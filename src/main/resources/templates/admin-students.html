@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title}">Quản lý Sinh viên</title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap4.min.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+    <!-- Navbar -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <a href="#" class="brand-link">
+            <span class="brand-text font-weight-light text-center d-block"><b>University</b> Portal</span>
+        </a>
+        <div class="sidebar">
+            <nav class="mt-4">
+                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                    <li class="nav-item">
+                        <a href="/admin-ui/dashboard" class="nav-link">
+                            <i class="nav-icon fas fa-tachometer-alt"></i><p>Dashboard Tổng quan</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin-ui/students" class="nav-link active">
+                            <i class="nav-icon fas fa-users"></i><p>Quản lý Sinh viên</p>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Content -->
+    <div class="content-wrapper">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Danh sách Sinh viên</h1>
+                    </div>
+                    <div class="col-sm-6 text-right">
+                        <!-- Nút mở Modal Thêm Sinh Viên -->
+                        <button class="btn btn-primary" data-toggle="modal" data-target="#addStudentModal">
+                            <i class="fas fa-plus"></i> Thêm Sinh viên mới
+                        </button>
+                        <button class="btn btn-success" id="btnExport">
+                            <i class="fas fa-file-excel"></i> Xuất Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="container-fluid">
+                <div class="card">
+                    <div class="card-body">
+                        <table id="studentTable" class="table table-bordered table-striped dt-responsive nowrap" style="width:100%">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Mã SV</th>
+                                <th>Họ Tên</th>
+                                <th>Email</th>
+                                <th>Ngành (Khoa)</th>
+                                <th>Khóa</th>
+                                <th>Học vụ</th>
+                                <th>Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody id="studentBody">
+                            <!-- Dữ liệu được đổ bằng AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thêm Sinh Viên -->
+    <div class="modal fade" id="addStudentModal" tabindex="-1" role="dialog" aria-labelledby="addStudentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="addStudentModalLabel"><i class="fas fa-user-plus"></i> Thêm Sinh Viên Mới</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="addStudentForm">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>Mã Sinh Viên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="studentCode" placeholder="Nhập mã sinh viên" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Họ và Tên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="fullName" placeholder="Nhập họ và tên" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Tên đăng nhập <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="username" placeholder="Nhập username" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Mật khẩu <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" name="password" placeholder="Nhập mật khẩu" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" placeholder="Nhập email" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Khóa (Năm nhập học)</label>
+                                <input type="number" class="form-control" name="enrollmentYear" placeholder="VD: 2023">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times"></i> Hủy</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Lưu Sinh Viên</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+<!-- DataTables & Plugins -->
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+      const token = localStorage.getItem('jwtToken');
+      if (!token) window.location.href = '/admin-ui/login';
+
+      $.ajaxSetup({ headers: { 'Authorization': 'Bearer ' + token } });
+
+      // Gọi API lấy danh sách sinh viên
+      function loadStudents() {
+          $.get('/api/students?page=0&size=100', function(response) {
+              let html = '';
+              const students = response.content;
+
+              students.forEach((s, index) => {
+                  let email = s.user ? s.user.email : 'N/A';
+                  let major = s.major ? s.major.name : 'Chưa phân ngành';
+                  let statusBadge = '';
+
+                  if (s.academicStatus === 'BINH_THUONG') statusBadge = '<span class="badge badge-success">Bình thường</span>';
+                  else if (s.academicStatus === 'CANH_BAO') statusBadge = '<span class="badge badge-warning">Cảnh báo</span>';
+                  else statusBadge = '<span class="badge badge-danger">Đình chỉ</span>';
+
+                  html += `<tr>
+                      <td>${index + 1}</td>
+                      <td><b>${s.studentCode}</b></td>
+                      <td>${s.fullName}</td>
+                      <td>${email}</td>
+                      <td>${major}</td>
+                      <td>${s.enrollmentYear || 'N/A'}</td>
+                      <td>${statusBadge}</td>
+                      <td>
+                          <button class="btn btn-sm btn-info" title="Sửa"><i class="fas fa-edit"></i></button>
+                          <button class="btn btn-sm btn-danger" title="Xóa"><i class="fas fa-trash"></i></button>
+                      </td>
+                  </tr>`;
+              });
+
+              // Hủy DataTable cũ trước khi vẽ lại
+              if ($.fn.DataTable.isDataTable('#studentTable')) {
+                  $('#studentTable').DataTable().destroy();
+              }
+
+              $('#studentBody').html(html);
+
+              $('#studentTable').DataTable({
+                  "responsive": true,
+                  "autoWidth": false,
+                  "language": {
+                      "url": "https://cdn.datatables.net/plug-ins/1.11.5/i18n/vi.json"
+                  }
+              });
+          }).fail(function() {
+              alert("Không thể tải dữ liệu sinh viên. Kiểm tra lại quyền Admin.");
+          });
+      }
+
+      // Load data ban đầu
+      loadStudents();
+
+      // Xử lý nút Xuất Excel
+      $('#btnExport').click(function() {
+          fetch('/api/data/export/students', {
+              headers: { 'Authorization': 'Bearer ' + token }
+          })
+          .then(res => res.blob())
+          .then(blob => {
+              let url = window.URL.createObjectURL(blob);
+              let a = document.createElement('a');
+              a.href = url;
+              a.download = 'danh_sach_sinh_vien.xlsx';
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+          });
+      });
+
+      // Xử lý Submit Form Thêm Sinh Viên
+      $('#addStudentForm').on('submit', function(e) {
+          e.preventDefault();
+
+          // Thu thập dữ liệu từ form
+          const formData = {
+              studentCode: $('input[name="studentCode"]').val(),
+              fullName: $('input[name="fullName"]').val(),
+              username: $('input[name="username"]').val(),
+              password: $('input[name="password"]').val(),
+              email: $('input[name="email"]').val(),
+              enrollmentYear: $('input[name="enrollmentYear"]').val(),
+              role: "ROLE_STUDENT" // Mặc định role khi tạo sinh viên
+          };
+
+          // Gửi AJAX POST request
+          $.ajax({
+              url: '/api/students', // Cần đảm bảo backend có endpoint POST /api/students
+              type: 'POST',
+              contentType: 'application/json',
+              data: JSON.stringify(formData),
+              success: function(res) {
+                  alert('Thêm sinh viên thành công!');
+                  $('#addStudentModal').modal('hide');
+                  $('#addStudentForm')[0].reset();
+                  loadStudents(); // Tải lại bảng dữ liệu
+              },
+              error: function(err) {
+                  alert('Lỗi khi thêm sinh viên: ' + (err.responseJSON?.message || err.responseText || 'Vui lòng kiểm tra lại dữ liệu'));
+              }
+          });
+      });
+
+    });
+</script>
+</body>
+</html>

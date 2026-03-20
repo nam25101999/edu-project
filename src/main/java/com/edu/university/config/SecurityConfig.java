@@ -46,14 +46,42 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                )
+
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        auth.requestMatchers(
+                                        "/api/auth/**",
+                                        "/swagger-ui/**",
+                                        "/v3/api-docs/**",
+
+                                        "/",
+                                        "/index.html",
+                                        "/admin-ui/**",
+                                        "/css/**",
+                                        "/js/**",
+                                        "/images/**"
+                                ).permitAll()
+
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .requestMatchers("/api/lecturer/**").hasAnyRole("ADMIN", "LECTURER")
                                 .requestMatchers("/api/student/**").hasAnyRole("ADMIN", "STUDENT")
-                                .requestMatchers("/api/enrollments/**").hasAnyRole("ADMIN", "STUDENT")
+
                                 .anyRequest().authenticated()
+                )
+
+                // 🔥 thêm cái này
+                .formLogin(form -> form
+                        .loginPage("/admin-ui/login")
+                        .defaultSuccessUrl("/admin-ui/dashboard", true)
+                        .permitAll()
+                )
+
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/admin-ui/login")
                 );
 
         http.authenticationProvider(authenticationProvider());
