@@ -1,5 +1,6 @@
 package com.edu.university.service;
 
+import com.edu.university.annotation.LogAction;
 import com.edu.university.entity.AcademicStatus;
 import com.edu.university.entity.Student;
 import com.edu.university.repository.StudentRepository;
@@ -20,6 +21,7 @@ public class AcademicService {
      * Hàm này có thể được gọi tự động (Cron Job) vào cuối mỗi kỳ học
      * để đánh giá lại toàn bộ tình trạng học vụ của sinh viên.
      */
+    @LogAction(action = "EVALUATE_ACADEMIC_STATUS", entityName = "STUDENT")
     @Transactional
     public void evaluateAllStudentsAcademicStatus() {
         List<Student> students = studentRepo.findAll();

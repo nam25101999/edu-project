@@ -1,5 +1,6 @@
 package com.edu.university.service;
 
+import com.edu.university.annotation.LogAction;
 import com.edu.university.dto.ClassSectionDtos.ClassSectionRequest;
 import com.edu.university.entity.ClassSection;
 import com.edu.university.entity.Course;
@@ -20,15 +21,18 @@ public class ClassSectionService {
     private final ClassSectionRepository classSectionRepository;
     private final CourseRepository courseRepository;
 
+    @LogAction(action = "VIEW_ALL_CLASS_SECTIONS", entityName = "CLASS_SECTION")
     public Page<ClassSection> getAllClassSections(Pageable pageable) {
         return classSectionRepository.findAll(pageable);
     }
 
+    @LogAction(action = "VIEW_CLASS_SECTION", entityName = "CLASS_SECTION")
     public ClassSection getClassSectionById(UUID id) {
         return classSectionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp học phần với ID: " + id));
     }
 
+    @LogAction(action = "CREATE_CLASS_SECTION", entityName = "CLASS_SECTION")
     @Transactional
     public ClassSection createClassSection(ClassSectionRequest request) {
         Course course = courseRepository.findById(request.courseId())
@@ -47,6 +51,7 @@ public class ClassSectionService {
         return classSectionRepository.save(classSection);
     }
 
+    @LogAction(action = "UPDATE_CLASS_SECTION", entityName = "CLASS_SECTION")
     @Transactional
     public ClassSection updateClassSection(UUID id, ClassSectionRequest request) {
         ClassSection classSection = getClassSectionById(id);
@@ -65,6 +70,7 @@ public class ClassSectionService {
         return classSectionRepository.save(classSection);
     }
 
+    @LogAction(action = "DELETE_CLASS_SECTION", entityName = "CLASS_SECTION")
     @Transactional
     public void deleteClassSection(UUID id) {
         ClassSection classSection = getClassSectionById(id);

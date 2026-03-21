@@ -24,11 +24,13 @@ public class ReportService {
     private final GradeRepository gradeRepo;
     private final GradeService gradeService;
 
-    // 1. Số lượng sinh viên theo khoa
+    // ======================================
+    // 1. SỐ LƯỢNG SINH VIÊN THEO KHOA
+    // ======================================
     public List<FacultyStat> getStudentsByFaculty() {
         List<Student> students = studentRepo.findAll();
 
-        // CẬP NHẬT: Nhóm sinh viên theo khoa thông qua liên kết Student -> Major -> Faculty
+        // Nhóm sinh viên theo khoa thông qua liên kết Student -> Major -> Faculty
         Map<String, Long> counts = students.stream()
                 .filter(s -> s.getMajor() != null && s.getMajor().getFaculty() != null)
                 .collect(Collectors.groupingBy(s -> s.getMajor().getFaculty().getName(), Collectors.counting()));
@@ -38,7 +40,9 @@ public class ReportService {
                 .toList();
     }
 
-    // 2. Tỷ lệ đậu / rớt (dựa trên điểm tổng kết >= 4.0 là đậu)
+    // ======================================
+    // 2. TỶ LỆ ĐẬU / RỚT
+    // ======================================
     public PassFailStat getPassFailRatio() {
         List<Grade> gradedEnrollments = gradeRepo.findAll().stream()
                 .filter(g -> g.getTotalScore() != null)
@@ -58,27 +62,31 @@ public class ReportService {
         return new PassFailStat(passCount, failCount, passRate, failRate);
     }
 
-    // 3. Top sinh viên có GPA cao nhất
+    // ======================================
+    // 3. TOP SINH VIÊN CÓ GPA CAO NHẤT
+    // ======================================
     public List<TopStudent> getTopStudents(int limit) {
         return studentRepo.findAll().stream()
                 .map(s -> new TopStudent(
                         s.getId(),
                         s.getStudentCode(),
                         s.getFullName(),
-                        gradeService.calculateCumulativeGPA(s.getId()) // Tái sử dụng logic tính GPA chuẩn
+                        gradeService.calculateCumulativeGPA(s.getId()) // Tái sử dụng logic tính GPA
                 ))
-                .sorted(Comparator.comparing(TopStudent::gpa).reversed()) // Sắp xếp giảm dần theo GPA
+                .sorted(Comparator.comparing(TopStudent::gpa).reversed()) // Giảm dần theo GPA
                 .limit(limit)
                 .toList();
     }
 
-    // 4. Dashboard tổng quan (Tổng số liệu hệ thống)
+    // ======================================
+    // 4. DASHBOARD TỔNG QUAN HỆ THỐNG
+    // ======================================
     public DashboardOverview getDashboardOverview() {
         long totalStudents = studentRepo.count();
         long totalCourses = courseRepo.count();
         long totalClasses = classSectionRepo.count();
 
-        // Đếm số lượng User có Role là LECTURER
+        // Đếm số lượng User có Role là GIẢNG VIÊN
         long totalLecturers = userRepo.findAll().stream()
                 .filter(u -> u.getRole() == Role.ROLE_LECTURER)
                 .count();

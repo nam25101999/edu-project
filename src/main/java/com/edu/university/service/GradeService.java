@@ -1,5 +1,6 @@
 package com.edu.university.service;
 
+import com.edu.university.annotation.LogAction;
 import com.edu.university.dto.PayloadDtos.GradeRequest;
 import com.edu.university.entity.Enrollment;
 import com.edu.university.entity.Grade;
@@ -21,6 +22,7 @@ public class GradeService {
     private final GradeRepository gradeRepo;
     private final EnrollmentRepository enrollmentRepo;
 
+    @LogAction(action = "ENTER_GRADE", entityName = "GRADE")
     @Transactional
     public Grade enterGrade(UUID enrollmentId, GradeRequest request) {
         Enrollment enrollment = enrollmentRepo.findById(enrollmentId)
@@ -47,7 +49,6 @@ public class GradeService {
         List<Grade> grades = gradeRepo.findByEnrollmentStudentId(studentId);
 
         // --- LOGIC: TÍNH GPA TỰ ĐỘNG LẤY ĐIỂM CAO NHẤT ---
-        // Sử dụng Map để gom nhóm môn học và chỉ giữ lại 1 điểm GPA cao nhất của môn đó
         Map<UUID, Double> maxGpaPerCourse = new HashMap<>();
         Map<UUID, Integer> creditsPerCourse = new HashMap<>();
 
@@ -57,7 +58,6 @@ public class GradeService {
                 UUID courseId = course.getId();
                 double currentGpa = g.getGpaScore();
 
-                // Cập nhật nếu môn này chưa có trong Map, hoặc điểm lần này CAO HƠN lần trước
                 if (!maxGpaPerCourse.containsKey(courseId) || currentGpa > maxGpaPerCourse.get(courseId)) {
                     maxGpaPerCourse.put(courseId, currentGpa);
                     creditsPerCourse.put(courseId, course.getCredits());
@@ -68,13 +68,11 @@ public class GradeService {
         double totalPoints = 0;
         int totalCredits = 0;
 
-        // Duyệt qua danh sách các môn học (chỉ chứa các điểm cao nhất) để tính GPA tích lũy
         for (UUID courseId : maxGpaPerCourse.keySet()) {
             totalPoints += (maxGpaPerCourse.get(courseId) * creditsPerCourse.get(courseId));
             totalCredits += creditsPerCourse.get(courseId);
         }
 
-        // Tránh lỗi chia cho 0 nếu sinh viên chưa có môn nào có điểm
         return totalCredits == 0 ? 0.0 : Math.round((totalPoints / totalCredits) * 100.0) / 100.0;
     }
 

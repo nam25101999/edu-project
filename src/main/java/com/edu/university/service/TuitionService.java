@@ -22,6 +22,9 @@ public class TuitionService {
     // Đơn giá 1 tín chỉ (Ví dụ: 500.000 VNĐ)
     private static final Double FEE_PER_CREDIT = 500000.0;
 
+    // ======================================
+    // TÍNH HỌC PHÍ KỲ HỌC
+    // ======================================
     @Transactional
     public TuitionFee calculateTuition(UUID studentId, String semester, Integer year) {
         Student student = studentRepo.findById(studentId)
@@ -58,6 +61,9 @@ public class TuitionService {
         return tuitionFeeRepo.save(fee);
     }
 
+    // ======================================
+    // THANH TOÁN HỌC PHÍ
+    // ======================================
     @Transactional
     public PaymentHistory makePayment(UUID tuitionFeeId, Double amount, String method, String note) {
         TuitionFee fee = tuitionFeeRepo.findById(tuitionFeeId)
@@ -82,10 +88,16 @@ public class TuitionService {
         return paymentRepo.save(payment);
     }
 
+    // ======================================
+    // LẤY LỊCH SỬ THANH TOÁN
+    // ======================================
     public List<PaymentHistory> getPaymentHistory(UUID tuitionFeeId) {
         return paymentRepo.findByTuitionFeeId(tuitionFeeId);
     }
 
+    // ======================================
+    // CẬP NHẬT TRẠNG THÁI HỌC PHÍ
+    // ======================================
     private void updateStatus(TuitionFee fee) {
         if (fee.getPaidAmount() >= fee.getTotalAmount()) {
             fee.setStatus(TuitionStatus.DA_DONG);

@@ -1,5 +1,6 @@
 package com.edu.university.service;
 
+import com.edu.university.annotation.LogAction;
 import com.edu.university.dto.CommentRequest;
 import com.edu.university.dto.MessageRequest;
 import com.edu.university.dto.TopicRequest;
@@ -33,6 +34,7 @@ public class ChatForumService {
 
     // ==================== FORUM / DIỄN ĐÀN ====================
 
+    @LogAction(action = "CREATE_TOPIC", entityName = "FORUM_TOPIC")
     @Transactional
     public ForumTopic createTopic(UUID authorId, TopicRequest request) {
         User author = userRepo.findById(authorId)
@@ -55,14 +57,17 @@ public class ChatForumService {
         return topicRepo.save(topic);
     }
 
+    @LogAction(action = "VIEW_GENERAL_TOPICS", entityName = "FORUM_TOPIC")
     public List<ForumTopic> getGeneralTopics() {
         return topicRepo.findByCourseIsNullOrderByCreatedAtDesc();
     }
 
+    @LogAction(action = "VIEW_COURSE_TOPICS", entityName = "FORUM_TOPIC")
     public List<ForumTopic> getCourseTopics(UUID courseId) {
         return topicRepo.findByCourseIdOrderByCreatedAtDesc(courseId);
     }
 
+    @LogAction(action = "ADD_COMMENT", entityName = "FORUM_COMMENT")
     @Transactional
     public ForumComment addComment(UUID authorId, UUID topicId, CommentRequest request) {
         User author = userRepo.findById(authorId)
@@ -80,12 +85,14 @@ public class ChatForumService {
         return commentRepo.save(comment);
     }
 
+    @LogAction(action = "VIEW_COMMENTS", entityName = "FORUM_COMMENT")
     public List<ForumComment> getComments(UUID topicId) {
         return commentRepo.findByTopicIdOrderByCreatedAtAsc(topicId);
     }
 
     // ==================== CHAT / TIN NHẮN TRỰC TIẾP ====================
 
+    @LogAction(action = "SEND_MESSAGE", entityName = "DIRECT_MESSAGE")
     @Transactional
     public DirectMessage sendMessage(UUID senderId, MessageRequest request) {
         User sender = userRepo.findById(senderId)
@@ -104,6 +111,7 @@ public class ChatForumService {
         return messageRepo.save(message);
     }
 
+    @LogAction(action = "VIEW_CONVERSATION", entityName = "DIRECT_MESSAGE")
     @Transactional
     public List<DirectMessage> getConversation(UUID currentUser, UUID partnerUser) {
         List<DirectMessage> messages = messageRepo.findConversation(currentUser, partnerUser);
@@ -118,6 +126,7 @@ public class ChatForumService {
         return messages;
     }
 
+    @LogAction(action = "VIEW_UNREAD_MESSAGES", entityName = "DIRECT_MESSAGE")
     public List<DirectMessage> getUnreadMessages(UUID userId) {
         return messageRepo.findByReceiverIdAndIsReadFalse(userId);
     }

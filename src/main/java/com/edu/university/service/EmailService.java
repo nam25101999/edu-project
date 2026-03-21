@@ -1,5 +1,6 @@
 package com.edu.university.service;
 
+import com.edu.university.annotation.LogAction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -15,6 +16,7 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    @LogAction(action = "SEND_OTP_EMAIL", entityName = "USER")
     public void sendOtpEmail(String to, String otp) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);

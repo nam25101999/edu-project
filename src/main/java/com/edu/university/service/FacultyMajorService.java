@@ -1,13 +1,14 @@
 package com.edu.university.service;
 
+import com.edu.university.annotation.LogAction;
 import com.edu.university.dto.FacultyMajorDtos.*;
 import com.edu.university.entity.Faculty;
 import com.edu.university.entity.Major;
+import com.edu.university.repository.FacultyRepository;
+import com.edu.university.repository.MajorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.edu.university.repository.FacultyRepository;
-import com.edu.university.repository.MajorRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class FacultyMajorService {
         return facultyRepo.findAll();
     }
 
+    @LogAction(action = "CREATE_FACULTY", entityName = "FACULTY")
     @Transactional
     public Faculty createFaculty(FacultyRequest request) {
         if (facultyRepo.existsByFacultyCode(request.facultyCode())) {
@@ -47,6 +49,7 @@ public class FacultyMajorService {
         return majorRepo.findByFaculty_Id(facultyId);
     }
 
+    @LogAction(action = "CREATE_MAJOR", entityName = "MAJOR")
     @Transactional
     public Major createMajor(MajorRequest request) {
         if (majorRepo.existsByMajorCode(request.majorCode())) {

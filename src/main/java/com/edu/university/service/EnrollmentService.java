@@ -1,5 +1,6 @@
 package com.edu.university.service;
 
+import com.edu.university.annotation.LogAction;
 import com.edu.university.entity.*;
 import com.edu.university.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class EnrollmentService {
     private final GradeRepository gradeRepo;
     private final TuitionFeeRepository tuitionFeeRepo; // Thêm repo học phí
 
+    @LogAction(action = "ENROLL_COURSE", entityName = "ENROLLMENT")
     @Transactional
     public Enrollment enroll(UUID studentId, UUID classSectionId) {
         Student student = studentRepo.findById(studentId)
@@ -68,7 +70,6 @@ public class EnrollmentService {
         if (currentSemesterCredits + section.getCourse().getCredits() > maxCredits) {
             throw new RuntimeException("Vượt quá số tín chỉ tối đa cho phép trong kỳ này (" + maxCredits + " TC).");
         }
-
 
         // ==========================================
         // KHỐI 2: LOGIC CỐT LÕI (HỌC LẠI, TRÙNG LỊCH)

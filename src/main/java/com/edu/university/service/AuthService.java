@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.edu.university.annotation.LogAction;
 
 import java.time.LocalDateTime;
 import java.util.Random;
@@ -31,31 +32,46 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
 
-    // Thêm các dependency cho phần Quên mật khẩu
     private final EmailService emailService;
     private final OtpTokenRepository otpTokenRepo;
 
+    // =========================
+    // LOGIN
+    // =========================
+    @LogAction(action = "LOGIN", entityName = "USER")
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.username(),
+                        loginRequest.password()
+                )
+        );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateJwtToken(authentication);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
         String role = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .findFirst().orElse("");
+                .findFirst()
+                .orElse("");
 
         return new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(), role);
     }
 
+    // =========================
+    // REGISTER
+    // =========================
+    @LogAction(action = "REGISTER", entityName = "USER")
     public void registerUser(SignupRequest signUpRequest) {
+
         if (userRepository.existsByUsername(signUpRequest.username())) {
-            throw new RuntimeException("Lỗi: Tên đăng nhập đã tồn tại!");
+            throw new RuntimeException("Tên đăng nhập đã tồn tại!");
         }
+
         if (userRepository.existsByEmail(signUpRequest.email())) {
-            throw new RuntimeException("Lỗi: Email đã được sử dụng!");
+            throw new RuntimeException("Email đã được sử dụng!");
         }
 
         User user = User.builder()
@@ -68,51 +84,52 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    // =========================================
-    // TÍNH NĂNG QUÊN MẬT KHẨU
-    // =========================================
-
+    // =========================
+    // FORGOT PASSWORD (GỬI OTP)
+    // =========================
+    @LogAction(action = "SEND_OTP", entityName = "USER")
     @Transactional
     public void generateAndSendOtp(ForgotPasswordRequest request) {
-        User user = userRepository.findByEmail(request.email()) // Cần đảm bảo UserRepository có hàm findByEmail
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với email này!"));
 
-        // Xóa OTP cũ nếu có
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy email!"));
+
         otpTokenRepo.deleteByUser(user);
 
-        // Tạo OTP 6 số ngẫu nhiên
         String otp = String.format("%06d", new Random().nextInt(999999));
 
         OtpToken otpToken = OtpToken.builder()
                 .otp(otp)
                 .user(user)
-                .expiryDate(LocalDateTime.now().plusMinutes(5)) // Hết hạn sau 5 phút
+                .expiryDate(LocalDateTime.now().plusMinutes(5))
                 .build();
 
         otpTokenRepo.save(otpToken);
 
-        // Gửi qua Email
         emailService.sendOtpEmail(user.getEmail(), otp);
     }
 
+    // =========================
+    // RESET PASSWORD
+    // =========================
+    @LogAction(action = "RESET_PASSWORD", entityName = "USER")
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
+
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với email này!"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản!"));
 
         OtpToken otpToken = otpTokenRepo.findByOtpAndUser(request.otp(), user)
-                .orElseThrow(() -> new RuntimeException("Mã OTP không chính xác!"));
+                .orElseThrow(() -> new RuntimeException("OTP không đúng!"));
 
         if (otpToken.isExpired()) {
             otpTokenRepo.delete(otpToken);
-            throw new RuntimeException("Mã OTP đã hết hạn, vui lòng yêu cầu lại!");
+            throw new RuntimeException("OTP đã hết hạn!");
         }
 
-        // Đổi mật khẩu
         user.setPassword(encoder.encode(request.newPassword()));
         userRepository.save(user);
 
-        // Xóa OTP sau khi dùng thành công
         otpTokenRepo.delete(otpToken);
     }
 }

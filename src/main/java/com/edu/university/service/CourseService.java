@@ -1,5 +1,6 @@
 package com.edu.university.service;
 
+import com.edu.university.annotation.LogAction;
 import com.edu.university.dto.CourseDtos.CourseRequest;
 import com.edu.university.entity.Course;
 import com.edu.university.repository.CourseRepository;
@@ -17,15 +18,18 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
 
+    @LogAction(action = "VIEW_ALL_COURSES", entityName = "COURSE")
     public Page<Course> getAllCourses(Pageable pageable) {
         return courseRepository.findAll(pageable);
     }
 
+    @LogAction(action = "VIEW_COURSE", entityName = "COURSE")
     public Course getCourseById(UUID id) {
         return courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy môn học với ID: " + id));
     }
 
+    @LogAction(action = "CREATE_COURSE", entityName = "COURSE")
     @Transactional
     public Course createCourse(CourseRequest request) {
         if (courseRepository.existsByCourseCode(request.courseCode())) {
@@ -48,6 +52,7 @@ public class CourseService {
         return courseRepository.save(course);
     }
 
+    @LogAction(action = "UPDATE_COURSE", entityName = "COURSE")
     @Transactional
     public Course updateCourse(UUID id, CourseRequest request) {
         Course course = getCourseById(id);
@@ -76,6 +81,7 @@ public class CourseService {
         return courseRepository.save(course);
     }
 
+    @LogAction(action = "DELETE_COURSE", entityName = "COURSE")
     @Transactional
     public void deleteCourse(UUID id) {
         Course course = getCourseById(id);

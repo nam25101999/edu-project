@@ -25,6 +25,9 @@ public class NotificationService {
     private final EnrollmentRepository enrollmentRepo;
     private final StudentRepository studentRepo;
 
+    // ======================================
+    // GỬI THÔNG BÁO TOÀN TRƯỜNG
+    // ======================================
     @Transactional
     public Notification sendToAll(String title, String message) {
         Notification notif = Notification.builder()
@@ -37,6 +40,9 @@ public class NotificationService {
         return notificationRepo.save(notif);
     }
 
+    // ======================================
+    // GỬI THÔNG BÁO THEO LỚP HỌC PHẦN
+    // ======================================
     @Transactional
     public Notification sendToClass(UUID classSectionId, String title, String message) {
         Notification notif = Notification.builder()
@@ -49,6 +55,9 @@ public class NotificationService {
         return notificationRepo.save(notif);
     }
 
+    // ======================================
+    // GỬI THÔNG BÁO ĐẾN CÁ NHÂN
+    // ======================================
     @Transactional
     public Notification sendToUser(UUID userId, String title, String message) {
         Notification notif = Notification.builder()
@@ -61,17 +70,19 @@ public class NotificationService {
         return notificationRepo.save(notif);
     }
 
-    // Lấy toàn bộ thông báo hiển thị cho 1 user đăng nhập
+    // ======================================
+    // LẤY TẤT CẢ THÔNG BÁO CỦA SINH VIÊN
+    // ======================================
     public List<Notification> getMyNotifications(UUID userId) {
         List<Notification> allMyNotifs = new ArrayList<>();
 
-        // 1. Lấy thông báo toàn trường
+        // 1. Thông báo toàn trường
         allMyNotifs.addAll(notificationRepo.findByTypeOrderByCreatedAtDesc(NotificationType.TOAN_TRUONG));
 
-        // 2. Lấy thông báo cá nhân
+        // 2. Thông báo cá nhân
         allMyNotifs.addAll(notificationRepo.findByTypeAndTargetIdOrderByCreatedAtDesc(NotificationType.CA_NHAN, userId));
 
-        // 3. Lấy thông báo của các lớp học phần mà sinh viên này đang học
+        // 3. Thông báo theo lớp học phần
         studentRepo.findByUserId(userId).ifPresent(student -> {
             List<UUID> enrolledClassIds = enrollmentRepo.findByStudentId(student.getId())
                     .stream()
@@ -83,7 +94,7 @@ public class NotificationService {
             }
         });
 
-        // Sắp xếp lại danh sách tổng hợp theo thời gian mới nhất
+        // Sắp xếp theo thời gian giảm dần
         allMyNotifs.sort(Comparator.comparing(Notification::getCreatedAt).reversed());
         return allMyNotifs;
     }
