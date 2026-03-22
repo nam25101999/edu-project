@@ -4,7 +4,7 @@ import com.edu.university.modules.enrollment.dto.GradeRequest;
 import com.edu.university.modules.report.annotation.LogAction;
 import com.edu.university.modules.enrollment.entity.Enrollment;
 import com.edu.university.modules.enrollment.entity.Grade;
-import com.edu.university.modules.enrollment.repository.course.entity.Course;
+import com.edu.university.modules.course.entity.Course;
 import com.edu.university.modules.enrollment.repository.EnrollmentRepository;
 import com.edu.university.modules.enrollment.repository.GradeRepository;
 import lombok.RequiredArgsConstructor;

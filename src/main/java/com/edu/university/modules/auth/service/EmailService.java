@@ -1,4 +1,4 @@
-package com.edu.university.modules.student.service.service;
+package com.edu.university.modules.auth.service;
 
 import com.edu.university.modules.report.annotation.LogAction;
 import lombok.RequiredArgsConstructor;

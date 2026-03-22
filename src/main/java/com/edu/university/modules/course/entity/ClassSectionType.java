@@ -1,4 +1,4 @@
-package com.edu.university.modules.enrollment.repository.course.entity;
+package com.edu.university.modules.course.entity;
 
 public enum ClassSectionType {
     LECTURE,    // Lớp lý thuyết

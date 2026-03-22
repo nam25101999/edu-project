@@ -2,7 +2,7 @@ package com.edu.university.modules.auth.controller;
 
 import com.edu.university.modules.auth.dto.ResetPasswordDtos.*;
 import com.edu.university.modules.auth.dto.AuthDtos.*;
-import com.edu.university.modules.student.service.service.AuthService;
+import com.edu.university.modules.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

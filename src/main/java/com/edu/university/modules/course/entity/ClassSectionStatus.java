@@ -1,4 +1,4 @@
-package com.edu.university.modules.enrollment.repository.course.entity;
+package com.edu.university.modules.course.entity;
 
 public enum ClassSectionStatus {
     OPEN,       // Đang mở đăng ký

@@ -1,6 +1,6 @@
-package com.edu.university.modules.enrollment.repository.course.repository;
+package com.edu.university.modules.course.repository;
 
-import com.edu.university.modules.enrollment.repository.course.entity.ExamSchedule;
+import com.edu.university.modules.course.entity.ExamSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

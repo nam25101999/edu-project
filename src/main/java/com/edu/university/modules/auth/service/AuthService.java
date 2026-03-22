@@ -1,4 +1,4 @@
-package com.edu.university.modules.student.service.service;
+package com.edu.university.modules.auth.service;
 
 import com.edu.university.modules.auth.dto.ResetPasswordDtos.*;
 import com.edu.university.modules.auth.dto.AuthDtos.*;

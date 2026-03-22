@@ -1,7 +1,7 @@
-package com.edu.university.modules.enrollment.repository.course.controller;
+package com.edu.university.modules.course.controller;
 
-import com.edu.university.modules.enrollment.repository.course.dto.CourseDtos.CourseRequest;
-import com.edu.university.modules.enrollment.service.service.CourseService;
+import com.edu.university.modules.course.dto.CourseDtos.CourseRequest;
+import com.edu.university.modules.course.service.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;

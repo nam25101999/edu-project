@@ -1,9 +1,10 @@
-package com.edu.university.modules.enrollment.service.service;
+package com.edu.university.modules.course.service;
 
 import com.edu.university.modules.report.annotation.LogAction;
-import com.edu.university.modules.enrollment.repository.course.dto.CourseDtos.CourseRequest;
-import com.edu.university.modules.enrollment.repository.course.entity.Course;
-import com.edu.university.modules.enrollment.repository.course.repository.CourseRepository;
+import com.edu.university.modules.course.dto.CourseDtos.CourseRequest;
+import com.edu.university.modules.course.entity.Course;
+import com.edu.university.modules.course.mapper.CourseMapper;
+import com.edu.university.modules.course.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class CourseService {
 
     private final CourseRepository courseRepository;
+    private final CourseMapper courseMapper; // Đã Inject Mapper vào đây
 
     @LogAction(action = "VIEW_ALL_COURSES", entityName = "COURSE")
     public Page<Course> getAllCourses(Pageable pageable) {
@@ -42,12 +44,11 @@ public class CourseService {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy môn tiên quyết với ID: " + request.prerequisiteCourseId()));
         }
 
-        Course course = Course.builder()
-                .courseCode(request.courseCode())
-                .name(request.name())
-                .credits(request.credits())
-                .prerequisiteCourse(prerequisite)
-                .build();
+        // ==========================================
+        // Dùng Mapper rút gọn thao tác tạo Entity
+        // ==========================================
+        Course course = courseMapper.toEntity(request);
+        course.setPrerequisiteCourse(prerequisite);
 
         return courseRepository.save(course);
     }
@@ -73,9 +74,10 @@ public class CourseService {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy môn tiên quyết"));
         }
 
-        course.setCourseCode(request.courseCode());
-        course.setName(request.name());
-        course.setCredits(request.credits());
+        // ==========================================
+        // Dùng Mapper để cập nhật trực tiếp vào Entity
+        // ==========================================
+        courseMapper.updateEntityFromDto(request, course);
         course.setPrerequisiteCourse(prerequisite);
 
         return courseRepository.save(course);

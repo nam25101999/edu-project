@@ -1,4 +1,4 @@
-package com.edu.university.modules.enrollment.repository.course.dto;
+package com.edu.university.modules.course.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

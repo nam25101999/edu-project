@@ -1,8 +1,8 @@
-package com.edu.university.modules.enrollment.repository.course.controller;
+package com.edu.university.modules.course.controller;
 
-import com.edu.university.modules.enrollment.repository.course.dto.ExamScheduleDtos.ExamScheduleRequest;
+import com.edu.university.modules.course.dto.ExamScheduleDtos.ExamScheduleRequest;
 import com.edu.university.common.security.UserDetailsImpl;
-import com.edu.university.modules.enrollment.service.service.ExamScheduleService;
+import com.edu.university.modules.course.service.ExamScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

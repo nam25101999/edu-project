@@ -2,11 +2,11 @@ package com.edu.university.modules.enrollment.service;
 
 import com.edu.university.modules.enrollment.repository.EnrollmentRepository;
 import com.edu.university.modules.enrollment.repository.GradeRepository;
-import com.edu.university.modules.enrollment.repository.course.repository.ClassSectionRepository;
+import com.edu.university.modules.course.repository.ClassSectionRepository;
 import com.edu.university.modules.finance.repository.TuitionFeeRepository;
 import com.edu.university.modules.report.annotation.LogAction;
-import com.edu.university.modules.enrollment.repository.course.entity.ClassSection;
-import com.edu.university.modules.enrollment.repository.course.entity.Course;
+import com.edu.university.modules.course.entity.ClassSection;
+import com.edu.university.modules.course.entity.Course;
 import com.edu.university.modules.enrollment.entity.AcademicStatus;
 import com.edu.university.modules.enrollment.entity.Enrollment;
 import com.edu.university.modules.enrollment.entity.Grade;

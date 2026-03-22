@@ -1,6 +1,6 @@
 package com.edu.university.modules.enrollment.entity;
 
-import com.edu.university.modules.enrollment.repository.course.entity.ClassSection;
+import com.edu.university.modules.course.entity.ClassSection;
 import com.edu.university.modules.student.entity.Student;
 import jakarta.persistence.*;
 import lombok.*;

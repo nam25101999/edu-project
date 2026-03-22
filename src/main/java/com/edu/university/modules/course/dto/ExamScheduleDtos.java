@@ -1,6 +1,6 @@
-package com.edu.university.modules.enrollment.repository.course.dto;
+package com.edu.university.modules.course.dto;
 
-import com.edu.university.modules.enrollment.repository.course.entity.ExamType;
+import com.edu.university.modules.course.entity.ExamType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;

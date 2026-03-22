@@ -1,14 +1,15 @@
-package com.edu.university.modules.enrollment.service.service;
+package com.edu.university.modules.course.service;
 
 import com.edu.university.modules.report.annotation.LogAction;
-import com.edu.university.modules.enrollment.repository.course.dto.ExamScheduleDtos.ExamScheduleRequest;
-import com.edu.university.modules.enrollment.repository.course.entity.ClassSection;
-import com.edu.university.modules.enrollment.repository.course.entity.ExamSchedule;
+import com.edu.university.modules.course.dto.ExamScheduleDtos.ExamScheduleRequest;
+import com.edu.university.modules.course.entity.ClassSection;
+import com.edu.university.modules.course.entity.ExamSchedule;
 import com.edu.university.modules.student.entity.Student;
-import com.edu.university.modules.enrollment.repository.course.repository.ClassSectionRepository;
+import com.edu.university.modules.course.repository.ClassSectionRepository;
 import com.edu.university.modules.enrollment.repository.EnrollmentRepository;
-import com.edu.university.modules.enrollment.repository.course.repository.ExamScheduleRepository;
+import com.edu.university.modules.course.repository.ExamScheduleRepository;
 import com.edu.university.modules.student.repository.StudentRepository;
+import com.edu.university.modules.course.mapper.ExamScheduleMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,9 @@ public class ExamScheduleService {
     private final ClassSectionRepository classSectionRepo;
     private final EnrollmentRepository enrollmentRepo;
     private final StudentRepository studentRepo;
+
+    // Đã Inject Mapper vào đây
+    private final ExamScheduleMapper examScheduleMapper;
 
     @LogAction(action = "CREATE_EXAM_SCHEDULE", entityName = "EXAM_SCHEDULE")
     @Transactional
@@ -61,18 +65,18 @@ public class ExamScheduleService {
             }
         }
 
-        ExamSchedule exam = ExamSchedule.builder()
-                .classSection(section)
-                .examType(request.examType())
-                .startTime(request.startTime())
-                .endTime(request.endTime())
-                .room(request.room())
-                .build();
+        // ==========================================
+        // Dùng Mapper rút gọn thao tác tạo Entity
+        // ==========================================
+        ExamSchedule exam = examScheduleMapper.toEntity(request);
+
+        // Set thủ công Object liên kết (do đã được ignore trong Mapper)
+        exam.setClassSection(section);
 
         return examRepo.save(exam);
     }
 
-    // Sinh viên xem lịch thi cá nhân
+    @LogAction(action = "VIEW_MY_EXAM_SCHEDULES", entityName = "EXAM_SCHEDULE")
     public List<ExamSchedule> getMyExamSchedules(UUID userId) {
         Student student = studentRepo.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sinh viên"));

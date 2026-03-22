@@ -2,8 +2,8 @@ package com.edu.university.modules.report.service;
 
 import com.edu.university.modules.auth.repository.UserRepository;
 import com.edu.university.modules.enrollment.repository.GradeRepository;
-import com.edu.university.modules.enrollment.repository.course.repository.ClassSectionRepository;
-import com.edu.university.modules.enrollment.repository.course.repository.CourseRepository;
+import com.edu.university.modules.course.repository.ClassSectionRepository;
+import com.edu.university.modules.course.repository.CourseRepository;
 import com.edu.university.modules.enrollment.service.GradeService;
 import com.edu.university.modules.report.dto.ReportDtos.*;
 import com.edu.university.modules.enrollment.entity.Grade;

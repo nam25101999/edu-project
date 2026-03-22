@@ -86,6 +86,11 @@ public class SecurityConfig {
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+        http.exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) -> res.sendError(401))
+                .accessDeniedHandler((req, res, e) -> res.sendError(403))
+        );
+
 
         return http.build();
     }

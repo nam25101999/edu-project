@@ -1,7 +1,7 @@
 package com.edu.university.modules.community.entity;
 
 import com.edu.university.modules.auth.entity.User;
-import com.edu.university.modules.enrollment.repository.course.entity.Course;
+import com.edu.university.modules.course.entity.Course;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;

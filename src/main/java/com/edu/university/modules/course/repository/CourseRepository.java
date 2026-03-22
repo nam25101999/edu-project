@@ -1,6 +1,6 @@
-package com.edu.university.modules.enrollment.repository.course.repository;
+package com.edu.university.modules.course.repository;
 
-import com.edu.university.modules.enrollment.repository.course.entity.Course;
+import com.edu.university.modules.course.entity.Course;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.util.UUID;
