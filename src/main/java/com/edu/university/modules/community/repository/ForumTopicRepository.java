@@ -1,4 +1,4 @@
-package com.edu.university.modules.community.controller;
+package com.edu.university.modules.community.repository;
 
 import com.edu.university.modules.community.entity.ForumTopic;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -3,7 +3,7 @@ package com.edu.university.modules.community.service;
 import com.edu.university.modules.community.entity.Notification;
 import com.edu.university.modules.community.entity.NotificationType;
 import com.edu.university.modules.enrollment.repository.EnrollmentRepository;
-import com.edu.university.modules.community.controller.NotificationRepository;
+import com.edu.university.modules.community.repository.NotificationRepository;
 import com.edu.university.modules.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
 # ==========================================
 # STAGE 1: BUILD
-# Dùng image Maven + JDK 17 để build source code
+# Dùng image Maven + JDK 21 để build source code
 # ==========================================
 FROM maven:3.9.6-eclipse-temurin-21 AS builder
 

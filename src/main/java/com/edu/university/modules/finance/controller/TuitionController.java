@@ -1,4 +1,4 @@
-package com.edu.university.modules.enrollment.controller;
+package com.edu.university.modules.finance.controller;
 
 import com.edu.university.modules.finance.entity.PaymentHistory;
 import com.edu.university.modules.finance.service.TuitionService;

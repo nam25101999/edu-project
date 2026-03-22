@@ -1,5 +1,6 @@
-package com.edu.university.modules.auth.controller;
+package com.edu.university;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.edu.university.modules.auth.dto.AuthDtos.LoginRequest;
 import com.edu.university.modules.auth.dto.AuthDtos.SignupRequest;
@@ -84,6 +85,7 @@ public class AuthControllerTest {
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists())
                 .andExpect(jsonPath("$.username").value("admin_test"))
@@ -97,6 +99,7 @@ public class AuthControllerTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest)))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().string("Đăng ký tài khoản thành công!"));
 
@@ -112,6 +115,7 @@ public class AuthControllerTest {
         // Cố tình truy cập API bảo mật mà KHÔNG gửi Token
         mockMvc.perform(get("/api/students")
                         .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
                 .andExpect(status().isUnauthorized()); // Mong đợi lỗi 401 Unauthorized
     }
 
@@ -124,6 +128,7 @@ public class AuthControllerTest {
         mockMvc.perform(get("/api/admin/dashboard") // ✅ đổi path admin thật
                         .header("Authorization", "Bearer " + studentToken)
                         .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
                 .andExpect(status().isForbidden()); // 403 Forbidden đúng theo SecurityConfig
     }
 
@@ -138,6 +143,7 @@ public class AuthControllerTest {
                         .param("page", "0")
                         .param("size", "10")
                         .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
                 .andExpect(status().isOk()); // Mong đợi 200 OK
     }
 
@@ -151,6 +157,7 @@ public class AuthControllerTest {
         MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
 
