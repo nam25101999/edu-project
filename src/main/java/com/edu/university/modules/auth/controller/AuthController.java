@@ -1,5 +1,6 @@
 package com.edu.university.modules.auth.controller;
 
+import com.edu.university.common.response.ApiResponse;
 import com.edu.university.modules.auth.dto.ResetPasswordDtos.*;
 import com.edu.university.modules.auth.dto.AuthDtos.*;
 import com.edu.university.modules.auth.service.AuthService;
@@ -17,14 +18,16 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        return ResponseEntity.ok(authService.authenticateUser(loginRequest));
+    public ResponseEntity<ApiResponse<JwtResponse>> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+        return ResponseEntity.ok(ApiResponse.success(authService.authenticateUser(loginRequest)));
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
+    public ResponseEntity<ApiResponse<String>> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         authService.registerUser(signUpRequest);
-        return ResponseEntity.ok("Đăng ký tài khoản thành công!");
+        return ResponseEntity
+                .status(org.springframework.http.HttpStatus.CREATED)
+                .body(ApiResponse.created("Đăng ký tài khoản thành công!", null));
     }
 
     // =========================================
@@ -32,14 +35,14 @@ public class AuthController {
     // =========================================
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<ApiResponse<String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.generateAndSendOtp(request);
-        return ResponseEntity.ok("Mã OTP đã được gửi đến email của bạn. Mã có hiệu lực trong 5 phút.");
+        return ResponseEntity.ok(ApiResponse.success("Mã OTP đã được gửi đến email của bạn. Mã có hiệu lực trong 5 phút."));
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<ApiResponse<String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
-        return ResponseEntity.ok("Khôi phục mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.");
+        return ResponseEntity.ok(ApiResponse.success("Khôi phục mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới."));
     }
 }

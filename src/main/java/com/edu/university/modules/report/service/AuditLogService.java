@@ -1,7 +1,9 @@
 package com.edu.university.modules.report.service;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.report.AuditLog;
-import com.edu.university.modules.report.AuditLogRepository;
+import com.edu.university.modules.report.reponsitory.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +12,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Service xử lý dữ liệu nhật ký hệ thống (Audit Logs) và thống kê.
+ */
 @Service
 @RequiredArgsConstructor
 public class AuditLogService {

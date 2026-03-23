@@ -1,5 +1,7 @@
 package com.edu.university.modules.student.service;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.report.annotation.LogAction;
 import com.edu.university.modules.student.dto.FacultyMajorDtos.*;
 import com.edu.university.modules.student.entity.Faculty;
@@ -13,6 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Service quản lý danh mục Khoa và Ngành học.
+ * Đã chuẩn hóa lỗi nghiệp vụ theo ErrorCode.
+ */
 @Service
 @RequiredArgsConstructor
 public class FacultyMajorService {
@@ -29,7 +35,7 @@ public class FacultyMajorService {
     @Transactional
     public Faculty createFaculty(FacultyRequest request) {
         if (facultyRepo.existsByFacultyCode(request.facultyCode())) {
-            throw new RuntimeException("Mã khoa đã tồn tại");
+            throw new BusinessException(ErrorCode.ALREADY_EXISTS, "Mã khoa đã tồn tại");
         }
         Faculty faculty = Faculty.builder()
                 .facultyCode(request.facultyCode())
@@ -46,6 +52,9 @@ public class FacultyMajorService {
     }
 
     public List<Major> getMajorsByFaculty(UUID facultyId) {
+        if (!facultyRepo.existsById(facultyId)) {
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy khoa yêu cầu");
+        }
         return majorRepo.findByFaculty_Id(facultyId);
     }
 
@@ -53,10 +62,10 @@ public class FacultyMajorService {
     @Transactional
     public Major createMajor(MajorRequest request) {
         if (majorRepo.existsByMajorCode(request.majorCode())) {
-            throw new RuntimeException("Mã ngành đã tồn tại");
+            throw new BusinessException(ErrorCode.ALREADY_EXISTS, "Mã ngành đã tồn tại");
         }
         Faculty faculty = facultyRepo.findById(request.facultyId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Khoa"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy Khoa liên kết"));
 
         Major major = Major.builder()
                 .majorCode(request.majorCode())

@@ -1,5 +1,7 @@
 package com.edu.university.modules.finance.service;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.enrollment.entity.Enrollment;
 import com.edu.university.modules.enrollment.repository.EnrollmentRepository;
 import com.edu.university.modules.finance.entity.PaymentHistory;
@@ -7,6 +9,7 @@ import com.edu.university.modules.finance.entity.TuitionFee;
 import com.edu.university.modules.finance.entity.TuitionStatus;
 import com.edu.university.modules.finance.repository.PaymentHistoryRepository;
 import com.edu.university.modules.finance.repository.TuitionFeeRepository;
+import com.edu.university.modules.report.annotation.LogAction;
 import com.edu.university.modules.student.entity.Student;
 import com.edu.university.modules.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +20,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Service quản lý học phí và thanh toán.
+ * Đã chuẩn hóa lỗi theo Enterprise Standard (ErrorCode FNC, STD).
+ */
 @Service
 @RequiredArgsConstructor
 public class TuitionService {
@@ -26,18 +33,14 @@ public class TuitionService {
     private final EnrollmentRepository enrollmentRepo;
     private final StudentRepository studentRepo;
 
-    // Đơn giá 1 tín chỉ (Ví dụ: 500.000 VNĐ)
     private static final Double FEE_PER_CREDIT = 500000.0;
 
-    // ======================================
-    // TÍNH HỌC PHÍ KỲ HỌC
-    // ======================================
+    @LogAction(action = "CALCULATE_TUITION", entityName = "TUITION_FEE")
     @Transactional
     public TuitionFee calculateTuition(UUID studentId, String semester, Integer year) {
         Student student = studentRepo.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
 
-        // Lấy tất cả môn đã đăng ký trong học kỳ
         List<Enrollment> enrollments = enrollmentRepo.findByStudentId(studentId).stream()
                 .filter(e -> e.getClassSection().getSemester().equals(semester) &&
                         e.getClassSection().getYear().equals(year))
@@ -49,7 +52,6 @@ public class TuitionService {
 
         double totalAmount = totalCredits * FEE_PER_CREDIT;
 
-        // Tìm hoặc tạo mới bản ghi học phí
         TuitionFee fee = tuitionFeeRepo.findByStudentIdAndSemesterAndYear(studentId, semester, year)
                 .orElse(TuitionFee.builder()
                         .student(student)
@@ -62,22 +64,23 @@ public class TuitionService {
         fee.setTotalCredits(totalCredits);
         fee.setTotalAmount(totalAmount);
 
-        // Cập nhật lại trạng thái dựa trên số tiền đã đóng
         updateStatus(fee);
 
         return tuitionFeeRepo.save(fee);
     }
 
-    // ======================================
-    // THANH TOÁN HỌC PHÍ
-    // ======================================
+    @LogAction(action = "MAKE_PAYMENT", entityName = "PAYMENT_HISTORY")
     @Transactional
     public PaymentHistory makePayment(UUID tuitionFeeId, Double amount, String method, String note) {
         TuitionFee fee = tuitionFeeRepo.findById(tuitionFeeId)
-                .orElseThrow(() -> new RuntimeException("Tuition fee record not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.TUITION_RECORD_NOT_FOUND));
 
         if (fee.getStatus() == TuitionStatus.DA_DONG) {
-            throw new RuntimeException("Học phí kỳ này đã được đóng đủ.");
+            throw new BusinessException(ErrorCode.TUITION_ALREADY_PAID);
+        }
+
+        if (amount <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_PAYMENT_AMOUNT);
         }
 
         fee.setPaidAmount(fee.getPaidAmount() + amount);
@@ -95,20 +98,17 @@ public class TuitionService {
         return paymentRepo.save(payment);
     }
 
-    // ======================================
-    // LẤY LỊCH SỬ THANH TOÁN
-    // ======================================
     public List<PaymentHistory> getPaymentHistory(UUID tuitionFeeId) {
+        if (!tuitionFeeRepo.existsById(tuitionFeeId)) {
+            throw new BusinessException(ErrorCode.TUITION_RECORD_NOT_FOUND);
+        }
         return paymentRepo.findByTuitionFeeId(tuitionFeeId);
     }
 
-    // ======================================
-    // CẬP NHẬT TRẠNG THÁI HỌC PHÍ
-    // ======================================
     private void updateStatus(TuitionFee fee) {
         if (fee.getPaidAmount() >= fee.getTotalAmount()) {
             fee.setStatus(TuitionStatus.DA_DONG);
-            fee.setPaidAmount(fee.getTotalAmount()); // Không cho vượt quá
+            fee.setPaidAmount(fee.getTotalAmount());
         } else if (fee.getPaidAmount() > 0) {
             fee.setStatus(TuitionStatus.DONG_MOT_PHAN);
         } else {

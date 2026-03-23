@@ -1,5 +1,7 @@
 package com.edu.university.modules.community.service;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.report.annotation.LogAction;
 import com.edu.university.modules.community.dto.CommentRequest;
 import com.edu.university.modules.community.dto.MessageRequest;
@@ -22,6 +24,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Service xử lý các nghiệp vụ Diễn đàn và Chat trực tiếp.
+ * Đã chuẩn hóa lỗi theo Enterprise Standard (ErrorCode).
+ */
 @Service
 @RequiredArgsConstructor
 public class ChatForumService {
@@ -38,12 +44,12 @@ public class ChatForumService {
     @Transactional
     public ForumTopic createTopic(UUID authorId, TopicRequest request) {
         User author = userRepo.findById(authorId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy User"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         Course course = null;
         if (request.courseId() != null) {
             course = courseRepo.findById(request.courseId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy Môn học"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
         }
 
         ForumTopic topic = ForumTopic.builder()
@@ -64,6 +70,10 @@ public class ChatForumService {
 
     @LogAction(action = "VIEW_COURSE_TOPICS", entityName = "FORUM_TOPIC")
     public List<ForumTopic> getCourseTopics(UUID courseId) {
+        // Kiểm tra môn học tồn tại trước khi lấy topic
+        if (!courseRepo.existsById(courseId)) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+        }
         return topicRepo.findByCourseIdOrderByCreatedAtDesc(courseId);
     }
 
@@ -71,9 +81,10 @@ public class ChatForumService {
     @Transactional
     public ForumComment addComment(UUID authorId, UUID topicId, CommentRequest request) {
         User author = userRepo.findById(authorId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy User"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         ForumTopic topic = topicRepo.findById(topicId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Chủ đề"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.TOPIC_NOT_FOUND));
 
         ForumComment comment = ForumComment.builder()
                 .topic(topic)
@@ -87,6 +98,9 @@ public class ChatForumService {
 
     @LogAction(action = "VIEW_COMMENTS", entityName = "FORUM_COMMENT")
     public List<ForumComment> getComments(UUID topicId) {
+        if (!topicRepo.existsById(topicId)) {
+            throw new BusinessException(ErrorCode.TOPIC_NOT_FOUND);
+        }
         return commentRepo.findByTopicIdOrderByCreatedAtAsc(topicId);
     }
 
@@ -96,9 +110,10 @@ public class ChatForumService {
     @Transactional
     public DirectMessage sendMessage(UUID senderId, MessageRequest request) {
         User sender = userRepo.findById(senderId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Người gửi"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         User receiver = userRepo.findById(request.receiverId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Người nhận"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND_CHAT));
 
         DirectMessage message = DirectMessage.builder()
                 .sender(sender)
@@ -114,15 +129,20 @@ public class ChatForumService {
     @LogAction(action = "VIEW_CONVERSATION", entityName = "DIRECT_MESSAGE")
     @Transactional
     public List<DirectMessage> getConversation(UUID currentUser, UUID partnerUser) {
+        if (!userRepo.existsById(partnerUser)) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND_CHAT);
+        }
+
         List<DirectMessage> messages = messageRepo.findConversation(currentUser, partnerUser);
 
         // Đánh dấu các tin nhắn người kia gửi cho mình là "Đã đọc"
-        for (DirectMessage msg : messages) {
-            if (msg.getReceiver().getId().equals(currentUser) && !msg.isRead()) {
-                msg.setRead(true);
-                messageRepo.save(msg);
-            }
-        }
+        messages.stream()
+                .filter(msg -> msg.getReceiver().getId().equals(currentUser) && !msg.isRead())
+                .forEach(msg -> {
+                    msg.setRead(true);
+                    messageRepo.save(msg);
+                });
+
         return messages;
     }
 

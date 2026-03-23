@@ -1,5 +1,7 @@
 package com.edu.university.modules.auth.service;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.auth.dto.ResetPasswordDtos.*;
 import com.edu.university.modules.auth.dto.AuthDtos.*;
 import com.edu.university.modules.auth.entity.OtpToken;
@@ -23,6 +25,10 @@ import com.edu.university.modules.report.annotation.LogAction;
 import java.time.LocalDateTime;
 import java.util.Random;
 
+/**
+ * Service xử lý các nghiệp vụ liên quan đến xác thực và phân quyền.
+ * Đã cập nhật để khớp với các mã lỗi trong ErrorCode enum mới nhất.
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -40,6 +46,8 @@ public class AuthService {
     // =========================
     @LogAction(action = "LOGIN", entityName = "USER")
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
+        // AuthenticationManager ném AuthenticationException nếu sai user/pass.
+        // Có thể bắt lỗi này ở GlobalExceptionHandler hoặc tại đây để trả về INVALID_CREDENTIALS.
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.username(),
@@ -67,11 +75,11 @@ public class AuthService {
     public void registerUser(SignupRequest signUpRequest) {
 
         if (userRepository.existsByUsername(signUpRequest.username())) {
-            throw new RuntimeException("Tên đăng nhập đã tồn tại!");
+            throw new BusinessException(ErrorCode.USER_ALREADY_EXISTS, "Tên đăng nhập đã tồn tại!");
         }
 
         if (userRepository.existsByEmail(signUpRequest.email())) {
-            throw new RuntimeException("Email đã được sử dụng!");
+            throw new BusinessException(ErrorCode.USER_ALREADY_EXISTS, "Email đã được sử dụng!");
         }
 
         User user = User.builder()
@@ -92,8 +100,9 @@ public class AuthService {
     public void generateAndSendOtp(ForgotPasswordRequest request) {
 
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy email!"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy email!"));
 
+        // Xóa các OTP cũ của user này trước khi tạo mới
         otpTokenRepo.deleteByUser(user);
 
         String otp = String.format("%06d", new Random().nextInt(999999));
@@ -117,19 +126,20 @@ public class AuthService {
     public void resetPassword(ResetPasswordRequest request) {
 
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản!"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy tài khoản!"));
 
         OtpToken otpToken = otpTokenRepo.findByOtpAndUser(request.otp(), user)
-                .orElseThrow(() -> new RuntimeException("OTP không đúng!"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.OTP_INVALID, "Mã OTP không chính xác!"));
 
         if (otpToken.isExpired()) {
             otpTokenRepo.delete(otpToken);
-            throw new RuntimeException("OTP đã hết hạn!");
+            throw new BusinessException(ErrorCode.OTP_EXPIRED, "Mã OTP đã hết hạn!");
         }
 
         user.setPassword(encoder.encode(request.newPassword()));
         userRepository.save(user);
 
+        // Xóa OTP sau khi sử dụng thành công
         otpTokenRepo.delete(otpToken);
     }
 }

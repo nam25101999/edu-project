@@ -1,5 +1,7 @@
 package com.edu.university.modules.enrollment.service;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.enrollment.dto.GradeRequest;
 import com.edu.university.modules.report.annotation.LogAction;
 import com.edu.university.modules.enrollment.entity.Enrollment;
@@ -16,6 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Service quản lý điểm số và tính toán GPA.
+ */
 @Service
 @RequiredArgsConstructor
 public class GradeService {
@@ -27,8 +32,9 @@ public class GradeService {
     @Transactional
     public Grade enterGrade(UUID enrollmentId, GradeRequest request) {
         Enrollment enrollment = enrollmentRepo.findById(enrollmentId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin đăng ký lớp học phần"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENROLLMENT_NOT_FOUND));
 
+        // Lấy bản ghi điểm cũ hoặc tạo mới nếu chưa có
         Grade grade = gradeRepo.findByEnrollmentId(enrollmentId).orElse(new Grade());
         grade.setEnrollment(enrollment);
         grade.setAttendanceScore(request.attendance());
@@ -39,7 +45,7 @@ public class GradeService {
         double total = request.attendance() * 0.1 + request.midterm() * 0.3 + request.finalScore() * 0.6;
         grade.setTotalScore(Math.round(total * 10.0) / 10.0);
 
-        // Quy đổi điểm GPA (hệ 4) và điểm chữ (A, B, C, D, F)
+        // Quy đổi điểm GPA (hệ 4) và điểm chữ
         grade.setGpaScore(convertToGpa(total));
         grade.setLetterGrade(convertToLetter(total));
 
@@ -49,7 +55,7 @@ public class GradeService {
     public double calculateCumulativeGPA(UUID studentId) {
         List<Grade> grades = gradeRepo.findByEnrollmentStudentId(studentId);
 
-        // --- LOGIC: TÍNH GPA TỰ ĐỘNG LẤY ĐIỂM CAO NHẤT ---
+        // Map để lưu điểm cao nhất của từng môn học (tránh tính trùng môn học lại)
         Map<UUID, Double> maxGpaPerCourse = new HashMap<>();
         Map<UUID, Integer> creditsPerCourse = new HashMap<>();
 

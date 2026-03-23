@@ -1,5 +1,8 @@
 package com.edu.university.modules.course.service;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
+import com.edu.university.modules.report.annotation.LogAction;
 import com.edu.university.modules.course.dto.ClassSectionDtos.ClassSectionRequest;
 import com.edu.university.modules.course.entity.ClassSection;
 import com.edu.university.modules.course.entity.Course;
@@ -14,55 +17,58 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+/**
+ * Service quản lý lớp học phần.
+ * Đã chuẩn hóa lỗi theo Enterprise Standard (ErrorCode CRS, SYS).
+ */
 @Service
 @RequiredArgsConstructor
 public class ClassSectionService {
 
     private final ClassSectionRepository classSectionRepository;
     private final CourseRepository courseRepository;
-
-    // 1. INJECT MAPPER VÀO ĐÂY
     private final ClassSectionMapper classSectionMapper;
 
+    @LogAction(action = "VIEW_ALL_CLASS_SECTIONS", entityName = "CLASS_SECTION")
     public Page<ClassSection> getAllClassSections(Pageable pageable) {
         return classSectionRepository.findAll(pageable);
     }
 
+    @LogAction(action = "VIEW_CLASS_SECTION", entityName = "CLASS_SECTION")
     public ClassSection getClassSectionById(UUID id) {
         return classSectionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp học phần với ID: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLASS_SECTION_NOT_FOUND, "Không tìm thấy lớp học phần với ID: " + id));
     }
 
+    @LogAction(action = "CREATE_CLASS_SECTION", entityName = "CLASS_SECTION")
     @Transactional
     public ClassSection createClassSection(ClassSectionRequest request) {
         Course course = courseRepository.findById(request.courseId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy môn học với ID: " + request.courseId()));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
 
-        // 2. DÙNG MAPPER CHUYỂN DTO -> ENTITY
+        // Dùng Mapper chuyển DTO -> Entity
         ClassSection classSection = classSectionMapper.toEntity(request);
-
-        // 3. Gán thủ công thuộc tính Course (do đã ignore trong Mapper)
         classSection.setCourse(course);
 
         return classSectionRepository.save(classSection);
     }
 
+    @LogAction(action = "UPDATE_CLASS_SECTION", entityName = "CLASS_SECTION")
     @Transactional
     public ClassSection updateClassSection(UUID id, ClassSectionRequest request) {
         ClassSection classSection = getClassSectionById(id);
 
         Course course = courseRepository.findById(request.courseId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy môn học với ID: " + request.courseId()));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
 
-        // 4. DÙNG MAPPER ĐỂ CẬP NHẬT TRỰC TIẾP VÀO ENTITY CŨ
+        // Cập nhật trực tiếp vào Entity cũ qua Mapper
         classSectionMapper.updateEntityFromDto(request, classSection);
-
-        // Cập nhật lại khoá ngoại Course
         classSection.setCourse(course);
 
         return classSectionRepository.save(classSection);
     }
 
+    @LogAction(action = "DELETE_CLASS_SECTION", entityName = "CLASS_SECTION")
     @Transactional
     public void deleteClassSection(UUID id) {
         ClassSection classSection = getClassSectionById(id);

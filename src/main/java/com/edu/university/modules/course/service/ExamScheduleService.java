@@ -1,5 +1,7 @@
 package com.edu.university.modules.course.service;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.report.annotation.LogAction;
 import com.edu.university.modules.course.dto.ExamScheduleDtos.ExamScheduleRequest;
 import com.edu.university.modules.course.entity.ClassSection;
@@ -17,6 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Service quản lý lịch thi.
+ * Đã chuẩn hóa lỗi theo Enterprise Standard (ErrorCode EXM, STD, SYS).
+ */
 @Service
 @RequiredArgsConstructor
 public class ExamScheduleService {
@@ -25,27 +31,28 @@ public class ExamScheduleService {
     private final ClassSectionRepository classSectionRepo;
     private final EnrollmentRepository enrollmentRepo;
     private final StudentRepository studentRepo;
-
-    // Đã Inject Mapper vào đây
     private final ExamScheduleMapper examScheduleMapper;
 
     @LogAction(action = "CREATE_EXAM_SCHEDULE", entityName = "EXAM_SCHEDULE")
     @Transactional
     public ExamSchedule createExamSchedule(ExamScheduleRequest request) {
+        // Kiểm tra lớp học phần
         ClassSection section = classSectionRepo.findById(request.classSectionId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp học phần"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLASS_SECTION_NOT_FOUND));
 
+        // Kiểm tra logic thời gian
         if (!request.startTime().isBefore(request.endTime())) {
-            throw new RuntimeException("Thời gian kết thúc phải sau thời gian bắt đầu");
+            throw new BusinessException(ErrorCode.INVALID_EXAM_TIME);
         }
 
-        // 1. Kiểm tra trùng phòng thi
+        // 1. Kiểm tra trùng phòng thi (EXM_002)
         List<ExamSchedule> roomConflicts = examRepo.findOverlappingByRoom(request.room(), request.startTime(), request.endTime());
         if (!roomConflicts.isEmpty()) {
-            throw new RuntimeException("Phòng thi " + request.room() + " đã có lịch thi khác trong khung giờ này.");
+            throw new BusinessException(ErrorCode.EXAM_ROOM_CONFLICT,
+                    "Phòng thi " + request.room() + " đã có lịch thi khác trong khung giờ này.");
         }
 
-        // 2. Kiểm tra trùng lịch thi của SINH VIÊN
+        // 2. Kiểm tra trùng lịch thi của SINH VIÊN (EXM_003)
         List<UUID> studentIdsInClass = enrollmentRepo.findByClassSectionId(request.classSectionId())
                 .stream().map(e -> e.getStudent().getId()).toList();
 
@@ -57,20 +64,17 @@ public class ExamScheduleService {
 
             for (UUID studentId : studentIdsInClass) {
                 if (overlappingStudentIds.contains(studentId)) {
-                    Student student = studentRepo.findById(studentId).get();
-                    throw new RuntimeException("Phát hiện trùng lịch thi! Sinh viên " + student.getFullName() +
-                            " (" + student.getStudentCode() + ") đã có lịch thi môn " +
-                            exam.getClassSection().getCourse().getName() + " vào thời gian này.");
+                    Student student = studentRepo.findById(studentId)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
+
+                    throw new BusinessException(ErrorCode.EXAM_STUDENT_CONFLICT,
+                            "Sinh viên " + student.getFullName() + " (" + student.getStudentCode() +
+                                    ") đã có lịch thi môn " + exam.getClassSection().getCourse().getName());
                 }
             }
         }
 
-        // ==========================================
-        // Dùng Mapper rút gọn thao tác tạo Entity
-        // ==========================================
         ExamSchedule exam = examScheduleMapper.toEntity(request);
-
-        // Set thủ công Object liên kết (do đã được ignore trong Mapper)
         exam.setClassSection(section);
 
         return examRepo.save(exam);
@@ -79,7 +83,7 @@ public class ExamScheduleService {
     @LogAction(action = "VIEW_MY_EXAM_SCHEDULES", entityName = "EXAM_SCHEDULE")
     public List<ExamSchedule> getMyExamSchedules(UUID userId) {
         Student student = studentRepo.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sinh viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
 
         List<UUID> myClassSectionIds = enrollmentRepo.findByStudentId(student.getId())
                 .stream().map(e -> e.getClassSection().getId()).toList();

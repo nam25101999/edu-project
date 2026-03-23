@@ -1,5 +1,6 @@
-package com.edu.university.modules.report;
+package com.edu.university.modules.report.reponsitory;
 
+import com.edu.university.modules.report.AuditLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

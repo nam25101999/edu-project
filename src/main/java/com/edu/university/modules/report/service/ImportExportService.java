@@ -1,5 +1,7 @@
 package com.edu.university.modules.report.service;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.auth.entity.Role;
 import com.edu.university.modules.auth.entity.User;
 import com.edu.university.modules.auth.repository.UserRepository;
@@ -9,9 +11,11 @@ import com.edu.university.modules.course.entity.ClassSection;
 import com.edu.university.modules.course.entity.Course;
 import com.edu.university.modules.enrollment.entity.Enrollment;
 import com.edu.university.modules.enrollment.entity.Grade;
+import com.edu.university.modules.report.annotation.LogAction;
 import com.edu.university.modules.student.entity.Student;
 import com.edu.university.modules.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,8 +31,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Service xử lý Import/Export dữ liệu hệ thống (Excel).
+ */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ImportExportService {
 
     private final StudentRepository studentRepo;
@@ -37,17 +45,15 @@ public class ImportExportService {
     private final EnrollmentRepository enrollmentRepo;
     private final PasswordEncoder passwordEncoder;
 
-    // ======================================
-    // 1. IMPORT SINH VIÊN TỪ EXCEL
-    // ======================================
+    @LogAction(action = "IMPORT_STUDENTS", entityName = "STUDENT")
     @Transactional
-    public int importStudentsFromExcel(MultipartFile file) throws IOException {
+    public int importStudentsFromExcel(MultipartFile file) {
         int count = 0;
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
 
             for (Row row : sheet) {
-                if (row.getRowNum() == 0) continue; // Bỏ qua header
+                if (row.getRowNum() == 0) continue; // Skip header
 
                 String username = getCellValueAsString(row.getCell(0));
                 String password = getCellValueAsString(row.getCell(1));
@@ -59,7 +65,6 @@ public class ImportExportService {
                 if (username.isBlank() || studentCode.isBlank()) continue;
 
                 if (!userRepo.existsByUsername(username) && !studentRepo.existsByStudentCode(studentCode)) {
-                    // Tạo user
                     User user = User.builder()
                             .username(username)
                             .password(passwordEncoder.encode(password))
@@ -68,7 +73,6 @@ public class ImportExportService {
                             .build();
                     user = userRepo.save(user);
 
-                    // Tạo sinh viên
                     Student student = Student.builder()
                             .user(user)
                             .studentCode(studentCode)
@@ -79,26 +83,24 @@ public class ImportExportService {
                     count++;
                 }
             }
+        } catch (IOException e) {
+            log.error("Lỗi đọc file Excel: {}", e.getMessage());
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Không thể đọc tệp tin Excel.");
         }
         return count;
     }
 
-    // ======================================
-    // 2. EXPORT DANH SÁCH SINH VIÊN
-    // ======================================
+    @LogAction(action = "EXPORT_STUDENTS", entityName = "STUDENT")
     public byte[] exportStudentList() throws IOException {
         List<Student> students = studentRepo.findAll();
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Students");
 
-            // Header
             Row header = sheet.createRow(0);
-            header.createCell(0).setCellValue("STT");
-            header.createCell(1).setCellValue("Mã SV");
-            header.createCell(2).setCellValue("Họ Tên");
-            header.createCell(3).setCellValue("Email");
-            header.createCell(4).setCellValue("Khoa");
-            header.createCell(5).setCellValue("Khóa");
+            String[] columns = {"STT", "Mã SV", "Họ Tên", "Email", "Khoa", "Khóa"};
+            for (int i = 0; i < columns.length; i++) {
+                header.createCell(i).setCellValue(columns[i]);
+            }
 
             int rowIdx = 1;
             for (Student s : students) {
@@ -120,13 +122,14 @@ public class ImportExportService {
         }
     }
 
-    // ======================================
-    // 3. EXPORT BẢNG ĐIỂM CHI TIẾT
-    // ======================================
+    @LogAction(action = "EXPORT_TRANSCRIPT", entityName = "GRADE")
     public byte[] exportStudentGrades(UUID studentId) throws IOException {
+        if (!studentRepo.existsById(studentId)) {
+            throw new BusinessException(ErrorCode.STUDENT_NOT_FOUND);
+        }
+
         List<Grade> grades = gradeRepo.findByEnrollmentStudentId(studentId);
 
-        // Nhóm theo học kỳ
         Map<String, List<Grade>> gradesBySemester = grades.stream()
                 .collect(Collectors.groupingBy(g ->
                         g.getEnrollment().getClassSection().getSemester() + " - " +
@@ -136,45 +139,34 @@ public class ImportExportService {
             Sheet sheet = workbook.createSheet("Transcript");
             int rowIdx = 0;
 
-            // Tính GPA tích lũy
+            // Logic tính GPA tích lũy tương tự như trong GradeService
             Map<UUID, Double> maxGpaPerCourse = new HashMap<>();
             Map<UUID, Integer> creditsPerCourse = new HashMap<>();
             for (Grade g : grades) {
                 if (g.getGpaScore() != null) {
                     Course course = g.getEnrollment().getClassSection().getCourse();
-                    UUID courseId = course.getId();
-                    double currentGpa = g.getGpaScore();
-                    if (!maxGpaPerCourse.containsKey(courseId) || currentGpa > maxGpaPerCourse.get(courseId)) {
-                        maxGpaPerCourse.put(courseId, currentGpa);
-                        creditsPerCourse.put(courseId, course.getCredits());
+                    if (!maxGpaPerCourse.containsKey(course.getId()) || g.getGpaScore() > maxGpaPerCourse.get(course.getId())) {
+                        maxGpaPerCourse.put(course.getId(), g.getGpaScore());
+                        creditsPerCourse.put(course.getId(), course.getCredits());
                     }
                 }
             }
 
-            double totalCumulativePoints = 0;
-            int totalCumulativeCredits = 0;
-            for (UUID courseId : maxGpaPerCourse.keySet()) {
-                totalCumulativePoints += maxGpaPerCourse.get(courseId) * creditsPerCourse.get(courseId);
-                totalCumulativeCredits += creditsPerCourse.get(courseId);
+            double totalPoints = 0;
+            int totalCredits = 0;
+            for (UUID cid : maxGpaPerCourse.keySet()) {
+                totalPoints += maxGpaPerCourse.get(cid) * creditsPerCourse.get(cid);
+                totalCredits += creditsPerCourse.get(cid);
             }
-            double cumulativeGPA = totalCumulativeCredits == 0 ? 0.0
-                    : Math.round((totalCumulativePoints / totalCumulativeCredits) * 100.0) / 100.0;
+            double cumulativeGPA = totalCredits == 0 ? 0.0 : Math.round((totalPoints / totalCredits) * 100.0) / 100.0;
 
-            // Xuất điểm theo học kỳ
             for (Map.Entry<String, List<Grade>> entry : gradesBySemester.entrySet()) {
                 Row semRow = sheet.createRow(rowIdx++);
                 semRow.createCell(0).setCellValue("HỌC KỲ: " + entry.getKey());
 
                 Row header = sheet.createRow(rowIdx++);
-                header.createCell(0).setCellValue("Mã Môn");
-                header.createCell(1).setCellValue("Tên Môn");
-                header.createCell(2).setCellValue("Tín Chỉ");
-                header.createCell(3).setCellValue("Chuyên Cần (10%)");
-                header.createCell(4).setCellValue("Giữa Kỳ (30%)");
-                header.createCell(5).setCellValue("Cuối Kỳ (60%)");
-                header.createCell(6).setCellValue("Tổng Kết (Hệ 10)");
-                header.createCell(7).setCellValue("Điểm Chữ");
-                header.createCell(8).setCellValue("Điểm Hệ 4");
+                String[] cols = {"Mã Môn", "Tên Môn", "Tín Chỉ", "CC(10%)", "GK(30%)", "CK(60%)", "Tổng Kết", "Điểm Chữ", "Hệ 4"};
+                for (int i = 0; i < cols.length; i++) header.createCell(i).setCellValue(cols[i]);
 
                 double semPoints = 0;
                 int semCredits = 0;
@@ -199,39 +191,27 @@ public class ImportExportService {
                 }
 
                 double semGPA = semCredits == 0 ? 0.0 : Math.round((semPoints / semCredits) * 100.0) / 100.0;
-                Row semSummaryRow = sheet.createRow(rowIdx++);
-                semSummaryRow.createCell(0).setCellValue(
-                        "=> TỔNG KẾT HỌC KỲ | Số tín chỉ đạt: " + semCredits + " | GPA Học kỳ: " + semGPA
-                );
+                Row summary = sheet.createRow(rowIdx++);
+                summary.createCell(0).setCellValue("=> GPA Học kỳ: " + semGPA + " | Tín chỉ đạt: " + semCredits);
                 rowIdx++;
             }
 
-            Row cumRow = sheet.createRow(rowIdx++);
-            cumRow.createCell(0).setCellValue("====== TỔNG KẾT TOÀN KHÓA ======");
-            Row cumDataRow = sheet.createRow(rowIdx++);
-            cumDataRow.createCell(0).setCellValue("Tổng số tín chỉ tích lũy: " + totalCumulativeCredits);
-            cumDataRow.createCell(1).setCellValue("GPA Tích Lũy: " + cumulativeGPA);
+            Row totalRow = sheet.createRow(rowIdx++);
+            totalRow.createCell(0).setCellValue("GPA TÍCH LŨY TOÀN KHÓA: " + cumulativeGPA + " | Tổng tín chỉ: " + totalCredits);
 
             workbook.write(out);
             return out.toByteArray();
         }
     }
 
-    // ======================================
-    // 4. EXPORT THỜI KHÓA BIỂU
-    // ======================================
+    @LogAction(action = "EXPORT_SCHEDULE", entityName = "ENROLLMENT")
     public byte[] exportStudentSchedule(UUID studentId) throws IOException {
         List<Enrollment> enrollments = enrollmentRepo.findByStudentId(studentId);
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Schedule");
             Row header = sheet.createRow(0);
-            header.createCell(0).setCellValue("Học Kỳ");
-            header.createCell(1).setCellValue("Năm Học");
-            header.createCell(2).setCellValue("Mã Môn");
-            header.createCell(3).setCellValue("Tên Môn");
-            header.createCell(4).setCellValue("Tín Chỉ");
-            header.createCell(5).setCellValue("Lịch Học");
-            header.createCell(6).setCellValue("Phòng Học");
+            String[] cols = {"Học Kỳ", "Năm Học", "Mã Môn", "Tên Môn", "Tín Chỉ", "Lịch Học", "Phòng"};
+            for (int i = 0; i < cols.length; i++) header.createCell(i).setCellValue(cols[i]);
 
             int rowIdx = 1;
             for (Enrollment e : enrollments) {
@@ -251,9 +231,6 @@ public class ImportExportService {
         }
     }
 
-    // ======================================
-    // HELPER
-    // ======================================
     private String getCellValueAsString(Cell cell) {
         if (cell == null) return "";
         return switch (cell.getCellType()) {

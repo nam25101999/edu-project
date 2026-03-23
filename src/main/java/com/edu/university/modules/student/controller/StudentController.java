@@ -1,12 +1,14 @@
 package com.edu.university.modules.student.controller;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
+import com.edu.university.common.response.ApiResponse;
 import com.edu.university.modules.student.entity.Student;
 import com.edu.university.modules.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,88 +17,92 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
+/**
+ * Controller quản lý thông tin sinh viên.
+ * Sử dụng ApiResponse và BusinessException chuẩn hóa với ErrorCode chi tiết.
+ */
 @RestController
 @RequestMapping("/api/students")
 @RequiredArgsConstructor
+@Slf4j
 public class StudentController {
 
     private final StudentRepository studentRepository;
 
-    // --- LẤY DANH SÁCH SINH VIÊN (Phân trang) ---
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<Student>> getAllStudents(
+    public ApiResponse<Page<Student>> getAllStudents(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(studentRepository.findAll(PageRequest.of(page, size)));
+        return ApiResponse.success(studentRepository.findAll(PageRequest.of(page, size)));
     }
 
-    // --- XEM CHI TIẾT 1 SINH VIÊN THEO ID (Read) ---
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<Student> getStudentById(@PathVariable UUID id) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT', 'LECTURER')")
+    public ApiResponse<Student> getStudentById(@PathVariable UUID id) {
         Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
-        return ResponseEntity.ok(student);
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
+        return ApiResponse.success(student);
     }
 
-    // --- THÊM SINH VIÊN MỚI (Create) ---
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Student> createStudent(@RequestBody Student student) {
-        // Lưu ý: Đảm bảo phía client không gửi kèm ID để database tự sinh (tuỳ chiến lược generate ID)
-        Student savedStudent = studentRepository.save(student);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedStudent);
+    public ApiResponse<Student> createStudent(@RequestBody Student student) {
+        if (student.getStudentCode() != null && studentRepository.existsByStudentCode(student.getStudentCode())) {
+            throw new BusinessException(ErrorCode.STUDENT_CODE_EXISTS);
+        }
+        return ApiResponse.created("Tạo sinh viên thành công", studentRepository.save(student));
     }
 
-    // --- CẬP NHẬT THÔNG TIN SINH VIÊN (Update) ---
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Student> updateStudent(@PathVariable UUID id, @RequestBody Student studentDetails) {
+    public ApiResponse<Student> updateStudent(@PathVariable UUID id, @RequestBody Student studentDetails) {
         Student existingStudent = studentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
 
-        // TODO: Thay đổi các trường bên dưới cho khớp với Entity Student của bạn
-        // existingStudent.setName(studentDetails.getName());
-        // existingStudent.setEmail(studentDetails.getEmail());
+        // Cập nhật các thông tin cơ bản
+        existingStudent.setFullName(studentDetails.getFullName());
         // existingStudent.setPhone(studentDetails.getPhone());
-        // ... (Không cập nhật trường id)
+        // Cập nhật các trường khác tương ứng với Entity Student
 
-        Student updatedStudent = studentRepository.save(existingStudent);
-        return ResponseEntity.ok(updatedStudent);
+        return ApiResponse.success("Cập nhật thông tin thành công", studentRepository.save(existingStudent));
     }
 
-    // --- XÓA SINH VIÊN (Delete) ---
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> deleteStudent(@PathVariable UUID id) {
-        Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
-
-        studentRepository.delete(student);
-        return ResponseEntity.ok("Student deleted successfully.");
+    public ApiResponse<Void> deleteStudent(@PathVariable UUID id) {
+        if (!studentRepository.existsById(id)) {
+            throw new BusinessException(ErrorCode.STUDENT_NOT_FOUND);
+        }
+        studentRepository.deleteById(id);
+        return ApiResponse.success("Xóa sinh viên thành công", null);
     }
 
-    // --- UPLOAD AVATAR (Có sẵn) ---
     @PostMapping("/{id}/avatar")
-    public ResponseEntity<?> uploadAvatar(@PathVariable UUID id, @RequestParam("file") MultipartFile file) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
+    public ApiResponse<String> uploadAvatar(@PathVariable UUID id, @RequestParam("file") MultipartFile file) {
         Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
+
+        if (file.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "File không được để trống");
+        }
 
         try {
             String uploadDir = "uploads/avatars/";
             File dir = new File(uploadDir);
             if (!dir.exists()) dir.mkdirs();
 
-            String filename = id.toString() + "_" + file.getOriginalFilename();
-            file.transferTo(new File(uploadDir + filename));
+            String filename = id.toString() + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            file.transferTo(new File(dir.getAbsolutePath() + File.separator + filename));
 
             student.setAvatarUrl("/" + uploadDir + filename);
             studentRepository.save(student);
 
-            return ResponseEntity.ok("Avatar uploaded successfully: " + student.getAvatarUrl());
+            return ApiResponse.success("Tải ảnh đại diện thành công", student.getAvatarUrl());
         } catch (IOException e) {
-            throw new RuntimeException("Failed to store file", e);
+            log.error("Lỗi khi lưu file avatar: {}", e.getMessage());
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Không thể lưu tệp tin ảnh");
         }
     }
 }

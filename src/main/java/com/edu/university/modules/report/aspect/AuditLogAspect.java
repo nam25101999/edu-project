@@ -3,7 +3,7 @@ package com.edu.university.modules.report.aspect;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.edu.university.modules.report.annotation.LogAction;
 import com.edu.university.modules.report.AuditLog;
-import com.edu.university.modules.report.AuditLogRepository;
+import com.edu.university.modules.report.reponsitory.AuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
