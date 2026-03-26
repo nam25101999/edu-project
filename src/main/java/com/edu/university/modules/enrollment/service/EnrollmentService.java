@@ -103,9 +103,10 @@ public class EnrollmentService {
         // 7. Kiểm tra điều kiện tiên quyết
         Course prereq = section.getCourse().getPrerequisiteCourse();
         if (prereq != null) {
-            boolean hasPassed = gradeRepo.findByEnrollmentStudentId(studentId).stream()
-                    .anyMatch(g -> g.getEnrollment().getClassSection().getCourse().getId().equals(prereq.getId())
-                            && g.getTotalScore() != null && g.getTotalScore() >= 4.0);
+            boolean hasPassed = gradeRepo.findGradeForPrerequisite(studentId).stream()
+                    .anyMatch(g -> g.courseId().equals(prereq.getId())
+                            && g.totalScore() != null
+                            && g.totalScore() >= 4.0);
             if (!hasPassed) {
                 throw new BusinessException(ErrorCode.PREREQUISITE_NOT_MET, "Chưa đạt điều kiện môn tiên quyết: " + prereq.getName());
             }

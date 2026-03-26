@@ -2,6 +2,7 @@ package com.edu.university.modules.report.controller;
 
 import com.edu.university.common.response.ApiResponse;
 import com.edu.university.modules.report.AuditLog;
+import com.edu.university.modules.report.reponsitory.AuditLogRepository;
 import com.edu.university.modules.report.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -11,7 +12,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Controller quản lý nhật ký hệ thống và phân tích dữ liệu vận hành.
@@ -25,6 +25,8 @@ public class AuditLogController {
 
     private final AuditLogService auditLogService;
 
+    // ================= LIST LOG =================
+
     @GetMapping
     public ApiResponse<Page<AuditLog>> getAuditLogs(
             @RequestParam(defaultValue = "0") int page,
@@ -32,10 +34,16 @@ public class AuditLogController {
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String status) {
 
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        PageRequest pageRequest = PageRequest.of(
+                page,
+                size,
+                Sort.by("createdAt").descending()
+        );
 
         Page<AuditLog> result;
+
         if (status != null && !status.isBlank()) {
+            // Có thể nâng cấp sau: filter theo status dynamic
             result = auditLogService.getFailedLogs(pageRequest);
         } else if (username != null && !username.isBlank()) {
             result = auditLogService.searchLogsByUsername(username, pageRequest);
@@ -46,20 +54,38 @@ public class AuditLogController {
         return ApiResponse.success(result);
     }
 
-    // === THỐNG KÊ ANALYTICS ===
+    // ================= ANALYTICS =================
 
+    /**
+     * Thống kê số lượng log theo trạng thái (SUCCESS / FAILED)
+     */
     @GetMapping("/analytics/status")
-    public ApiResponse<List<Map<String, Object>>> getStatusStats() {
-        return ApiResponse.success("Thống kê trạng thái hệ thống", auditLogService.getStatusStatistics());
+    public ApiResponse<List<AuditLogRepository.StatusCount>> getStatusStats() {
+        return ApiResponse.success(
+                "Thống kê trạng thái hệ thống",
+                auditLogService.getStatusStatistics()
+        );
     }
 
+    /**
+     * Thống kê số lượng log theo entity (USER, COURSE, AUTH...)
+     */
     @GetMapping("/analytics/entities")
-    public ApiResponse<List<Map<String, Object>>> getEntityStats() {
-        return ApiResponse.success("Thống kê tài nguyên hệ thống", auditLogService.getEntityStatistics());
+    public ApiResponse<List<AuditLogRepository.EntityCount>> getEntityStats() {
+        return ApiResponse.success(
+                "Thống kê tài nguyên hệ thống",
+                auditLogService.getEntityStatistics()
+        );
     }
 
+    /**
+     * Top 10 API chạy chậm nhất
+     */
     @GetMapping("/analytics/slow-apis")
     public ApiResponse<List<AuditLog>> getSlowestApis() {
-        return ApiResponse.success("Danh sách các thao tác phản hồi chậm", auditLogService.getSlowestOperations());
+        return ApiResponse.success(
+                "Danh sách các thao tác phản hồi chậm",
+                auditLogService.getSlowestOperations()
+        );
     }
 }

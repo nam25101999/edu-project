@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>University Portal - Dashboard</title>
+
+    <!-- Google Font & Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- AdminLTE & Plugins -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.3/sweetalert2.min.css">
+
+    <style>
+        /* CSS để ẩn/hiện các phân hệ trong giao diện SPA */
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cân chỉnh chiều cao biểu đồ */
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        .table-responsive { max-height: 500px; }
+
+        .action-btns .btn { padding: 0.1rem 0.4rem; font-size: 0.875rem; margin-right: 2px; }
+    </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <!-- Navbar -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link text-danger" href="#" onclick="handleLogout()" role="button">
+                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <a href="#" class="brand-link">
+            <span class="brand-text font-weight-light ml-3">University Portal</span>
+        </a>
+        <div class="sidebar">
+            <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                <div class="image">
+                    <img src="https://ui-avatars.com/api/?name=Admin" class="img-circle elevation-2" alt="User Image" id="user-avatar">
+                </div>
+                <div class="info">
+                    <a href="#" class="d-block" id="display-username">Loading...</a>
+                    <span class="badge badge-success" id="display-role">Role</span>
+                </div>
+            </div>
+            <!-- Menu điều hướng SPA -->
+            <nav class="mt-2">
+                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active nav-menu" onclick="switchView('view-dashboard', this)">
+                            <i class="nav-icon fas fa-tachometer-alt"></i><p>Tổng quan</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link nav-menu" onclick="switchView('view-reports', this)">
+                            <i class="nav-icon fas fa-chart-pie"></i><p>Báo cáo & Thống kê</p>
+                        </a>
+                    </li>
+
+                    <!-- Các menu Admin -->
+                    <li class="nav-header admin-only" style="display:none;">QUẢN TRỊ VIÊN</li>
+
+                    <!-- QUẢN LÝ KHOA NGÀNH -->
+                    <li class="nav-item admin-only" style="display:none;">
+                        <a href="#" class="nav-link nav-menu" onclick="switchView('view-departments', this)">
+                            <i class="nav-icon fas fa-building"></i><p>Quản lý Khoa / Ngành</p>
+                        </a>
+                    </li>
+
+                    <!-- QUẢN LÝ LỚP SINH HOẠT -->
+                    <li class="nav-item admin-only" style="display:none;">
+                        <a href="#" class="nav-link nav-menu" onclick="switchView('view-student-classes', this)">
+                            <i class="nav-icon fas fa-users"></i><p>Quản lý Lớp sinh hoạt</p>
+                        </a>
+                    </li>
+
+                    <!-- QUẢN LÝ SINH VIÊN -->
+                    <li class="nav-item admin-only" style="display:none;">
+                        <a href="#" class="nav-link nav-menu" onclick="switchView('view-students', this)">
+                            <i class="nav-icon fas fa-user-graduate"></i><p>Quản lý Sinh viên</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item admin-only" style="display:none;">
+                        <a href="#" class="nav-link nav-menu" onclick="switchView('view-audit-logs', this)">
+                            <i class="nav-icon fas fa-history"></i><p>Nhật ký hệ thống</p>
+                        </a>
+                    </li>
+                    <li class="nav-item admin-only" style="display:none;">
+                        <a href="#" class="nav-link nav-menu" onclick="switchView('view-data', this)">
+                            <i class="nav-icon fas fa-file-excel"></i><p>Nhập/Xuất dữ liệu</p>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="content-wrapper">
+
+        <!-- 1. VIEW: DASHBOARD (TỔNG QUAN) -->
+        <section id="view-dashboard" class="view-section active">
+            <div class="content-header">
+                <div class="container-fluid"><h1 class="m-0">Bảng điều khiển hệ thống</h1></div>
+            </div>
+            <div class="content">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-info">
+                                <div class="inner"><h3 id="stat-students">0</h3><p>Sinh viên</p></div>
+                                <div class="icon"><i class="fas fa-user-graduate"></i></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-success">
+                                <div class="inner"><h3 id="stat-lecturers">0</h3><p>Giảng viên</p></div>
+                                <div class="icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-warning">
+                                <div class="inner"><h3 id="stat-courses">0</h3><p>Môn học</p></div>
+                                <div class="icon"><i class="fas fa-book"></i></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <div class="small-box bg-danger">
+                                <div class="inner"><h3 id="stat-classes">0</h3><p>Lớp học phần</p></div>
+                                <div class="icon"><i class="fas fa-chalkboard"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. VIEW: REPORTS (BÁO CÁO & THỐNG KÊ) -->
+        <section id="view-reports" class="view-section">
+            <div class="content-header">
+                <div class="container-fluid">
+                    <div class="row mb-2">
+                        <div class="col-sm-6">
+                            <h1 class="m-0">Báo cáo & Thống kê</h1>
+                        </div>
+                        <div class="col-sm-6 text-right">
+                            <button class="btn btn-primary" onclick="loadReportsData()">
+                                <i class="fas fa-sync-alt"></i> Làm mới dữ liệu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="container-fluid">
+                    <!-- Quick Statistics -->
+                    <div class="row">
+                        <div class="col-md-6 col-lg-3">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h3 id="stat-total-students">0</h3>
+                                    <p>Tổng sinh viên</p>
+                                </div>
+                                <div class="icon"><i class="fas fa-users"></i></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="small-box bg-success">
+                                <div class="inner">
+                                    <h3 id="stat-active-students">0</h3>
+                                    <p>Đang theo học</p>
+                                </div>
+                                <div class="icon"><i class="fas fa-user-check"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Bar for Faculty/Major counts -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="card card-outline card-info">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-4">
+                                            <label>Tra cứu nhanh theo Khoa</label>
+                                            <select id="report-faculty-select" class="form-control" onchange="onFacultyFilterChange()">
+                                                <option value="">-- Chọn khoa để xem số lượng --</option>
+                                                <!-- Data from Faculty API -->
+                                            </select>
+                                        </div>
+                                        <div class="col-md-8 mt-3 mt-md-0">
+                                            <div class="alert alert-info mb-0">
+                                                <i class="icon fas fa-info"></i>
+                                                Số sinh viên thuộc khoa: <strong id="faculty-student-count">0</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card card-primary">
+                                <div class="card-header"><h3 class="card-title">Sinh viên theo khoa</h3></div>
+                                <div class="card-body">
+                                    <div class="chart-container"><canvas id="facultyChart"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card card-success">
+                                <div class="card-header"><h3 class="card-title">Tỷ lệ Đậu / Rớt</h3></div>
+                                <div class="card-body">
+                                    <div class="chart-container"><canvas id="passFailChart"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ranking Table -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card card-warning">
+                                <div class="card-header">
+                                    <h3 class="card-title">Top 10 Sinh viên xuất sắc</h3>
+                                    <div class="card-tools">
+                                        <span class="badge badge-dark" id="top-students-scope">Toàn trường</span>
+                                    </div>
+                                </div>
+                                <div class="card-body table-responsive p-0">
+                                    <table class="table table-hover text-nowrap">
+                                        <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Mã SV</th>
+                                            <th>Họ Tên</th>
+                                            <th>GPA</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="top-students-tbody">
+                                        <tr><td colspan="4" class="text-center">Đang tải dữ liệu...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. VIEW: KHOA NGÀNH (DEPARTMENTS) -->
+        <section id="view-departments" class="view-section">
+            <div class="content-header">
+                <div class="container-fluid"><h1 class="m-0">Quản lý Khoa / Ngành</h1></div>
+            </div>
+            <div class="content">
+                <div class="container-fluid">
+                    <div class="row">
+                        <!-- Cột Khoa -->
+                        <div class="col-md-7">
+                            <div class="card card-info">
+                                <div class="card-header">
+                                    <h3 class="card-title">Danh sách Khoa</h3>
+                                    <div class="card-tools">
+                                        <button class="btn btn-sm btn-light" onclick="$('#modal-faculty').modal('show')">
+                                            <i class="fas fa-plus"></i> Thêm Khoa
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body table-responsive p-0">
+                                    <table class="table table-hover text-nowrap">
+                                        <thead><tr><th>Mã Khoa</th><th>Tên Khoa</th><th>Email</th><th>Hành động</th></tr></thead>
+                                        <tbody id="faculties-tbody">
+                                        <tr><td colspan="4" class="text-center">Đang tải...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Cột Ngành -->
+                        <div class="col-md-5">
+                            <div class="card card-primary">
+                                <div class="card-header">
+                                    <h3 class="card-title" id="majors-card-title">Danh sách Ngành học</h3>
+                                    <div class="card-tools">
+                                        <button class="btn btn-sm btn-light" onclick="$('#modal-major').modal('show')">
+                                            <i class="fas fa-plus"></i> Thêm Ngành
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body table-responsive p-0">
+                                    <table class="table table-hover text-nowrap">
+                                        <thead><tr><th>Mã Ngành</th><th>Tên Ngành</th><th>Khoa</th></tr></thead>
+                                        <tbody id="majors-tbody">
+                                        <tr><td colspan="3" class="text-center">Vui lòng chọn Khoa để xem</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3.5. VIEW: LỚP SINH HOẠT (STUDENT CLASSES) -->
+        <section id="view-student-classes" class="view-section">
+            <div class="content-header">
+                <div class="container-fluid"><h1 class="m-0">Quản lý Lớp sinh hoạt</h1></div>
+            </div>
+            <div class="content">
+                <div class="container-fluid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Danh sách Lớp sinh hoạt</h3>
+                            <div class="card-tools d-flex">
+                                <div class="input-group input-group-sm mr-2" style="width: 250px;">
+                                    <input type="text" id="filter-sclass-keyword" class="form-control float-right" placeholder="Tìm theo mã lớp, tên lớp...">
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-default" onclick="loadStudentClasses(0)"><i class="fas fa-search"></i></button>
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-primary" onclick="openStudentClassModal()">
+                                    <i class="fas fa-plus"></i> Thêm Lớp
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body table-responsive p-0">
+                            <table class="table table-hover text-nowrap">
+                                <thead>
+                                <tr>
+                                    <th>Mã Lớp</th>
+                                    <th>Tên Lớp</th>
+                                    <th>Ngành học</th>
+                                    <th>Hành động</th>
+                                </tr>
+                                </thead>
+                                <tbody id="student-classes-tbody">
+                                <tr><td colspan="4" class="text-center">Đang tải...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer clearfix">
+                            <ul class="pagination pagination-sm m-0 float-right" id="student-class-pagination">
+                                <!-- Tạo bằng JS -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. VIEW: SINH VIÊN (STUDENTS) -->
+        <section id="view-students" class="view-section">
+            <div class="content-header">
+                <div class="container-fluid"><h1 class="m-0">Quản lý Sinh viên</h1></div>
+            </div>
+            <div class="content">
+                <div class="container-fluid">
+                    <!-- Khu vực Filter -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <input type="text" id="filter-stu-keyword" class="form-control" placeholder="Tìm theo mã sinh viên, họ tên...">
+                                </div>
+                                <div class="col-md-4">
+                                    <select id="filter-stu-major" class="form-control">
+                                        <option value="">-- Tất cả Ngành học --</option>
+                                        <!-- Được điền bằng JS -->
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <button class="btn btn-primary" onclick="loadStudents(0)"><i class="fas fa-search"></i> Tìm kiếm</button>
+                                    <button class="btn btn-default" onclick="resetStudentFilter()"><i class="fas fa-sync"></i> Làm mới</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Danh sách Sinh viên</h3>
+                            <div class="card-tools">
+                                <button class="btn btn-sm btn-primary" onclick="openStudentModal()">
+                                    <i class="fas fa-plus"></i> Thêm Sinh viên
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body table-responsive p-0">
+                            <table class="table table-hover text-nowrap">
+                                <thead>
+                                <tr>
+                                    <th>Mã SV</th>
+                                    <th>Họ tên</th>
+                                    <th>Ngành học</th>
+                                    <th>Lớp sinh hoạt</th>
+                                    <th>Trạng thái</th>
+                                    <th>Hành động</th>
+                                </tr>
+                                </thead>
+                                <tbody id="students-tbody">
+                                <tr><td colspan="6" class="text-center">Đang tải...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer clearfix">
+                            <ul class="pagination pagination-sm m-0 float-right" id="student-pagination">
+                                <!-- Tạo bằng JS -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. VIEW: AUDIT LOGS -->
+        <section id="view-audit-logs" class="view-section">
+            <div class="content-header">
+                <div class="container-fluid"><h1 class="m-0">Nhật ký hoạt động hệ thống</h1></div>
+            </div>
+            <div class="content">
+                <div class="container-fluid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Danh sách Audit Logs</h3>
+                            <div class="card-tools">
+                                <button class="btn btn-sm btn-primary" onclick="loadAuditLogs()"><i class="fas fa-sync"></i> Làm mới</button>
+                            </div>
+                        </div>
+                        <div class="card-body table-responsive p-0" style="height: 500px;">
+                            <table class="table table-head-fixed text-nowrap table-striped">
+                                <thead>
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>User</th>
+                                    <th>Hành động</th>
+                                    <th>Entity</th>
+                                    <th>Trạng thái</th>
+                                    <th>IP</th>
+                                </tr>
+                                </thead>
+                                <tbody id="audit-logs-tbody">
+                                <tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. VIEW: DATA IMPORT/EXPORT -->
+        <section id="view-data" class="view-section">
+            <div class="content-header">
+                <div class="container-fluid"><h1 class="m-0">Nhập / Xuất dữ liệu</h1></div>
+            </div>
+            <div class="content">
+                <div class="container-fluid">
+                    <div class="row">
+                        <!-- Import Excel -->
+                        <div class="col-md-6">
+                            <div class="card card-primary">
+                                <div class="card-header"><h3 class="card-title">Nhập danh sách sinh viên (Import)</h3></div>
+                                <form id="form-import" onsubmit="handleImportStudents(event)">
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="excelFile">Tải lên file Excel (.xlsx)</label>
+                                            <div class="input-group">
+                                                <div class="custom-file">
+                                                    <input type="file" class="custom-file-input" id="excelFile" accept=".xlsx, .xls" required>
+                                                    <label class="custom-file-label" for="excelFile" id="excelFileLabel">Chọn file...</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Xử lý Import</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Export Excel -->
+                        <div class="col-md-6">
+                            <div class="card card-success">
+                                <div class="card-header"><h3 class="card-title">Xuất báo cáo (Export)</h3></div>
+                                <div class="card-body">
+                                    <p>Tải xuống các báo cáo hệ thống dưới định dạng Excel.</p>
+                                    <button class="btn btn-outline-success btn-block text-left mb-2" onclick="downloadExcel('/data/export/students', 'danh_sach_sinh_vien.xlsx')">
+                                        <i class="fas fa-download mr-2"></i> Xuất toàn bộ danh sách Sinh viên
+                                    </button>
+                                    <hr>
+                                    <div class="form-group">
+                                        <label>Mã / ID Sinh viên (Dành cho bảng điểm & TKB):</label>
+                                        <input type="text" id="export-student-id" class="form-control mb-2" placeholder="Nhập UUID của sinh viên...">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <button class="btn btn-outline-info btn-block" onclick="exportStudentSpecific('grades')">Xuất Bảng điểm</button>
+                                            </div>
+                                            <div class="col-6">
+                                                <button class="btn btn-outline-primary btn-block" onclick="exportStudentSpecific('schedule')">Xuất TKB</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- CÁC MODALS -->
+    <!-- Modal Khoa -->
+    <div class="modal fade" id="modal-faculty">
+        <div class="modal-dialog">
+            <form class="modal-content" onsubmit="handleCreateFaculty(event)">
+                <div class="modal-header">
+                    <h4 class="modal-title">Thêm Khoa mới</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group"><label>Mã Khoa</label><input type="text" class="form-control" id="fac-code" required></div>
+                    <div class="form-group"><label>Tên Khoa</label><input type="text" class="form-control" id="fac-name" required></div>
+                    <div class="form-group"><label>Email Liên hệ</label><input type="email" class="form-control" id="fac-email"></div>
+                    <div class="form-group"><label>Mô tả</label><textarea class="form-control" id="fac-desc"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Ngành -->
+    <div class="modal fade" id="modal-major">
+        <div class="modal-dialog">
+            <form class="modal-content" onsubmit="handleCreateMajor(event)">
+                <div class="modal-header">
+                    <h4 class="modal-title">Thêm Ngành học</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group"><label>Mã Ngành</label><input type="text" class="form-control" id="maj-code" required></div>
+                    <div class="form-group"><label>Tên Ngành</label><input type="text" class="form-control" id="maj-name" required></div>
+                    <div class="form-group">
+                        <label>Thuộc Khoa</label>
+                        <select class="form-control" id="maj-faculty" required><option value="">-- Chọn Khoa --</option></select>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Lớp sinh hoạt -->
+    <div class="modal fade" id="modal-student-class">
+        <div class="modal-dialog">
+            <form class="modal-content" id="form-student-class" onsubmit="handleSaveStudentClass(event)">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal-student-class-title">Thêm Lớp sinh hoạt</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="sclass-id">
+                    <div class="form-group">
+                        <label>Mã Lớp <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="sclass-code" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tên Lớp <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="sclass-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ngành học <span class="text-danger">*</span></label>
+                        <select class="form-control" id="sclass-major" required>
+                            <option value="">-- Chọn Ngành học --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu</button></div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Modal Sinh viên (Đã cập nhật theo DTO) -->
+    <div class="modal fade" id="modal-student">
+        <div class="modal-dialog modal-lg">
+            <form class="modal-content" id="form-student" onsubmit="handleSaveStudent(event)">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal-student-title">Thêm Sinh viên</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="stu-id">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Mã Sinh viên <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="stu-code" required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Họ và Tên <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="stu-name" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Ngành học <span class="text-danger">*</span></label>
+                            <select class="form-control" id="stu-major" required>
+                                <option value="">-- Chọn Ngành học --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Lớp sinh hoạt <span class="text-danger">*</span></label>
+                            <select class="form-control" id="stu-class" required>
+                                <option value="">-- Chọn Lớp sinh hoạt --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Năm nhập học <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="stu-year" min="2000" max="2100" required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Trạng thái học tập</label>
+                            <select class="form-control" id="stu-status">
+                                <option value="BINH_THUONG">Bình thường</option>
+                                <option value="CANH_BAO">Cảnh báo học vụ</option>
+                                <option value="DINH_CHI">Đình chỉ học tập</option>
+                                <option value="BAO_LUU">Bảo lưu kết quả</option>
+                                <option value="THOI_HOC">Thôi học</option>
+                                <option value="TOT_NGHIEP">Đã tốt nghiệp</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu thông tin</button></div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <strong>Copyright &copy; 2026 University Portal.</strong> All rights reserved.
+    </footer>
+</div>
+
+<!-- Scripts Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/js/adminlte.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.3/sweetalert2.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Custom App Logic -->
+<script src="/js/dashboard.js"></script>
+
+</body>
+</html>

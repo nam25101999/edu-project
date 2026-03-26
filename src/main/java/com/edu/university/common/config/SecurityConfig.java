@@ -46,51 +46,43 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
+                // Thay đổi Session sang IF_REQUIRED để hỗ trợ lưu trạng thái login trên trình duyệt
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+
+                                // Cho phép các đường dẫn giao diện (phải khớp với Controller)
+                                "/",
+                                "/login",
+                                "/dashboard",
+                                "/register",
+
+                                // Cho phép tài nguyên tĩnh
+                                "/css/**", "/js/**", "/images/**", "/static/**"
+                        ).permitAll()
+
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // ... các cấu hình role khác
+                        .anyRequest().authenticated()
                 )
 
-                .authorizeHttpRequests(auth ->
-                        auth.requestMatchers(
-                                        "/api/auth/**",
-                                        "/swagger-ui/**",
-                                        "/v3/api-docs/**",
-
-                                        "/",
-                                        "/index.html",
-                                        "/admin-ui/**",
-                                        "/css/**",
-                                        "/js/**",
-                                        "/images/**"
-                                ).permitAll()
-
-                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                                .requestMatchers("/api/lecturer/**").hasAnyRole("ADMIN", "LECTURER")
-                                .requestMatchers("/api/student/**").hasAnyRole("ADMIN", "STUDENT")
-
-                                .anyRequest().authenticated()
-                )
-
-                // 🔥 thêm cái này
                 .formLogin(form -> form
-                        .loginPage("/admin-ui/login")
-                        .defaultSuccessUrl("/admin-ui/dashboard", true)
+                        .loginPage("/login") // Phải khớp với @GetMapping("/login") trong WebUIController
+                        .defaultSuccessUrl("/dashboard", true)
                         .permitAll()
                 )
 
                 .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/admin-ui/login")
+                        .logoutUrl("/api/auth/logout") // Khớp với API logout của bạn
+                        .logoutSuccessUrl("/login")
                 );
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
-        http.exceptionHandling(ex -> ex
-                .authenticationEntryPoint((req, res, e) -> res.sendError(401))
-                .accessDeniedHandler((req, res, e) -> res.sendError(403))
-        );
-
 
         return http.build();
     }

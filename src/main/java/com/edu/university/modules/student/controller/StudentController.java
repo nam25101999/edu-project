@@ -3,12 +3,15 @@ package com.edu.university.modules.student.controller;
 import com.edu.university.common.exception.BusinessException;
 import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.common.response.ApiResponse;
+import com.edu.university.modules.student.dto.StudentDtos.StudentRequest;
+import com.edu.university.modules.student.dto.StudentDtos.StudentResponse;
 import com.edu.university.modules.student.entity.Student;
 import com.edu.university.modules.student.repository.StudentRepository;
+import com.edu.university.modules.student.service.StudentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,64 +20,95 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
-/**
- * Controller quản lý thông tin sinh viên.
- * Sử dụng ApiResponse và BusinessException chuẩn hóa với ErrorCode chi tiết.
- */
 @RestController
 @RequestMapping("/api/students")
 @RequiredArgsConstructor
 @Slf4j
 public class StudentController {
 
+    private final StudentService studentService;
     private final StudentRepository studentRepository;
 
+    /**
+     * Lấy danh sách sinh viên có lọc theo từ khóa và ngành học.
+     */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<Page<Student>> getAllStudents(
+    public ApiResponse<Page<StudentResponse>> getAllStudents(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) UUID majorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.success(studentRepository.findAll(PageRequest.of(page, size)));
+
+        return ApiResponse.success(studentService.searchAndFilterStudents(keyword, majorId, page, size));
+    }
+
+    /**
+     * Lấy danh sách sinh viên theo một ngành cụ thể.
+     */
+    @GetMapping("/major/{majorId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
+    public ApiResponse<Page<StudentResponse>> getStudentsByMajor(
+            @PathVariable UUID majorId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return ApiResponse.success(studentService.getStudentsByMajor(majorId, page, size));
+    }
+
+    /**
+     * Lấy danh sách sinh viên theo khoa.
+     */
+    @GetMapping("/faculty/{facultyId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
+    public ApiResponse<Page<StudentResponse>> getStudentsByFaculty(
+            @PathVariable UUID facultyId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return ApiResponse.success(studentService.getStudentsByFaculty(facultyId, page, size));
+    }
+
+    /**
+     * Endpoint mới: Đếm số lượng sinh viên theo ngành.
+     */
+    @GetMapping("/count/major/{majorId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
+    public ApiResponse<Long> countStudentsByMajor(@PathVariable UUID majorId) {
+        return ApiResponse.success(studentService.countStudentsByMajor(majorId));
+    }
+
+    /**
+     * Endpoint mới: Đếm số lượng sinh viên theo khoa.
+     */
+    @GetMapping("/count/faculty/{facultyId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
+    public ApiResponse<Long> countStudentsByFaculty(@PathVariable UUID facultyId) {
+        return ApiResponse.success(studentService.countStudentsByFaculty(facultyId));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT', 'LECTURER')")
-    public ApiResponse<Student> getStudentById(@PathVariable UUID id) {
-        Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
-        return ApiResponse.success(student);
+    public ApiResponse<StudentResponse> getStudentById(@PathVariable UUID id) {
+        return ApiResponse.success(studentService.getById(id));
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<Student> createStudent(@RequestBody Student student) {
-        if (student.getStudentCode() != null && studentRepository.existsByStudentCode(student.getStudentCode())) {
-            throw new BusinessException(ErrorCode.STUDENT_CODE_EXISTS);
-        }
-        return ApiResponse.created("Tạo sinh viên thành công", studentRepository.save(student));
+    public ApiResponse<StudentResponse> createStudent(@Valid @RequestBody StudentRequest request) {
+        return ApiResponse.created("Tạo sinh viên thành công", studentService.createStudent(request));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<Student> updateStudent(@PathVariable UUID id, @RequestBody Student studentDetails) {
-        Student existingStudent = studentRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
-
-        // Cập nhật các thông tin cơ bản
-        existingStudent.setFullName(studentDetails.getFullName());
-        // existingStudent.setPhone(studentDetails.getPhone());
-        // Cập nhật các trường khác tương ứng với Entity Student
-
-        return ApiResponse.success("Cập nhật thông tin thành công", studentRepository.save(existingStudent));
+    public ApiResponse<StudentResponse> updateStudent(@PathVariable UUID id, @Valid @RequestBody StudentRequest request) {
+        return ApiResponse.success("Cập nhật thông tin thành công", studentService.updateStudent(id, request));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Void> deleteStudent(@PathVariable UUID id) {
-        if (!studentRepository.existsById(id)) {
-            throw new BusinessException(ErrorCode.STUDENT_NOT_FOUND);
-        }
-        studentRepository.deleteById(id);
+        studentService.deleteStudent(id);
         return ApiResponse.success("Xóa sinh viên thành công", null);
     }
 
@@ -82,7 +116,7 @@ public class StudentController {
     @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
     public ApiResponse<String> uploadAvatar(@PathVariable UUID id, @RequestParam("file") MultipartFile file) {
         Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy sinh viên"));
 
         if (file.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "File không được để trống");

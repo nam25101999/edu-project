@@ -1,6 +1,7 @@
 package com.edu.university.modules.enrollment.controller;
 
 import com.edu.university.common.response.ApiResponse;
+import com.edu.university.modules.enrollment.dto.GradeResponse;
 import com.edu.university.modules.enrollment.entity.Grade;
 import com.edu.university.modules.enrollment.repository.GradeRepository;
 import com.edu.university.modules.enrollment.service.GradeService;
@@ -30,7 +31,8 @@ public class GradeController {
 
     @PostMapping("/enrollment/{enrollmentId}")
     @PreAuthorize("hasRole('LECTURER') or hasRole('ADMIN')")
-    public ApiResponse<Grade> enterGrade(@PathVariable UUID enrollmentId, @RequestBody GradeRequest request) {
+    public ApiResponse<GradeResponse> enterGrade(@PathVariable UUID enrollmentId, @RequestBody GradeRequest request) {
+        // Thay đổi kiểu trả về từ Grade sang GradeResponse
         return ApiResponse.success("Cập nhật điểm thành công", gradeService.enterGrade(enrollmentId, request));
     }
 

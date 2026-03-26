@@ -1,5 +1,7 @@
 package com.edu.university.modules.student.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -22,9 +24,11 @@ public class StudentClass {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "major_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Ngăn lỗi proxy
     private Major major; // Thuộc ngành nào
 
     // 1 Lớp sinh viên có nhiều Sinh viên
     @OneToMany(mappedBy = "studentClass", cascade = CascadeType.ALL)
+    @JsonIgnore // CHÚ Ý: Bắt buộc phải có để ngăn lỗi đệ quy vòng lặp vô tận (StackOverflow) khi serialize JSON
     private List<Student> students;
 }

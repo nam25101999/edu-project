@@ -11,4 +11,13 @@ public class StudentClassDtos {
             @NotBlank(message = "Tên lớp không được để trống") String name,
             @NotNull(message = "ID của Ngành học không được để trống") UUID majorId
     ) {}
+
+    // DTO để trả dữ liệu ra client
+    public record StudentClassResponse(
+            UUID id,
+            String classCode,
+            String name,
+            UUID majorId,
+            String majorName // Nếu muốn hiển thị tên ngành học
+    ) {}
 }

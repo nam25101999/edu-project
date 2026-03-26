@@ -2,144 +2,154 @@ package com.edu.university.modules.auth.service;
 
 import com.edu.university.common.exception.BusinessException;
 import com.edu.university.common.exception.ErrorCode;
-import com.edu.university.modules.auth.dto.ResetPasswordDtos.*;
-import com.edu.university.modules.auth.dto.AuthDtos.*;
-import com.edu.university.modules.auth.entity.OtpToken;
-import com.edu.university.modules.auth.entity.Role;
-import com.edu.university.modules.auth.entity.User;
-import com.edu.university.modules.auth.repository.OtpTokenRepository;
-import com.edu.university.modules.auth.repository.UserRepository;
 import com.edu.university.common.security.JwtUtils;
 import com.edu.university.common.security.UserDetailsImpl;
+import com.edu.university.modules.auth.dto.AuthDtos.*;
+import com.edu.university.modules.auth.entity.RefreshToken;
+import com.edu.university.modules.auth.entity.Role;
+import com.edu.university.modules.auth.entity.User;
+import com.edu.university.modules.auth.repository.UserRepository;
+import com.edu.university.modules.report.annotation.LogAction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.edu.university.modules.report.annotation.LogAction;
+import com.edu.university.modules.auth.dto.AuthDtos.TokenRefreshRequest;
 
 import java.time.LocalDateTime;
-import java.util.Random;
+import java.util.UUID;
 
-/**
- * Service xử lý các nghiệp vụ liên quan đến xác thực và phân quyền.
- * Đã cập nhật để khớp với các mã lỗi trong ErrorCode enum mới nhất.
- */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
-    private final PasswordEncoder encoder;
+    private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
     private final JwtUtils jwtUtils;
+    private final AuthenticationManager authenticationManager;
 
-    private final EmailService emailService;
-    private final OtpTokenRepository otpTokenRepo;
-
-    // =========================
-    // LOGIN
-    // =========================
+    // ================= LOGIN =================
+    @Transactional
     @LogAction(action = "LOGIN", entityName = "USER")
-    public JwtResponse authenticateUser(LoginRequest loginRequest) {
-        // AuthenticationManager ném AuthenticationException nếu sai user/pass.
-        // Có thể bắt lỗi này ở GlobalExceptionHandler hoặc tại đây để trả về INVALID_CREDENTIALS.
+    public JwtResponse authenticateUser(LoginRequest request) {
+
+        // 1. Lấy giá trị đầu vào (có thể là username, email, hoặc mã SV)
+        String identifier = request.identifier();
+
+        // 2. Tìm user trong DB bằng chuỗi identifier này
+        // Yêu cầu: Bạn cần thêm method findByIdentifier trong UserRepository
+        User user = userRepository.findByIdentifier(identifier)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 3. Xác thực qua Spring Security bằng username chuẩn lấy từ DB
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.username(),
-                        loginRequest.password()
+                        user.getUsername(), // Luôn truyền username thực tế để Spring Security xử lý
+                        request.password()
                 )
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
-
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
+        // 4. Cập nhật thông tin thống kê đăng nhập của User
+        // Chúng ta tái sử dụng luôn entity user đã tìm ở bước 2 thay vì gọi lại userRepository.findById()
+        user.setLastLoginAt(LocalDateTime.now());
+        user.setFailedLoginAttempts(0); // Reset số lần đăng nhập sai
+        userRepository.save(user);
+
+        // 5. Tạo Tokens
+        String accessToken = jwtUtils.generateJwtToken(authentication);
+        RefreshToken refreshToken = tokenService.createRefreshToken(userDetails.getId());
+
         String role = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
                 .findFirst()
-                .orElse("");
+                .map(item -> item.getAuthority())
+                .orElse(Role.ROLE_STUDENT.name());
 
-        return new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(), role);
+        return new JwtResponse(
+                accessToken,
+                refreshToken.getToken(),
+                userDetails.getId(),
+                userDetails.getUsername(),
+                role
+        );
     }
 
-    // =========================
-    // REGISTER
-    // =========================
-    @LogAction(action = "REGISTER", entityName = "USER")
-    public void registerUser(SignupRequest signUpRequest) {
+    // ================= REGISTER =================
+    @Transactional
+    @LogAction(action = "SIGNUP", entityName = "USER")
+    public User registerUser(SignupRequest request) {
 
-        if (userRepository.existsByUsername(signUpRequest.username())) {
-            throw new BusinessException(ErrorCode.USER_ALREADY_EXISTS, "Tên đăng nhập đã tồn tại!");
+        if (userRepository.existsByUsername(request.username())) {
+            throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS);
         }
 
-        if (userRepository.existsByEmail(signUpRequest.email())) {
-            throw new BusinessException(ErrorCode.USER_ALREADY_EXISTS, "Email đã được sử dụng!");
+        if (userRepository.existsByEmail(request.email())) {
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
+        // Khởi tạo User mới, các trường boolean mặc định đã được xử lý bởi @Builder.Default trong Entity
         User user = User.builder()
-                .username(signUpRequest.username())
-                .email(signUpRequest.email())
-                .password(encoder.encode(signUpRequest.password()))
-                .role(Role.valueOf(signUpRequest.role()))
+                .username(request.username())
+                .email(request.email())
+                .password(passwordEncoder.encode(request.password()))
+                .role(Role.ROLE_STUDENT) // Gán Role mặc định
                 .build();
 
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
-    // =========================
-    // FORGOT PASSWORD (GỬI OTP)
-    // =========================
-    @LogAction(action = "SEND_OTP", entityName = "USER")
+    // ================= LOGOUT =================
     @Transactional
-    public void generateAndSendOtp(ForgotPasswordRequest request) {
-
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy email!"));
-
-        // Xóa các OTP cũ của user này trước khi tạo mới
-        otpTokenRepo.deleteByUser(user);
-
-        String otp = String.format("%06d", new Random().nextInt(999999));
-
-        OtpToken otpToken = OtpToken.builder()
-                .otp(otp)
-                .user(user)
-                .expiryDate(LocalDateTime.now().plusMinutes(5))
-                .build();
-
-        otpTokenRepo.save(otpToken);
-
-        emailService.sendOtpEmail(user.getEmail(), otp);
+    @LogAction(action = "LOGOUT", entityName = "USER")
+    public void logout(String refreshToken) {
+        tokenService.logout(refreshToken);
     }
 
-    // =========================
-    // RESET PASSWORD
-    // =========================
-    @LogAction(action = "RESET_PASSWORD", entityName = "USER")
+    // ================= CHANGE PASSWORD =================
     @Transactional
-    public void resetPassword(ResetPasswordRequest request) {
+    @LogAction(action = "CHANGE_PASSWORD", entityName = "USER")
+    public void changePassword(UUID userId, ChangePasswordRequest request) {
 
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy tài khoản!"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        OtpToken otpToken = otpTokenRepo.findByOtpAndUser(request.otp(), user)
-                .orElseThrow(() -> new BusinessException(ErrorCode.OTP_INVALID, "Mã OTP không chính xác!"));
-
-        if (otpToken.isExpired()) {
-            otpTokenRepo.delete(otpToken);
-            throw new BusinessException(ErrorCode.OTP_EXPIRED, "Mã OTP đã hết hạn!");
+        // check mật khẩu cũ
+        if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        user.setPassword(encoder.encode(request.newPassword()));
-        userRepository.save(user);
+        // không cho trùng mật khẩu cũ
+        if (passwordEncoder.matches(request.newPassword(), user.getPassword())) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT);
+        }
 
-        // Xóa OTP sau khi sử dụng thành công
-        otpTokenRepo.delete(otpToken);
+        // Cập nhật mật khẩu và lưu vết thời gian đổi
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        user.setPasswordChangedAt(LocalDateTime.now());
+
+        userRepository.save(user);
+    }
+
+    // ================= REFRESH TOKEN =================
+    @Transactional
+    public TokenRefreshResponse refreshToken(TokenRefreshRequest request) {
+
+        RefreshToken newToken = tokenService.rotateToken(request.refreshToken());
+
+        String newAccessToken = jwtUtils.generateTokenFromUsername(
+                newToken.getUser().getUsername()
+        );
+
+        return new TokenRefreshResponse(
+                newAccessToken,
+                newToken.getToken()
+        );
     }
 }

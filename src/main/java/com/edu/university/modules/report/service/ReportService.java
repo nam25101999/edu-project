@@ -14,6 +14,7 @@ import com.edu.university.modules.student.entity.Student;
 import com.edu.university.modules.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
@@ -34,6 +35,11 @@ public class ReportService {
     private final GradeRepository gradeRepo;
     private final GradeService gradeService;
 
+    /**
+     * Sửa lỗi Lazy Load bằng cách thêm @Transactional.
+     * Hibernate Session sẽ được giữ mở để lấy thông tin Faculty.
+     */
+    @Transactional(readOnly = true)
     public List<FacultyStat> getStudentsByFaculty() {
         List<Student> students = studentRepo.findAll();
 
@@ -46,6 +52,7 @@ public class ReportService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public PassFailStat getPassFailRatio() {
         List<Grade> gradedEnrollments = gradeRepo.findAll().stream()
                 .filter(g -> g.getTotalScore() != null)
@@ -58,7 +65,7 @@ public class ReportService {
         long passCount = gradedEnrollments.stream()
                 .filter(g -> g.getTotalScore() >= 4.0)
                 .count();
-        long failCount = gradedEnrollments.size() - passCount;
+        long failCount = (long) gradedEnrollments.size() - passCount;
 
         double passRate = Math.round(((double) passCount / gradedEnrollments.size()) * 100.0 * 100.0) / 100.0;
         double failRate = Math.round(((double) failCount / gradedEnrollments.size()) * 100.0 * 100.0) / 100.0;
@@ -66,6 +73,10 @@ public class ReportService {
         return new PassFailStat(passCount, failCount, passRate, failRate);
     }
 
+    /**
+     * Thêm @Transactional để tính toán GPA tích lũy mà không lỗi Lazy Load.
+     */
+    @Transactional(readOnly = true)
     public List<TopStudent> getTopStudents(int limit) {
         if (limit <= 0 || limit > 100) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "Giới hạn danh sách phải từ 1 đến 100");
@@ -83,6 +94,7 @@ public class ReportService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public DashboardOverview getDashboardOverview() {
         long totalStudents = studentRepo.count();
         long totalCourses = courseRepo.count();

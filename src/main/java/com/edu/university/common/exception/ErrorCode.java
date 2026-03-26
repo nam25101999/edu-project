@@ -31,12 +31,14 @@ public enum ErrorCode {
     ALREADY_EXISTS(409, "SYS_409", "Dữ liệu đã tồn tại trong hệ thống", HttpStatus.CONFLICT),
 
     // === LỖI NGHIỆP VỤ XÁC THỰC (AUTH) ===
-    USER_ALREADY_EXISTS(409, "AUTH_001", "Tên đăng nhập hoặc email đã tồn tại", HttpStatus.CONFLICT),
-    USER_NOT_FOUND(404, "AUTH_002", "Không tìm thấy người dùng", HttpStatus.NOT_FOUND),
-    INVALID_CREDENTIALS(400, "AUTH_003", "Thông tin đăng nhập không chính xác", HttpStatus.BAD_REQUEST),
-    OTP_EXPIRED(400, "AUTH_004", "Mã OTP đã hết hạn", HttpStatus.BAD_REQUEST),
-    OTP_INVALID(400, "AUTH_005", "Mã OTP không chính xác", HttpStatus.BAD_REQUEST),
-    INVALID_ROLE(400, "AUTH_006", "Giá trị role không hợp lệ", HttpStatus.BAD_REQUEST),
+    USER_ALREADY_EXISTS(409, "AUTH_001", "Người dùng đã tồn tại", HttpStatus.CONFLICT),
+    USERNAME_ALREADY_EXISTS(409, "AUTH_002", "Tên đăng nhập đã tồn tại", HttpStatus.CONFLICT),
+    EMAIL_ALREADY_EXISTS(409, "AUTH_003", "Email đã tồn tại", HttpStatus.CONFLICT),
+    USER_NOT_FOUND(404, "AUTH_004", "Không tìm thấy người dùng", HttpStatus.NOT_FOUND),
+    INVALID_CREDENTIALS(400, "AUTH_005", "Thông tin đăng nhập không chính xác", HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED(400, "AUTH_006", "Mã OTP đã hết hạn", HttpStatus.BAD_REQUEST),
+    OTP_INVALID(400, "AUTH_007", "Mã OTP không chính xác", HttpStatus.BAD_REQUEST),
+    INVALID_ROLE(400, "AUTH_008", "Giá trị role không hợp lệ", HttpStatus.BAD_REQUEST),
 
     // === LỖI NGHIỆP VỤ SINH VIÊN & HÀNH CHÍNH (STD) ===
     STUDENT_NOT_FOUND(404, "STD_001", "Không tìm thấy hồ sơ sinh viên", HttpStatus.NOT_FOUND),
