@@ -1,7 +1,7 @@
 package com.edu.university.modules.auth.repository;
 
 import com.edu.university.modules.auth.entity.Role;
-import com.edu.university.modules.auth.entity.User;
+import com.edu.university.modules.auth.entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,27 +12,31 @@ import java.util.UUID;
 
 /**
  * Repository quản lý thực thể User.
- * Bổ sung phương thức countByRole để phục vụ thống kê trong ReportService.
+ * Bổ sung phương thức countByRolesContaining để phục vụ thống kê trong ReportService.
  */
 @Repository
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<Users, UUID> {
 
-    Optional<User> findByUsername(String username);
+    Optional<Users> findByUsername(String username);
 
-    Optional<User> findByEmail(String email);
+    Optional<Users> findByEmail(String email);
 
     Boolean existsByUsername(String username);
 
     Boolean existsByEmail(String email);
 
-    @Query("SELECT u FROM User u WHERE u.username = :identifier OR u.email = :identifier " +
-            "OR EXISTS (SELECT 1 FROM Student s WHERE s.user = u AND s.studentCode = :identifier)")
-    Optional<User> findByIdentifier(@Param("identifier") String identifier);
+    /**
+     * Đăng nhập linh hoạt: Tìm User bằng username, email hoặc mã số sinh viên.
+     */
+    @Query("SELECT u FROM Users u " +
+            "LEFT JOIN Student s ON s.user.id = u.id " +
+            "WHERE u.username = :identifier OR u.email = :identifier OR s.studentCode = :identifier")
+    Optional<Users> findByIdentifier(@Param("identifier") String identifier);
 
     /**
      * Đếm số lượng người dùng theo vai trò (Role).
      * @param role Vai trò cần đếm (ADMIN, STUDENT, LECTURER...)
      * @return Số lượng người dùng thuộc vai trò đó.
      */
-    long countByRole(Role role);
+    long countByRolesContaining(Role role); // ĐÃ SỬA: Đổi countByRole thành countByRolesContaining
 }

@@ -24,6 +24,7 @@ public enum ErrorCode {
     FORBIDDEN(403, "SYS_003", "Bạn không có quyền truy cập tài nguyên này", HttpStatus.FORBIDDEN),
     NOT_FOUND(404, "SYS_004", "Không tìm thấy tài nguyên", HttpStatus.NOT_FOUND),
     INTERNAL_SERVER_ERROR(500, "SYS_500", "Lỗi hệ thống nội bộ! Vui lòng thử lại sau", HttpStatus.INTERNAL_SERVER_ERROR),
+    BAD_REQUEST(400, "SYS_400", "Yêu cầu không hợp lệ", HttpStatus.BAD_REQUEST),
 
     // Alias cho các lỗi hệ thống cũ để tránh lỗi biên dịch
     SYSTEM_ERROR(500, "SYS_500", "Lỗi hệ thống nội bộ", HttpStatus.INTERNAL_SERVER_ERROR),
@@ -39,6 +40,8 @@ public enum ErrorCode {
     OTP_EXPIRED(400, "AUTH_006", "Mã OTP đã hết hạn", HttpStatus.BAD_REQUEST),
     OTP_INVALID(400, "AUTH_007", "Mã OTP không chính xác", HttpStatus.BAD_REQUEST),
     INVALID_ROLE(400, "AUTH_008", "Giá trị role không hợp lệ", HttpStatus.BAD_REQUEST),
+    EMAIL_NOT_VERIFIED(403, "AUTH_009", "Email chưa được xác thực", HttpStatus.FORBIDDEN),
+    EMAIL_ALREADY_VERIFIED(400, "AUTH_010", "Email đã được xác thực trước đó", HttpStatus.BAD_REQUEST),
 
     // === LỖI NGHIỆP VỤ SINH VIÊN & HÀNH CHÍNH (STD) ===
     STUDENT_NOT_FOUND(404, "STD_001", "Không tìm thấy hồ sơ sinh viên", HttpStatus.NOT_FOUND),

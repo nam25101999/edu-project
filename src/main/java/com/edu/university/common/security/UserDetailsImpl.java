@@ -16,6 +16,7 @@ public class UserDetailsImpl implements UserDetails {
     private String username;
     private String password;
     private Collection<? extends GrantedAuthority> authorities;
+    private boolean isActive; // Thêm trường này để quản lý trạng thái tài khoản
 
     // ========================
     // OVERRIDE METHODS
@@ -43,7 +44,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return true; // Bạn có thể map với trường lockUntil sau này nếu muốn
     }
 
     @Override
@@ -53,6 +54,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        // Đã sửa: Trả về trạng thái thực tế của User thay vì luôn luôn là true
+        return isActive;
     }
 }

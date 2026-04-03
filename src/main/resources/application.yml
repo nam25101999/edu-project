@@ -15,9 +15,9 @@ spring:
     name: backend
 
   datasource:
-    url: jdbc:sqlserver://den1.mssql8.gear.host:1433;databaseName=edudb1;encrypt=true;trustServerCertificate=true
-    username: edudb1
-    password: Uq04Y?T!A73T
+    url: jdbc:sqlserver://den1.mssql8.gear.host:1433;databaseName=education11;encrypt=true;trustServerCertificate=true
+    username: education11
+    password: Cw86~BTxrx!Y
 
   jpa:
     hibernate:

@@ -19,10 +19,10 @@ import java.util.Date;
 @Component
 public class JwtUtils {
 
-    @Value("${spring.security.jwt.secret:defaultSecretKeyForUniversityPortalProject2026MustBeAtLeast32Chars}")
+    @Value("${app.jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
     private String jwtSecret;
 
-    @Value("${spring.security.jwt.expirationMs:3600000}") // 1 giờ
+    @Value("${app.jwt.expirationMs:3600000}") // 1 giờ
     private int jwtExpirationMs;
 
     private Key key() {

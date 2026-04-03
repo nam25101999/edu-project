@@ -1,13 +1,12 @@
 package com.edu.university.modules.student.controller;
 
-import com.edu.university.common.response.ApiResponse;
-import com.edu.university.modules.student.dto.StudentClassDtos.StudentClassRequest;
-import com.edu.university.modules.student.dto.StudentClassDtos.StudentClassResponse;
+import com.edu.university.modules.student.dto.request.StudentClassRequestDTO;
+import com.edu.university.modules.student.dto.response.StudentClassResponseDTO;
 import com.edu.university.modules.student.service.StudentClassService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,62 +19,38 @@ public class StudentClassController {
 
     private final StudentClassService studentClassService;
 
-    // ✅ FIX: dùng DTO
-    @GetMapping("/all")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<List<StudentClassResponse>> getAllClasses() {
-        return ApiResponse.success(studentClassService.getAllClasses());
-    }
-
-    // ✅ FIX: Page<StudentClassResponse>
-    @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'LECTURER')")
-    public ApiResponse<Page<StudentClassResponse>> searchStudentClasses(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        return ApiResponse.success(
-                studentClassService.searchStudentClasses(keyword, page, size)
-        );
-    }
-
-    // ✅ FIX: Response DTO
-    @GetMapping("/{id}")
-    public ApiResponse<StudentClassResponse> getById(@PathVariable UUID id) {
-        return ApiResponse.success(studentClassService.getById(id));
-    }
-
-    // ✅ FIX
+    // 1. Tạo lớp mới
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<StudentClassResponse> createStudentClass(
-            @Valid @RequestBody StudentClassRequest request
-    ) {
-        return ApiResponse.created(
-                "Tạo lớp sinh hoạt thành công",
-                studentClassService.createStudentClass(request)
-        );
+    public ResponseEntity<StudentClassResponseDTO> createClass(@Valid @RequestBody StudentClassRequestDTO requestDTO) {
+        return new ResponseEntity<>(studentClassService.createClass(requestDTO), HttpStatus.CREATED);
     }
 
-    // ✅ FIX
+    // 2 & 6. Lấy danh sách lớp & Lọc lớp theo khoa, ngành
+    @GetMapping
+    public ResponseEntity<List<StudentClassResponseDTO>> getClasses(
+            @RequestParam(required = false) UUID departmentId,
+            @RequestParam(required = false) UUID majorId) {
+        return ResponseEntity.ok(studentClassService.getClassesByDepartmentAndMajor(departmentId, majorId));
+    }
+
+    // 3. Lấy chi tiết lớp
+    @GetMapping("/{id}")
+    public ResponseEntity<StudentClassResponseDTO> getClassById(@PathVariable UUID id) {
+        return ResponseEntity.ok(studentClassService.getClassById(id));
+    }
+
+    // 4. Cập nhật thông tin lớp
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<StudentClassResponse> updateStudentClass(
+    public ResponseEntity<StudentClassResponseDTO> updateClass(
             @PathVariable UUID id,
-            @Valid @RequestBody StudentClassRequest request
-    ) {
-        return ApiResponse.success(
-                "Cập nhật lớp sinh hoạt thành công",
-                studentClassService.updateStudentClass(id, request)
-        );
+            @Valid @RequestBody StudentClassRequestDTO requestDTO) {
+        return ResponseEntity.ok(studentClassService.updateClass(id, requestDTO));
     }
 
-    // DELETE giữ nguyên
+    // 5. Xóa mềm lớp
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<Void> deleteStudentClass(@PathVariable UUID id) {
-        studentClassService.deleteStudentClass(id);
-        return ApiResponse.success("Xóa lớp sinh hoạt thành công", null);
+    public ResponseEntity<Void> deleteClass(@PathVariable UUID id) {
+        studentClassService.deleteClass(id);
+        return ResponseEntity.noContent().build();
     }
 }

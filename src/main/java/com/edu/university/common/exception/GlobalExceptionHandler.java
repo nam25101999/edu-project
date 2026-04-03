@@ -1,7 +1,9 @@
 package com.edu.university.common.exception;
 
 import com.edu.university.common.response.ApiResponse;
-import com.edu.university.modules.report.service.AuditLogService;
+import com.edu.university.common.security.UserDetailsImpl;
+import com.edu.university.modules.auth.entity.AuditLog;
+import com.edu.university.modules.auth.service.AuditLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
@@ -32,14 +35,17 @@ public class GlobalExceptionHandler {
         return UUID.randomUUID().toString();
     }
 
-    private String getUsername() {
+    // Lấy UUID của User thay vì Username để phù hợp với chuẩn Log mới
+    private UUID getCurrentUserId() {
         try {
-            return SecurityContextHolder.getContext()
-                    .getAuthentication()
-                    .getName();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof UserDetailsImpl userDetails) {
+                return userDetails.getId();
+            }
         } catch (Exception e) {
-            return "anonymous";
+            // Ignore
         }
+        return null; // Trả về null nếu là khách (Guest) chưa đăng nhập
     }
 
     // ===== 1. BUSINESS EXCEPTION =====
@@ -58,12 +64,13 @@ public class GlobalExceptionHandler {
 
         // 🔥 AUDIT LOG
         auditLogService.log(
-                "BUSINESS_ERROR",
+                AuditLog.AuditAction.UPDATE, // Dùng UPDATE tạm (có thể thêm BUSINESS_ERROR vào Enum)
                 "SYSTEM",
-                "FAILED",
+                null,
+                errorCode.getStatus(), // Status dạng Integer (400, 404,...)
                 request.getRequestURI(),
                 request.getMethod(),
-                getUsername(),
+                getCurrentUserId(),
                 message,
                 request
         );
@@ -96,14 +103,15 @@ public class GlobalExceptionHandler {
 
         log.warn("[TraceID: {}] Validation Error: {}", traceId, errors);
 
-        // 🔥 AUDIT LOG (QUAN TRỌNG NHẤT)
+        // 🔥 AUDIT LOG
         auditLogService.log(
-                "VALIDATION_ERROR",
-                "User",
-                "FAILED",
+                AuditLog.AuditAction.UPDATE,
+                "USER",
+                null,
+                ErrorCode.INVALID_INPUT.getStatus(),
                 request.getRequestURI(),
                 request.getMethod(),
-                getUsername(),
+                getCurrentUserId(),
                 errors.toString(),
                 request
         );
@@ -132,12 +140,13 @@ public class GlobalExceptionHandler {
 
         // 🔥 AUDIT LOG
         auditLogService.log(
-                "ACCESS_DENIED",
+                AuditLog.AuditAction.UPDATE,
                 "SECURITY",
-                "FAILED",
+                null,
+                ErrorCode.FORBIDDEN.getStatus(),
                 request.getRequestURI(),
                 request.getMethod(),
-                getUsername(),
+                getCurrentUserId(),
                 ex.getMessage(),
                 request
         );
@@ -165,12 +174,13 @@ public class GlobalExceptionHandler {
 
         // 🔥 AUDIT LOG
         auditLogService.log(
-                "RUNTIME_ERROR",
+                AuditLog.AuditAction.UPDATE,
                 "SYSTEM",
-                "FAILED",
+                null,
+                ErrorCode.INTERNAL_SERVER_ERROR.getStatus(),
                 request.getRequestURI(),
                 request.getMethod(),
-                getUsername(),
+                getCurrentUserId(),
                 ex.getMessage(),
                 request
         );
@@ -198,12 +208,13 @@ public class GlobalExceptionHandler {
 
         // 🔥 AUDIT LOG
         auditLogService.log(
-                "SYSTEM_ERROR",
+                AuditLog.AuditAction.UPDATE,
                 "SYSTEM",
-                "FAILED",
+                null,
+                ErrorCode.INTERNAL_SERVER_ERROR.getStatus(),
                 request.getRequestURI(),
                 request.getMethod(),
-                getUsername(),
+                getCurrentUserId(),
                 ex.getMessage(),
                 request
         );
@@ -218,6 +229,8 @@ public class GlobalExceptionHandler {
                         traceId
                 ));
     }
+
+    // ===== 6. BAD CREDENTIALS =====
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadCredentials(
             BadCredentialsException ex,
@@ -229,12 +242,13 @@ public class GlobalExceptionHandler {
 
         // 🔥 Audit log
         auditLogService.log(
-                "AUTH_ERROR",
+                AuditLog.AuditAction.LOGIN_FAILED, // Ánh xạ chuẩn với Enum LOGIN_FAILED
                 "SECURITY",
-                "FAILED",
+                null,
+                400,
                 request.getRequestURI(),
                 request.getMethod(),
-                getUsername(),
+                getCurrentUserId(),
                 ex.getMessage(),
                 request
         );
@@ -250,6 +264,7 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    // ===== 7. USER NOT FOUND =====
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleUserNotFound(
             UsernameNotFoundException ex,
@@ -261,12 +276,13 @@ public class GlobalExceptionHandler {
 
         // 🔥 Audit log
         auditLogService.log(
-                "AUTH_ERROR",
+                AuditLog.AuditAction.LOGIN_FAILED, // Ánh xạ chuẩn với Enum LOGIN_FAILED
                 "SECURITY",
-                "FAILED",
+                null,
+                404,
                 request.getRequestURI(),
                 request.getMethod(),
-                getUsername(),
+                getCurrentUserId(),
                 ex.getMessage(),
                 request
         );
