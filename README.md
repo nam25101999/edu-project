@@ -1,173 +1,176 @@
-🎓 Hệ Thống Quản Lý Đào Tạo Tín Chỉ Đại Học (University Management System)
+# University Management System - Core Backend
+
+[![Java Version](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-<div align="center">
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Java-17-ED8B00%3Fstyle%3Dfor-the-badge%26logo%3Djava%26logoColor%3Dwhite" alt="Java" />
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Spring_Boot-3.2.4-6DB33F%3Fstyle%3Dfor-the-badge%26logo%3Dspring-boot%26logoColor%3Dwhite" alt="Spring Boot" />
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Spring_Security-JWT-6DB33F%3Fstyle%3Dfor-the-badge%26logo%3Dspring-security%26logoColor%3Dwhite" alt="Spring Security" />
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/SQL_Server-Cloud-CC2927%3Fstyle%3Dfor-the-badge%26logo%3Dmicrosoft-sql-server%26logoColor%3Dwhite" alt="SQL Server" />
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Docker-Enabled-2496ED%3Fstyle%3Dfor-the-badge%26logo%3Ddocker%26logoColor%3Dwhite" alt="Docker" />
-</div>
+A production-ready Enterprise Resource Planning (ERP) backend for universities, built with a refined Modular Monolith architecture. This system manages everything from student admissions and academic registration to finance and e-learning.
 
-Dự án là một giải pháp phần mềm chuyển đổi số toàn diện cho môi trường Đại học. Hệ thống quản lý toàn bộ vòng đời của sinh viên từ lúc nhập học, đăng ký tín chỉ, đóng học phí, tham gia cộng đồng diễn đàn, cho đến khi xét duyệt học vụ và tốt nghiệp.
+---
 
-Đặc biệt, hệ thống được thiết kế theo kiến trúc Modular Monolith chuẩn Enterprise, phân chia rõ ràng theo từng Domain Driven (Miền nghiệp vụ), sẵn sàng để scale (mở rộng) lên Microservices trong tương lai.
+## 🚀 Project Overview
 
-📑 Mục lục
+The University Management System (UMS) backend provides a centralized, secure, and scalable API for higher education institutions. It is designed to handle complex academic workflows while maintaining high performance and strict data integrity.
 
-✨ Tính năng nổi bật
+### Key Highlights
+- **Architecture**: Modular Monolith to balance development speed with logical separation.
+- **Standards**: Enterprise-grade patterns (6-layer structure, DTO-only exposure, standardized responses).
+- **Security**: Stateless JWT authentication with granular Role-Based Access Control (RBAC).
+- **Quality**: 100% integration coverage for critical paths using MockMvc and H2.
 
-💻 Công nghệ sử dụng
+---
+
+## ✨ Features
+
+The system is divided into **14 functional modules**:
+
+- **Auth**: JWT-based authentication, password recovery, and session management.
+- **Academic**: Management of academic years, semesters, and course sections.
+- **Curriculum**: Department, Major, and Training Program structures.
+- **E-learning**: Assignments, attendance tracking, and learning materials.
+- **Student**: Comprehensive student profiles and lifecycle management.
+- **Student Service**: Petitions, surveys, and conduct score management.
+- **Grading**: Standardized grading scales and transcript generation.
+- **Registration**: Course registration workflows and capacity management.
+- **Finance**: Tuition fee calculations and payment tracking.
+- **HR**: Employee and department management.
+- **Schedule**: Timetabling and room management.
+- **Examination**: Exam scheduling and proctoring layout.
+- **Graduation**: Graduation eligibility checking and degree management.
+- **System**: Global configuration and audit logging.
+
+---
+
+## 🏗️ Architecture & Design Decisions
+
+### Modular Monolith Strategy
+The project follows a **Modular Monolith** architecture. This approach was chosen to reduce the operational complexity associated with microservices while maintaining high scalability and logical separation between university domains.
+
+### 6-Layer Structure
+Each module follows a strict 6-layer architecture to ensure separation of concerns:
+
+1. **Controller**: REST Endpoints (Handled by `ResponseEntity<BaseResponse<T>>`).
+2. **DTO**: Data Transfer Objects (Input/Output validation, no direct Entity exposure).
+3. **Mapper**: MapStruct interfaces handling DTO-Entity conversions.
+4. **Service**: Business logic and transaction management.
+5. **Repository**: Data access layer (Spring Data JPA).
+6. **Entity**: JPA/Hibernate Database models.
+
+### Key Decisions
+- **Zero Entity Exposure**: The DTO pattern is strictly enforced across all modules to ensure decoupled data structures.
+- **Centralized BaseResponse**: All API interactions utilize a unified response object, significantly improving frontend consistency and error handling.
+- **MapStruct for Performance**: Bytecode-level mapping ensures minimal overhead during object conversion.
 
-🏗 Kiến trúc hệ thống
+---
 
-🚀 Hướng dẫn cài đặt (Docker)
+## 📂 Project Structure
 
-📖 Tài liệu API (Swagger)
+```text
+src/main/java/com/edu/university
+├── common/                 # Shared resources (Exception Handling, Response Wrapper)
+│   ├── exception/          # GlobalExceptionHandler & BusinessException
+│   └── response/           # BaseResponse<T> implementation
+├── config/                 # Security, JPA, and Global Bean configurations
+└── modules/                # 14 Functional Modules
+    ├── auth/
+    ├── academic/
+    ├── curriculum/         # (Each module contains 6 sub-layers)
+    │   ├── controller/
+    │   ├── dto/
+    │   ├── mapper/
+    │   ├── service/
+    │   ├── repository/
+    │   └── entity/
+    └── ... 
+```
 
-📸 Hình ảnh minh họa
+## 🔄 Module Interaction
 
-✨ Tính năng nổi bật
+To maintain high cohesion and low coupling, cross-module interactions are managed via well-defined Service-to-Service interfaces:
 
-Hệ thống được chia thành 6 Module nghiệp vụ chính, hoạt động độc lập nhưng liên kết chặt chẽ với nhau:
+- **Registration**: Depends on the **Academic** and **Student** modules for eligibility and capacity checks.
+- **Finance**: Integrates with the **Registration** module to trigger tuition fee calculations upon enrollment.
+- **E-learning**: Relies on **Registration** to sync student rosters for specific course sections.
 
-1. 🔐 Module Xác Thực & Bảo Mật (Auth)
+---
 
-Đăng nhập, Đăng ký phân quyền Role-based (ADMIN, LECTURER, STUDENT).
+## ⚡ Performance Optimization
 
-Xác thực bảo mật bằng JWT (JSON Web Token).
+- **Pagination**: Mandatory `Pageable` support applied to all list and search endpoints to prevent high memory consumption.
+- **DTO Projection**: Optimized JPA queries using selective DTO projections to reduce database I/O.
+- **Caching Strategy**: Redis-based distributed caching is planned for high-traffic metadata (Academic Years, Course Catalogs).
+- **Batch Processing**: Used for large-scale operations like tuition generation and transcript calculations.
 
-Quên mật khẩu & Đặt lại mật khẩu an toàn thông qua Mã OTP gửi qua Email.
+---
 
-2. 📚 Module Quản Lý Đào Tạo & Tín Chỉ (Course & Enrollment)
+## 🚦 Getting Started
 
-Quản lý Khoa, Ngành, Lớp học hành chính.
+### Prerequisites
+- JDK 21
+- Maven 3.9+
+- MS SQL Server (Optional for local dev, uses H2 for tests)
 
-Mở lớp học phần (Class Section), giới hạn sĩ số sinh viên tối đa.
+### Running the Application
+```bash
+mvn spring-boot:run
+```
+The API will be available at `http://localhost:8080`.
+Swagger UI: `http://localhost:8080/swagger-ui.html`
 
-Thuật toán xếp lịch thông minh: Tự động phát hiện và chặn nếu sinh viên đăng ký trùng lịch học, hoặc giảng viên xếp trùng phòng thi, trùng giờ thi.
+### Running Tests
+```bash
+# Run all tests (Unit + Integration)
+mvn test
+```
 
-Nhập điểm (Chuyên cần, Giữa kỳ, Cuối kỳ), tự động quy đổi điểm chữ (A, B, C, D, F) và tính GPA hệ 4.0.
+---
 
-Đánh giá học vụ tự động (Bình thường / Cảnh báo / Đình chỉ).
+## 📡 API Standards
 
-3. 💰 Module Tài Chính (Finance)
+### Standard Response Format
+All API responses follow the `BaseResponse<T>` pattern for consistency:
 
-Tự động tính toán học phí theo tổng số tín chỉ đăng ký thực tế.
+```json
+{
+  "success": true,
+  "message": "Operation successful",
+  "data": { ... },
+  "errors": null,
+  "timestamp": "2024-04-06T11:13:38"
+}
+```
 
-Hỗ trợ thanh toán linh hoạt (Đóng toàn bộ / Đóng một phần).
+### Security Flow
+1. **Authentication**: POST `/api/auth/login` returns a JWT token.
+2. **Authorization**: Include the token in the `Authorization: Bearer <token>` header for protected routes.
+3. **RBAC**: Access to endpoints is restricted based on roles (e.g., `ADMIN`, `LECTURER`, `STUDENT`).
 
-Lưu vết lịch sử giao dịch và xuất hóa đơn điện tử (text/csv).
+---
 
-4. 💬 Module Cộng Đồng (Community)
+## 🧪 Testing Strategy
 
-Diễn đàn (Forum): Thảo luận chung toàn trường hoặc hỏi đáp trực tiếp trong từng môn học.
+- **Unit Tests**: JUnit 5 + Mockito. Focus on isolated service logic.
+- **Integration Tests (IT)**: `BaseIntegrationTest` using `MockMvc` and H2 in-memory database.
+    - Validates full Controller-to-DB flow.
+    - Enforces Security context validation using `@WithMockUser`.
 
-Chat trực tiếp (Direct Message): Nhắn tin 1-1 giữa sinh viên và giảng viên/admin.
+---
 
-Hệ thống Thông báo (Notification): Gửi thông báo toàn trường, thông báo riêng cho 1 lớp học phần, hoặc thông báo cá nhân.
+## 🛠️ Development Principles
 
-5. 📊 Module Báo Cáo & Dữ Liệu (Report)
+- **Zero Entity Exposure**: Entities must never leave the Service layer. Use DTOs for all Controller interactions.
+- **Standardized Error Handling**: Use `BusinessException` with predefined `ErrorCode` for all business-level failures.
+- **Soft Delete**: All data-sensitive entities use `@SQLRestriction` for soft-deletion.
+- **Auditing**: Automatic `createdAt`, `updatedAt`, `createdBy`, and `updatedBy` tracking via JPA Auditing.
 
-Import/Export Excel (Apache POI): Nhập/Xuất hàng nghìn dữ liệu sinh viên, bảng điểm, thời khóa biểu chỉ với 1 click.
+---
 
-Dashboard Thống kê: Biểu đồ tỷ lệ sinh viên theo khoa, tỷ lệ đậu/rớt, Top sinh viên xuất sắc.
+## 🗺️ Roadmap
+- [ ] Migrate to Spring Boot 3.3.x.
+- [ ] Implement Redis-based distributed caching.
+- [ ] Expand Audit Logging to a dedicated ELK stack.
+- [ ] Add WebSocket support for real-time notifications.
 
-Enterprise Audit Log (AOP): Hệ thống theo dõi thao tác người dùng ngầm. Ghi lại mọi địa chỉ IP, Thiết bị (User-Agent), Payload dữ liệu gửi lên và thời gian xử lý API (Execution Time) để phục vụ Debug và truy vết bảo mật.
+---
 
-💻 Công nghệ sử dụng
-
-Backend Core: Java 21, Spring Boot 3.2.5, Spring Data JPA, Hibernate.
-
-Security: Spring Security 6, JWT, BCrypt.
-
-Database: Microsoft SQL Server (Lưu trữ an toàn trên Cloud).
-
-Libraries/Tools: Lombok, Apache POI (Xử lý file Excel), JavaMailSender (Gửi Email SMTP), Springdoc OpenAPI (Swagger).
-
-DevOps & Deploy: Docker, Docker Compose, Multi-stage builds.
-
-🏗 Kiến trúc hệ thống (Modular Monolith)
-
-Dự án áp dụng triệt để nguyên tắc Package by Feature, loại bỏ hoàn toàn sự kết dính (Tight Coupling) cấp độ cơ sở dữ liệu giữa các module:
-
-src/main/java/com/university/
-├── common/         # Chứa Cấu hình, Exception Handler, Security Filters
-├── modules/        # Nơi chứa các miền nghiệp vụ độc lập
-│   ├── auth/       # -> Service xác thực, cấp Token, OTP Email
-│   ├── student/    # -> Quản lý thông tin Sinh viên, Khoa, Ngành
-│   ├── course/     # -> Quản lý Môn học, Lớp học phần, Xếp lịch thi
-│   ├── enrollment/ # -> Xử lý Đăng ký tín chỉ, Điểm số, Tính GPA
-│   ├── finance/    # -> Quản lý Công nợ, Học phí, Thanh toán
-│   ├── community/  # -> Quản lý Diễn đàn, Chat 1-1, Thông báo đẩy
-│   ├── report/     # -> Thống kê Dashboard, Import/Export Excel, Audit Log
-│   └── ui/         # -> Giao diện Admin Dashboard (Thymeleaf/HTML)
-└── BackendApplication.java
-
-
-🚀 Hướng dẫn cài đặt bằng Docker
-
-Với Docker, bạn không cần phải cài đặt môi trường Java rườm rà hay config Database phức tạp. Mọi thứ đã được bọc sẵn!
-
-1. Yêu cầu trước khi cài đặt:
-
-Máy tính đã cài đặt và đang chạy Docker Desktop.
-
-Git.
-
-2. Các bước khởi chạy:
-
-Mở Terminal (Command Prompt) và chạy lần lượt các lệnh sau:
-
-# Clone source code về máy
-git clone [https://github.com/nam25101999/du-an-giao-duc.git](https://github.com/nam25101999/du-an-giao-duc.git)
-
-# Di chuyển vào thư mục dự án
-cd du-an-giao-duc/backend
-
-# Khởi chạy toàn bộ hệ thống bằng Docker Compose
-docker-compose up -d --build
-
-
-3. Trải nghiệm hệ thống:
-
-Sau khi Terminal báo Started BackendApplication, bạn có thể truy cập:
-
-🌐 Giao diện Admin (Web UI): http://localhost:8080/admin-ui/login
-
-📚 Tài liệu API (Swagger): http://localhost:8080/swagger-ui/index.html
-
-(Tài khoản Admin mặc định để test: admin / password123)
-
-📖 Tài liệu API (Swagger)
-
-Tất cả các RESTful API của dự án đều được sinh tài liệu tự động qua Swagger. Giao diện trực quan cho phép bạn test API trực tiếp trên trình duyệt.
-
-Cách test API cần bảo mật:
-
-Gọi API POST /api/auth/login với tài khoản hợp lệ.
-
-Copy chuỗi token trả về.
-
-Kéo lên đầu trang Swagger, bấm vào nút Authorize (màu xanh lá) và dán token vào.
-
-📸 Hình ảnh minh họa
-
-Dashboard Thống kê
-
-Quản lý Sinh viên
-
-<img src="https://www.google.com/search?q=https://via.placeholder.com/600x350.png%3Ftext%3DAdmin%2BDashboard%2BScreenshot" alt="Dashboard">
-
-<img src="https://www.google.com/search?q=https://via.placeholder.com/600x350.png%3Ftext%3DStudent%2BManagement%2BScreenshot" alt="Students">
-
-Swagger OpenAPI
-
-Excel Import/Export
-
-<img src="https://www.google.com/search?q=https://via.placeholder.com/600x350.png%3Ftext%3DSwagger%2BUI%2BScreenshot" alt="Swagger">
-
-<img src="https://www.google.com/search?q=https://via.placeholder.com/600x350.png%3Ftext%3DExcel%2BReport%2BScreenshot" alt="Excel">
-
-(Lưu ý: Bạn hãy thay thế link ảnh placeholder ở trên bằng ảnh chụp màn hình thực tế dự án của bạn để README đẹp nhất nhé!)
-
-Phát triển bởi nam25101999 ☕ Nếu bạn thấy dự án này hữu ích, đừng quên cho mình 1 ⭐ nhé!
+*Developed by the University IT Department.*

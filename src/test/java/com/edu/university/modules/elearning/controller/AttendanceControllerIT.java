@@ -40,7 +40,7 @@ public class AttendanceControllerIT extends BaseIntegrationTest {
         attendanceRepository.deleteAll();
         
         courseSection = new CourseSection();
-        courseSection.setSectionCode("CS001");
+        courseSection.setClassCode("CS001");
         courseSection = courseSectionRepository.save(courseSection);
 
         student = new Student();

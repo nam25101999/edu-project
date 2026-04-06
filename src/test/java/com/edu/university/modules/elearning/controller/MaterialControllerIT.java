@@ -31,7 +31,7 @@ public class MaterialControllerIT extends BaseIntegrationTest {
     void setUp() {
         materialRepository.deleteAll();
         courseSection = new CourseSection();
-        courseSection.setSectionCode("CS_MAT_001");
+        courseSection.setClassCode("CS_MAT_001");
         courseSection = courseSectionRepository.save(courseSection);
     }
 

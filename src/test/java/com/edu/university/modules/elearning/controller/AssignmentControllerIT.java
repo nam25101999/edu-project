@@ -1,6 +1,8 @@
 package com.edu.university.modules.elearning.controller;
 
 import com.edu.university.BaseIntegrationTest;
+import com.edu.university.modules.academic.entity.CourseSection;
+import com.edu.university.modules.academic.repository.CourseSectionRepository;
 import com.edu.university.modules.elearning.dto.request.AssignmentRequest;
 import com.edu.university.modules.elearning.entity.Assignment;
 import com.edu.university.modules.elearning.repository.AssignmentRepository;
@@ -21,14 +23,22 @@ public class AssignmentControllerIT extends BaseIntegrationTest {
     @Autowired
     private AssignmentRepository assignmentRepository;
 
+    @Autowired
+    private CourseSectionRepository courseSectionRepository;
+
     private Assignment assignment;
-    private final UUID courseSectionId = UUID.randomUUID();
+    private CourseSection courseSection;
 
     @BeforeEach
     void setUp() {
         assignmentRepository.deleteAll();
+        
+        courseSection = new CourseSection();
+        courseSection.setClassCode("CS_ASSIGN_001");
+        courseSection = courseSectionRepository.save(courseSection);
+
         assignment = new Assignment();
-        assignment.setCourseSectionId(courseSectionId);
+        assignment.setCourseSection(courseSection);
         assignment.setTitle("Bài tập mẫu");
         assignment.setDescription("Mô tả bài tập mẫu");
         assignment.setDueDate(LocalDateTime.now().plusDays(7));
@@ -40,7 +50,7 @@ public class AssignmentControllerIT extends BaseIntegrationTest {
     @WithMockUser(roles = "LECTURER")
     void createAssignment_Success() throws Exception {
         AssignmentRequest request = new AssignmentRequest();
-        request.setCourseSectionId(courseSectionId);
+        request.setCourseSectionId(courseSection.getId());
         request.setTitle("Bài tập mới");
         request.setDescription("Mô tả bài tập mới");
         request.setDueDate(LocalDateTime.now().plusDays(5));
@@ -57,7 +67,7 @@ public class AssignmentControllerIT extends BaseIntegrationTest {
     @Test
     @WithMockUser(roles = "STUDENT")
     void getAssignmentsByCourseSection_Success() throws Exception {
-        mockMvc.perform(get("/api/assignments/course-section/{id}", courseSectionId))
+        mockMvc.perform(get("/api/assignments/course-section/{id}", courseSection.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].title").value("Bài tập mẫu"));

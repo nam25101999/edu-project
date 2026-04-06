@@ -1,6 +1,8 @@
 package com.edu.university.modules.elearning.controller;
 
 import com.edu.university.BaseIntegrationTest;
+import com.edu.university.modules.academic.entity.CourseSection;
+import com.edu.university.modules.academic.repository.CourseSectionRepository;
 import com.edu.university.modules.elearning.dto.request.GradeRequest;
 import com.edu.university.modules.elearning.dto.request.SubmissionRequest;
 import com.edu.university.modules.elearning.entity.Assignment;
@@ -32,17 +34,25 @@ public class SubmissionControllerIT extends BaseIntegrationTest {
     @Autowired
     private StudentRepository studentRepository;
 
+    @Autowired
+    private CourseSectionRepository courseSectionRepository;
+
     private Assignment assignment;
     private Student student;
     private Submission submission;
+    private CourseSection courseSection;
 
     @BeforeEach
     void setUp() {
         submissionRepository.deleteAll();
         assignmentRepository.deleteAll();
 
+        courseSection = new CourseSection();
+        courseSection.setClassCode("CS_SUB_001");
+        courseSection = courseSectionRepository.save(courseSection);
+
         assignment = new Assignment();
-        assignment.setCourseSectionId(UUID.randomUUID());
+        assignment.setCourseSection(courseSection);
         assignment.setTitle("Bài tập lớn");
         assignment.setDueDate(LocalDateTime.now().plusDays(2));
         assignment = assignmentRepository.save(assignment);
