@@ -1,5 +1,6 @@
 package com.edu.university.modules.academic.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDate;
@@ -8,6 +9,7 @@ import java.util.UUID;
 
 @Data
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SemesterResponseDTO {
     private UUID id;
     private String semesterCode;

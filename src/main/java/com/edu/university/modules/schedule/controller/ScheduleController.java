@@ -5,6 +5,8 @@ import com.edu.university.modules.schedule.dto.response.ScheduleResponseDTO;
 import com.edu.university.modules.schedule.service.ScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +27,8 @@ public class ScheduleController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ScheduleResponseDTO>> getAll() {
-        return ResponseEntity.ok(scheduleService.getAll());
+    public ResponseEntity<List<ScheduleResponseDTO>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(scheduleService.getAll(pageable).getContent());
     }
 
     @GetMapping("/{id}")

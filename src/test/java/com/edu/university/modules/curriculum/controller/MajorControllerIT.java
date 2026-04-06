@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -55,8 +56,8 @@ public class MajorControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.code").value("CS_MAJOR"))
-                .andExpect(jsonPath("$.faculty.code").value("IT_FAC"));
+                .andExpect(jsonPath("$.data.code").value("CS_MAJOR"))
+                .andExpect(jsonPath("$.data.facultyName").value("Faculty of IT"));
     }
 
     @Test
@@ -82,7 +83,7 @@ public class MajorControllerIT extends BaseIntegrationTest {
         
         mockMvc.perform(get("/api/majors"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.data.content", hasSize(1)));
     }
 
     @Test
@@ -92,7 +93,7 @@ public class MajorControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/majors/" + m.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("M2"));
+                .andExpect(jsonPath("$.data.code").value("M2"));
     }
 
     @Test
@@ -109,7 +110,7 @@ public class MajorControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Updated Major"));
+                .andExpect(jsonPath("$.data.name").value("Updated Major"));
     }
 
     @Test
@@ -118,7 +119,7 @@ public class MajorControllerIT extends BaseIntegrationTest {
         Major m = majorRepository.save(Major.builder().code("M4").name("Major 4").faculty(testFaculty).isActive(true).build());
 
         mockMvc.perform(delete("/api/majors/" + m.getId()))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         entityManager.flush();
         entityManager.clear();

@@ -1,15 +1,18 @@
 package com.edu.university.modules.curriculum.controller;
 
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.curriculum.dto.request.CoursePrerequisiteRequestDTO;
 import com.edu.university.modules.curriculum.dto.response.CoursePrerequisiteResponseDTO;
 import com.edu.university.modules.curriculum.service.CoursePrerequisiteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -20,23 +23,26 @@ public class CoursePrerequisiteController {
     private final CoursePrerequisiteService coursePrerequisiteService;
 
     @PostMapping
-    public ResponseEntity<CoursePrerequisiteResponseDTO> create(@Valid @RequestBody CoursePrerequisiteRequestDTO requestDTO) {
-        return new ResponseEntity<>(coursePrerequisiteService.create(requestDTO), HttpStatus.CREATED);
+    public ResponseEntity<BaseResponse<CoursePrerequisiteResponseDTO>> create(@Valid @RequestBody CoursePrerequisiteRequestDTO requestDTO) {
+        return new ResponseEntity<>(
+                BaseResponse.created("Tạo môn tiên quyết thành công", coursePrerequisiteService.create(requestDTO)),
+                HttpStatus.CREATED
+        );
     }
 
     @GetMapping
-    public ResponseEntity<List<CoursePrerequisiteResponseDTO>> getAll() {
-        return ResponseEntity.ok(coursePrerequisiteService.getAll());
+    public ResponseEntity<BaseResponse<Page<CoursePrerequisiteResponseDTO>>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.ok(coursePrerequisiteService.getAll(pageable)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CoursePrerequisiteResponseDTO> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(coursePrerequisiteService.getById(id));
+    public ResponseEntity<BaseResponse<CoursePrerequisiteResponseDTO>> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(BaseResponse.ok(coursePrerequisiteService.getById(id)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<Void>> delete(@PathVariable UUID id) {
         coursePrerequisiteService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.ok("Xóa môn tiên quyết thành công", null));
     }
 }

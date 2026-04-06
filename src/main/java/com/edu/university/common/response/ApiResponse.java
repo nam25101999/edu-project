@@ -16,26 +16,26 @@ public record ApiResponse<T>(
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime timestamp
 ) {
-    // 1. HTTP 200 OK (Thành công chung)
+    // 1. HTTP 200 OK (ThÃ nh cÃ´ng chung)
     public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(200, null, "Thành công", data, null, null, null, LocalDateTime.now());
+        return new ApiResponse<>(200, null, "ThÃ nh cÃ´ng", data, null, null, null, LocalDateTime.now());
     }
 
     public static <T> ApiResponse<T> success(String message, T data) {
         return new ApiResponse<>(200, null, message, data, null, null, null, LocalDateTime.now());
     }
 
-    // 2. HTTP 201 CREATED (Tạo mới thành công)
+    // 2. HTTP 201 CREATED (Táº¡o má»›i thÃ nh cÃ´ng)
     public static <T> ApiResponse<T> created(String message, T data) {
         return new ApiResponse<>(201, null, message, data, null, null, null, LocalDateTime.now());
     }
 
-    // 3. Lỗi chung (Không chi tiết)
+    // 3. Lá»—i chung (KhÃ´ng chi tiáº¿t)
     public static <T> ApiResponse<T> error(int code, String errorCode, String message, String path, String traceId) {
         return new ApiResponse<>(code, errorCode, message, null, null, path, traceId, LocalDateTime.now());
     }
 
-    // 4. Lỗi Validation (Có chi tiết)
+    // 4. Lá»—i Validation (CÃ³ chi tiáº¿t)
     public static <T> ApiResponse<T> error(int code, String errorCode, String message, T details, String path, String traceId) {
         return new ApiResponse<>(code, errorCode, message, null, details, path, traceId, LocalDateTime.now());
     }

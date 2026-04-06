@@ -13,17 +13,17 @@ import java.util.UUID;
 public interface OtpTokenRepository extends JpaRepository<OtpToken, UUID> {
 
     /**
-     * Lấy danh sách tất cả các OTP hợp lệ (chưa dùng, chưa hủy, chưa xóa) của User theo loại (Type).
-     * Phục vụ việc thu hồi toàn bộ OTP cũ khi người dùng yêu cầu gửi lại OTP mới.
+     * Láº¥y danh sÃ¡ch táº¥t cáº£ cÃ¡c OTP há»£p lá»‡ (chÆ°a dÃ¹ng, chÆ°a há»§y, chÆ°a xÃ³a) cá»§a User theo loáº¡i (Type).
+     * Phá»¥c vá»¥ viá»‡c thu há»“i toÃ n bá»™ OTP cÅ© khi ngÆ°á»i dÃ¹ng yÃªu cáº§u gá»­i láº¡i OTP má»›i.
      */
     List<OtpToken> findByUserAndOtpTypeAndIsUsedFalseAndIsRevokedFalseAndDeletedAtIsNull(Users user, OtpToken.OtpType type);
 
     /**
-     * Lấy ra mã OTP MỚI NHẤT (dựa vào thời gian tạo) và đang còn hiệu lực của User theo loại (Type).
-     * Phục vụ việc xác thực khi người dùng nhập mã OTP.
+     * Láº¥y ra mÃ£ OTP Má»šI NHáº¤T (dá»±a vÃ o thá»i gian táº¡o) vÃ  Ä‘ang cÃ²n hiá»‡u lá»±c cá»§a User theo loáº¡i (Type).
+     * Phá»¥c vá»¥ viá»‡c xÃ¡c thá»±c khi ngÆ°á»i dÃ¹ng nháº­p mÃ£ OTP.
      */
     Optional<OtpToken> findTopByUserAndOtpTypeAndIsUsedFalseAndIsRevokedFalseAndDeletedAtIsNullOrderByCreatedAtDesc(Users user, OtpToken.OtpType type);
 
-    // Xóa toàn bộ OTP của User (Dùng khi cleanup dọn dẹp data)
+    // XÃ³a toÃ n bá»™ OTP cá»§a User (DÃ¹ng khi cleanup dá»n dáº¹p data)
     void deleteByUser(Users user);
 }

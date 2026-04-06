@@ -13,6 +13,8 @@ public interface StudentClassSectionMapper {
 
     @Mapping(target = "student", ignore = true)
     @Mapping(target = "studentClass", ignore = true)
+    @Mapping(target = "startDate", expression = "java(requestDTO.getStartDate() != null ? requestDTO.getStartDate().atStartOfDay() : null)")
+    @Mapping(target = "endDate", expression = "java(requestDTO.getEndDate() != null ? requestDTO.getEndDate().atStartOfDay() : null)")
     StudentClassSection toEntity(StudentClassSectionRequestDTO requestDTO);
 
     @Mapping(target = "studentId", source = "student.id")
@@ -20,9 +22,13 @@ public interface StudentClassSectionMapper {
     @Mapping(target = "studentName", source = "student.fullName")
     @Mapping(target = "studentClassesId", source = "studentClass.id")
     @Mapping(target = "className", source = "studentClass.className")
+    @Mapping(target = "startDate", expression = "java(entity.getStartDate() != null ? entity.getStartDate().toLocalDate() : null)")
+    @Mapping(target = "endDate", expression = "java(entity.getEndDate() != null ? entity.getEndDate().toLocalDate() : null)")
     StudentClassSectionResponseDTO toResponseDTO(StudentClassSection entity);
 
     @Mapping(target = "student", ignore = true)
     @Mapping(target = "studentClass", ignore = true)
+    @Mapping(target = "startDate", expression = "java(requestDTO.getStartDate() != null ? requestDTO.getStartDate().atStartOfDay() : null)")
+    @Mapping(target = "endDate", expression = "java(requestDTO.getEndDate() != null ? requestDTO.getEndDate().atStartOfDay() : null)")
     void updateEntityFromDTO(StudentClassSectionRequestDTO requestDTO, @MappingTarget StudentClassSection entity);
 }

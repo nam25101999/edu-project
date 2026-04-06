@@ -131,9 +131,9 @@ public class DataSeeder implements CommandLineRunner {
         if (roleRepository.count() > 0)
             return roleRepository.findByName("ADMIN").orElse(null);
         List<Permission> all = permissionRepository.findAll();
-        Role admin = Role.builder().name("ADMIN").description("Full quyền").permissions(new HashSet<>(all)).build();
-        Role lecturer = Role.builder().name("LECTURER").description("Giảng viên").permissions(new HashSet<>()).build();
-        Role student = Role.builder().name("STUDENT").description("Sinh viên").permissions(new HashSet<>()).build();
+        Role admin = Role.builder().name("ADMIN").description("Full quyá»n").permissions(new HashSet<>(all)).build();
+        Role lecturer = Role.builder().name("LECTURER").description("Giáº£ng viÃªn").permissions(new HashSet<>()).build();
+        Role student = Role.builder().name("STUDENT").description("Sinh viÃªn").permissions(new HashSet<>()).build();
         roleRepository.saveAll(List.of(admin, lecturer, student));
         return admin;
     }
@@ -156,10 +156,10 @@ public class DataSeeder implements CommandLineRunner {
         if (departmentRepository.count() > 0)
             return departmentRepository.findAll();
         List<Department> depts = List.of(
-                Department.builder().code("CNTT").name("Công nghệ thông tin").establishedYear(LocalDate.of(2000, 1, 1))
+                Department.builder().code("CNTT").name("CÃ´ng nghá»‡ thÃ´ng tin").establishedYear(LocalDate.of(2000, 1, 1))
                         .build(),
-                Department.builder().code("KTE").name("Kinh tế").establishedYear(LocalDate.of(2005, 5, 20)).build(),
-                Department.builder().code("NNGU").name("Ngoại ngữ").establishedYear(LocalDate.of(2010, 8, 15)).build());
+                Department.builder().code("KTE").name("Kinh táº¿").establishedYear(LocalDate.of(2005, 5, 20)).build(),
+                Department.builder().code("NNGU").name("Ngoáº¡i ngá»¯").establishedYear(LocalDate.of(2010, 8, 15)).build());
         return departmentRepository.saveAll(depts);
     }
 
@@ -167,11 +167,11 @@ public class DataSeeder implements CommandLineRunner {
         if (positionRepository.count() > 0)
             return positionRepository.findAll();
         List<Position> pos = List.of(
-                Position.builder().code("TK").name("Trưởng khoa").level("Management").department(depts.get(0))
+                Position.builder().code("TK").name("TrÆ°á»Ÿng khoa").level("Management").department(depts.get(0))
                         .isActive(true).build(),
-                Position.builder().code("GV").name("Giảng viên").level("Academic").department(depts.get(0))
+                Position.builder().code("GV").name("Giáº£ng viÃªn").level("Academic").department(depts.get(0))
                         .isActive(true).build(),
-                Position.builder().code("NV").name("Nhân viên").level("Staff").department(depts.get(1)).isActive(true)
+                Position.builder().code("NV").name("NhÃ¢n viÃªn").level("Staff").department(depts.get(1)).isActive(true)
                         .build());
         return positionRepository.saveAll(pos);
     }
@@ -180,11 +180,11 @@ public class DataSeeder implements CommandLineRunner {
         if (employeeRepository.count() > 0)
             return;
         List<Employee> emps = List.of(
-                Employee.builder().employeeCode("NV001").fullName("Nguyễn Văn A").email("nva@edu.vn")
+                Employee.builder().employeeCode("NV001").fullName("Nguyá»…n VÄƒn A").email("nva@edu.vn")
                         .phone("0987654321").department(depts.get(0)).position(pos.get(0)).isActive(true).build(),
-                Employee.builder().employeeCode("NV002").fullName("Trần Thị B").email("ttb@edu.vn").phone("0123456789")
+                Employee.builder().employeeCode("NV002").fullName("Tráº§n Thá»‹ B").email("ttb@edu.vn").phone("0123456789")
                         .department(depts.get(0)).position(pos.get(1)).isActive(true).build(),
-                Employee.builder().employeeCode("NV003").fullName("Lê Văn C").email("lvc@edu.vn").phone("0909090909")
+                Employee.builder().employeeCode("NV003").fullName("LÃª VÄƒn C").email("lvc@edu.vn").phone("0909090909")
                         .department(depts.get(1)).position(pos.get(2)).isActive(true).build());
         employeeRepository.saveAll(emps);
     }
@@ -193,9 +193,9 @@ public class DataSeeder implements CommandLineRunner {
         if (academicYearRepository.count() > 0)
             return academicYearRepository.findAll();
         return academicYearRepository.saveAll(List.of(
-                AcademicYear.builder().academicCode("2023-2024").academicName("Năm học 2023-2024")
+                AcademicYear.builder().academicCode("2023-2024").academicName("NÄƒm há»c 2023-2024")
                         .startDate(LocalDate.of(2023, 9, 1)).endDate(LocalDate.of(2024, 8, 31)).build(),
-                AcademicYear.builder().academicCode("2024-2025").academicName("Năm học 2024-2025")
+                AcademicYear.builder().academicCode("2024-2025").academicName("NÄƒm há»c 2024-2025")
                         .startDate(LocalDate.of(2024, 9, 1)).endDate(LocalDate.of(2025, 8, 31)).build()));
     }
 
@@ -203,17 +203,17 @@ public class DataSeeder implements CommandLineRunner {
         if (semesterRepository.count() > 0)
             return;
         semesterRepository.saveAll(List.of(
-                Semester.builder().semesterCode("HK1-23").semesterName("Học kỳ 1").academicYear("2023-2024").build(),
-                Semester.builder().semesterCode("HK2-23").semesterName("Học kỳ 2").academicYear("2023-2024").build()));
+                Semester.builder().semesterCode("HK1-23").semesterName("Há»c ká»³ 1").academicYear("2023-2024").build(),
+                Semester.builder().semesterCode("HK2-23").semesterName("Há»c ká»³ 2").academicYear("2023-2024").build()));
     }
 
     private List<Faculty> seedFaculties() {
         if (facultyRepository.count() > 0)
             return facultyRepository.findAll();
         List<Faculty> faculties = List.of(
-                Faculty.builder().code("CNTT").name("Công nghệ thông tin").establishedYear(LocalDate.of(2000, 1, 1)).build(),
-                Faculty.builder().code("KTE").name("Kinh tế").establishedYear(LocalDate.of(2005, 5, 20)).build(),
-                Faculty.builder().code("NNGU").name("Ngoại ngữ").establishedYear(LocalDate.of(2010, 8, 15)).build()
+                Faculty.builder().code("CNTT").name("CÃ´ng nghá»‡ thÃ´ng tin").establishedYear(LocalDate.of(2000, 1, 1)).build(),
+                Faculty.builder().code("KTE").name("Kinh táº¿").establishedYear(LocalDate.of(2005, 5, 20)).build(),
+                Faculty.builder().code("NNGU").name("Ngoáº¡i ngá»¯").establishedYear(LocalDate.of(2010, 8, 15)).build()
         );
         return facultyRepository.saveAll(faculties);
     }
@@ -225,7 +225,7 @@ public class DataSeeder implements CommandLineRunner {
         List<Major> majors = List.of(
                 Major.builder()
                         .code("CNTT")
-                        .name("Công nghệ thông tin")
+                        .name("CÃ´ng nghá»‡ thÃ´ng tin")
                         .faculty(faculties.get(0))
                         .effectiveDate("2023-09-01")
                         .expiryDate("2033-08-31")
@@ -234,7 +234,7 @@ public class DataSeeder implements CommandLineRunner {
 
                 Major.builder()
                         .code("QTKD")
-                        .name("Quản trị kinh doanh")
+                        .name("Quáº£n trá»‹ kinh doanh")
                         .faculty(faculties.get(1))
                         .effectiveDate("2023-09-01")
                         .expiryDate("2033-08-31")
@@ -248,11 +248,11 @@ public class DataSeeder implements CommandLineRunner {
         if (courseRepository.count() > 0)
             return;
         courseRepository.saveAll(List.of(
-                Course.builder().code("JAVA01").name("Lập trình Java Cơ bản").credits(BigDecimal.valueOf(3))
+                Course.builder().code("JAVA01").name("Láº­p trÃ¬nh Java CÆ¡ báº£n").credits(BigDecimal.valueOf(3))
                         .department(depts.get(0)).isActive(true).build(),
-                Course.builder().code("DB01").name("Cơ sở dữ liệu").credits(BigDecimal.valueOf(3))
+                Course.builder().code("DB01").name("CÆ¡ sá»Ÿ dá»¯ liá»‡u").credits(BigDecimal.valueOf(3))
                         .department(depts.get(0)).isActive(true).build(),
-                Course.builder().code("MKT01").name("Marketing căn bản").credits(BigDecimal.valueOf(2))
+                Course.builder().code("MKT01").name("Marketing cÄƒn báº£n").credits(BigDecimal.valueOf(2))
                         .department(depts.get(1)).isActive(true).build()));
     }
 
@@ -260,9 +260,9 @@ public class DataSeeder implements CommandLineRunner {
         if (trainingProgramRepository.count() > 0)
             return trainingProgramRepository.findAll();
         return trainingProgramRepository.saveAll(List.of(
-                TrainingProgram.builder().programCode("CT-CNTT").programName("Chương trình CNTT Chuẩn")
+                TrainingProgram.builder().programCode("CT-CNTT").programName("ChÆ°Æ¡ng trÃ¬nh CNTT Chuáº©n")
                         .major(majors.get(0)).build(),
-                TrainingProgram.builder().programCode("CT-QTKD").programName("Chương trình QTKD CLC")
+                TrainingProgram.builder().programCode("CT-QTKD").programName("ChÆ°Æ¡ng trÃ¬nh QTKD CLC")
                         .major(majors.get(1)).build()));
     }
 
@@ -283,7 +283,7 @@ public class DataSeeder implements CommandLineRunner {
                 .build();
         userRepository.save(user1);
 
-        Student s1 = Student.builder().studentCode("SV001").fullName("Nguyễn Hoàng Nam").gender("1")
+        Student s1 = Student.builder().studentCode("SV001").fullName("Nguyá»…n HoÃ ng Nam").gender("1")
                 .user(user1)
                 .academicYear(years.get(0)).department(depts.get(0)).major(majors.get(0))
                 .trainingProgram(programs.get(0)).status("STUDYING").isActive(true).build();
@@ -298,7 +298,7 @@ public class DataSeeder implements CommandLineRunner {
                 .build();
         userRepository.save(user2);
 
-        Student s2 = Student.builder().studentCode("SV002").fullName("Phạm Minh Hằng").gender("2").academicYear(years.get(0))
+        Student s2 = Student.builder().studentCode("SV002").fullName("Pháº¡m Minh Háº±ng").gender("2").academicYear(years.get(0))
                 .user(user2)
                 .department(depts.get(0)).major(majors.get(0)).trainingProgram(programs.get(0))
                 .status("STUDYING").isActive(true).build();
@@ -336,13 +336,13 @@ public class DataSeeder implements CommandLineRunner {
     private void seedSchedules(List<CourseSection> sections) {
         if (scheduleRepository.count() > 0) return;
 
-        Building b1 = buildingRepository.save(Building.builder().buildingCode("A2").buildingName("Tòa nhà A2").build());
-        Room r1 = roomRepository.save(Room.builder().roomCode("A2-502").roomName("Phòng 502").building(b1).build());
+        Building b1 = buildingRepository.save(Building.builder().buildingCode("A2").buildingName("TÃ²a nhÃ  A2").build());
+        Room r1 = roomRepository.save(Room.builder().roomCode("A2-502").roomName("PhÃ²ng 502").building(b1).build());
 
         Schedule sch1 = Schedule.builder()
                 .courseSection(sections.get(0))
                 .room(r1)
-                .dayOfWeek(2) // Thứ 2
+                .dayOfWeek(2) // Thá»© 2
                 .startPeriod(1)
                 .endPeriod(4)
                 .shift("MORNING")
@@ -351,7 +351,7 @@ public class DataSeeder implements CommandLineRunner {
         Schedule sch2 = Schedule.builder()
                 .courseSection(sections.get(1))
                 .room(r1)
-                .dayOfWeek(4) // Thứ 4
+                .dayOfWeek(4) // Thá»© 4
                 .startPeriod(5)
                 .endPeriod(8)
                 .shift("AFTERNOON")

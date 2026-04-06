@@ -1,7 +1,7 @@
 package com.edu.university.modules.hr.controller;
 
-import com.edu.university.BackendApplication;
 import com.edu.university.BaseIntegrationTest;
+import com.edu.university.builders.DepartmentBuilder;
 import com.edu.university.modules.hr.dto.request.PositionRequestDTO;
 import com.edu.university.modules.hr.entity.Department;
 import com.edu.university.modules.hr.entity.Position;
@@ -13,11 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import java.util.UUID;
-
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class PositionControllerIT extends BaseIntegrationTest {
 
@@ -34,10 +33,9 @@ public class PositionControllerIT extends BaseIntegrationTest {
         positionRepository.deleteAll();
         departmentRepository.deleteAll();
         
-        testDept = departmentRepository.save(Department.builder()
-                .code("DEPT_01")
-                .name("Department 01")
-                .isActive(true)
+        testDept = departmentRepository.save(DepartmentBuilder.aDepartment()
+                .withCode("DEPT_01")
+                .withName("Department 01")
                 .build());
     }
 
@@ -53,8 +51,9 @@ public class PositionControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.code").value("POS_01"))
-                .andExpect(jsonPath("$.department.code").value("DEPT_01"));
+                .andExpect(jsonPath("$.code").value(201))
+                .andExpect(jsonPath("$.data.code").value("POS_01"))
+                .andExpect(jsonPath("$.data.departmentId").value(testDept.getId().toString()));
     }
 
     @Test
@@ -75,12 +74,13 @@ public class PositionControllerIT extends BaseIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void getAllPositions_ShouldReturnList() throws Exception {
+    void getAllPositions_ShouldReturnPaginated() throws Exception {
         positionRepository.save(Position.builder().code("P1").name("Pos 1").department(testDept).isActive(true).build());
         
         mockMvc.perform(get("/api/positions"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.content.length()").value(1));
     }
 
     @Test
@@ -90,7 +90,8 @@ public class PositionControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/positions/" + p.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("P2"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.code").value("P2"));
     }
 
     @Test
@@ -100,7 +101,8 @@ public class PositionControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/positions/code/P3"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Pos 3"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.name").value("Pos 3"));
     }
 
     @Test
@@ -117,16 +119,18 @@ public class PositionControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Updated Pos"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.name").value("Updated Pos"));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void deletePosition_ShouldReturn204_AndSoftDelete() throws Exception {
+    void deletePosition_ShouldReturn200_AndSoftDelete() throws Exception {
         Position p = positionRepository.save(Position.builder().code("P5").name("Pos 5").department(testDept).isActive(true).build());
 
         mockMvc.perform(delete("/api/positions/" + p.getId()))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
 
         entityManager.flush();
         entityManager.clear();

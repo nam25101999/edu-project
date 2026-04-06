@@ -20,6 +20,7 @@ public interface CourseRegistrationMapper {
     @Mapping(target = "studentCode", source = "student.studentCode")
     @Mapping(target = "courseSectionId", source = "courseSection.id")
     @Mapping(target = "classCode", source = "courseSection.classCode")
+    @Mapping(target = "courseCode", source = "courseSection.course.code")
     @Mapping(target = "courseName", source = "courseSection.course.name")
     @Mapping(target = "registrationPeriodId", source = "registrationPeriod.id")
     @Mapping(target = "registrationPeriodName", source = "registrationPeriod.name")
@@ -28,5 +29,6 @@ public interface CourseRegistrationMapper {
     @Mapping(target = "student", ignore = true)
     @Mapping(target = "courseSection", ignore = true)
     @Mapping(target = "registrationPeriod", ignore = true)
-    void updateEntityFromDTO(CourseRegistrationRequestDTO requestDTO, @MappingTarget CourseRegistration courseRegistration);
+    void updateEntityFromDTO(CourseRegistrationRequestDTO requestDTO,
+            @MappingTarget CourseRegistration courseRegistration);
 }

@@ -12,7 +12,6 @@ public class StudentRequestDTO {
     @NotBlank(message = "Mã sinh viên không được để trống")
     private String studentCode;
 
-    @NotNull(message = "User ID không được để trống")
     private UUID userId;
 
     private UUID departmentId; // Khoa

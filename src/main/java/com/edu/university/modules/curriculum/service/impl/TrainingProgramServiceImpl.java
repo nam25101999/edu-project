@@ -13,13 +13,12 @@ import com.edu.university.modules.curriculum.service.TrainingProgramService;
 import com.edu.university.modules.hr.entity.Department;
 import com.edu.university.modules.hr.repository.DepartmentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,68 +33,73 @@ public class TrainingProgramServiceImpl implements TrainingProgramService {
     @Transactional
     public TrainingProgramResponseDTO create(TrainingProgramRequestDTO requestDTO) {
         if (trainingProgramRepository.existsByProgramCode(requestDTO.getProgramCode())) {
-            throw new BusinessException(ErrorCode.ALREADY_EXISTS, "Mã chương trình đào tạo đã tồn tại");
+            throw new BusinessException(ErrorCode.TRAINING_PROGRAM_CODE_EXISTS);
         }
-        TrainingProgram trainingProgram = trainingProgramMapper.toEntity(requestDTO);
+        
+        Major major = null;
         if (requestDTO.getMajorId() != null) {
-            Major major = majorRepository.findById(requestDTO.getMajorId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy ngành"));
-            trainingProgram.setMajor(major);
+            major = majorRepository.findById(requestDTO.getMajorId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MAJOR_NOT_FOUND));
         }
+
+        Department department = null;
         if (requestDTO.getDepartmentId() != null) {
-            Department department = departmentRepository.findById(requestDTO.getDepartmentId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy khoa"));
-            trainingProgram.setDepartment(department);
+            department = departmentRepository.findById(requestDTO.getDepartmentId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FACULTY_NOT_FOUND)); // Or DEPARTMENT_NOT_FOUND if exists
         }
-        trainingProgram.setActive(true);
-        trainingProgram.setCreatedAt(LocalDateTime.now());
-        return trainingProgramMapper.toResponseDTO(trainingProgramRepository.save(trainingProgram));
+
+        TrainingProgram tp = trainingProgramMapper.toEntity(requestDTO);
+        tp.setMajor(major);
+        tp.setDepartment(department);
+        tp.setActive(true);
+        
+        return trainingProgramMapper.toResponseDTO(trainingProgramRepository.save(tp));
     }
 
     @Override
-    public List<TrainingProgramResponseDTO> getAll() {
-        return trainingProgramRepository.findAll().stream()
-                .map(trainingProgramMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<TrainingProgramResponseDTO> getAll(Pageable pageable) {
+        return trainingProgramRepository.findAll(pageable)
+                .map(trainingProgramMapper::toResponseDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TrainingProgramResponseDTO getById(UUID id) {
-        TrainingProgram trainingProgram = trainingProgramRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy chương trình đào tạo"));
-        return trainingProgramMapper.toResponseDTO(trainingProgram);
+        TrainingProgram tp = trainingProgramRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TRAINING_PROGRAM_NOT_FOUND));
+        return trainingProgramMapper.toResponseDTO(tp);
     }
 
     @Override
     @Transactional
     public TrainingProgramResponseDTO update(UUID id, TrainingProgramRequestDTO requestDTO) {
-        TrainingProgram trainingProgram = trainingProgramRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy chương trình đào tạo"));
-        trainingProgramMapper.updateEntityFromDTO(requestDTO, trainingProgram);
+        TrainingProgram tp = trainingProgramRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TRAINING_PROGRAM_NOT_FOUND));
+        
+        trainingProgramMapper.updateEntityFromDTO(requestDTO, tp);
+        
         if (requestDTO.getMajorId() != null) {
             Major major = majorRepository.findById(requestDTO.getMajorId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy ngành"));
-            trainingProgram.setMajor(major);
-        } else {
-            trainingProgram.setMajor(null);
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MAJOR_NOT_FOUND));
+            tp.setMajor(major);
         }
+        
         if (requestDTO.getDepartmentId() != null) {
             Department department = departmentRepository.findById(requestDTO.getDepartmentId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy khoa"));
-            trainingProgram.setDepartment(department);
-        } else {
-            trainingProgram.setDepartment(null);
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FACULTY_NOT_FOUND));
+            tp.setDepartment(department);
         }
-        trainingProgram.setUpdatedAt(LocalDateTime.now());
-        return trainingProgramMapper.toResponseDTO(trainingProgramRepository.save(trainingProgram));
+        
+        return trainingProgramMapper.toResponseDTO(trainingProgramRepository.save(tp));
     }
 
     @Override
     @Transactional
     public void delete(UUID id) {
-        TrainingProgram trainingProgram = trainingProgramRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy chương trình đào tạo"));
-        trainingProgram.softDelete("system");
-        trainingProgramRepository.save(trainingProgram);
+        TrainingProgram tp = trainingProgramRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TRAINING_PROGRAM_NOT_FOUND));
+        tp.softDelete("system");
+        trainingProgramRepository.save(tp);
     }
 }

@@ -1,15 +1,18 @@
 package com.edu.university.modules.student.controller;
 
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.student.dto.request.StudentStatusRequestDTO;
 import com.edu.university.modules.student.dto.response.StudentStatusResponseDTO;
 import com.edu.university.modules.student.service.StudentStatusService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -19,37 +22,37 @@ public class StudentStatusController {
 
     private final StudentStatusService statusService;
 
-    // 1. Thêm trạng thái mới cho sinh viên
     @PostMapping
-    public ResponseEntity<StudentStatusResponseDTO> createStatus(
+    public ResponseEntity<BaseResponse<StudentStatusResponseDTO>> createStatus(
             @Valid @RequestBody StudentStatusRequestDTO requestDTO) {
-        return new ResponseEntity<>(statusService.createStatus(requestDTO), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                BaseResponse.created("Thêm trạng thái thành công", statusService.createStatus(requestDTO)),
+                HttpStatus.CREATED
+        );
     }
 
-    // 2. Lấy tất cả trạng thái
     @GetMapping
-    public ResponseEntity<List<StudentStatusResponseDTO>> getAll() {
-        return ResponseEntity.ok(statusService.getAll());
+    public ResponseEntity<BaseResponse<Page<StudentStatusResponseDTO>>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.ok(statusService.getAll(pageable)));
     }
 
-    // 3. Lấy trạng thái sinh viên
     @GetMapping("/student/{studentId}")
-    public ResponseEntity<List<StudentStatusResponseDTO>> getByStudentId(@PathVariable UUID studentId) {
-        return ResponseEntity.ok(statusService.getByStudentId(studentId));
+    public ResponseEntity<BaseResponse<Page<StudentStatusResponseDTO>>> getByStudentId(
+            @PathVariable UUID studentId,
+            @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.ok(statusService.getByStudentId(studentId, pageable)));
     }
 
-    // 4. Cập nhật trạng thái
     @PutMapping("/{id}")
-    public ResponseEntity<StudentStatusResponseDTO> updateStatus(
+    public ResponseEntity<BaseResponse<StudentStatusResponseDTO>> updateStatus(
             @PathVariable UUID id,
             @Valid @RequestBody StudentStatusRequestDTO requestDTO) {
-        return ResponseEntity.ok(statusService.updateStatus(id, requestDTO));
+        return ResponseEntity.ok(BaseResponse.ok("Cập nhật trạng thái thành công", statusService.updateStatus(id, requestDTO)));
     }
 
-    // 5. Xóa mềm trạng thái
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteStatus(@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<Void>> deleteStatus(@PathVariable UUID id) {
         statusService.deleteStatus(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.ok("Xóa trạng thái thành công", null));
     }
 }

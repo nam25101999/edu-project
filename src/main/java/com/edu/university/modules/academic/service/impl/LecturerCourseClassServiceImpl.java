@@ -13,16 +13,17 @@ import com.edu.university.modules.academic.service.LecturerCourseClassService;
 import com.edu.university.modules.auth.entity.Users;
 import com.edu.university.modules.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LecturerCourseClassServiceImpl implements LecturerCourseClassService {
 
     private final LecturerCourseClassRepository lecturerCourseClassRepository;
@@ -33,40 +34,44 @@ public class LecturerCourseClassServiceImpl implements LecturerCourseClassServic
     @Override
     @Transactional
     public LecturerCourseClassResponseDTO create(LecturerCourseClassRequestDTO requestDTO) {
-        LecturerCourseClass lecturerCourseClass = lecturerCourseClassMapper.toEntity(requestDTO);
+        log.info("Assigning lecturer {} to course section {}", requestDTO.getLecturerId(), requestDTO.getCourseSectionId());
         
         Users lecturer = userRepository.findById(requestDTO.getLecturerId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy giảng viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy giảng viên"));
         CourseSection courseSection = courseSectionRepository.findById(requestDTO.getCourseSectionId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học phần"));
-        
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLASS_SECTION_NOT_FOUND));
+
+        LecturerCourseClass lecturerCourseClass = lecturerCourseClassMapper.toEntity(requestDTO);
         lecturerCourseClass.setLecturer(lecturer);
         lecturerCourseClass.setCourseSection(courseSection);
         lecturerCourseClass.setActive(true);
-        lecturerCourseClass.setCreatedAt(LocalDateTime.now());
         
         return lecturerCourseClassMapper.toResponseDTO(lecturerCourseClassRepository.save(lecturerCourseClass));
     }
 
     @Override
-    public List<LecturerCourseClassResponseDTO> getAll() {
-        return lecturerCourseClassRepository.findAll().stream()
-                .map(lecturerCourseClassMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<LecturerCourseClassResponseDTO> getAll(Pageable pageable) {
+        log.info("Getting all lecturer course class assignments with pagination: {}", pageable);
+        return lecturerCourseClassRepository.findAll(pageable)
+                .map(lecturerCourseClassMapper::toResponseDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public LecturerCourseClassResponseDTO getById(UUID id) {
+        log.info("Getting lecturer course class assignment by id: {}", id);
         LecturerCourseClass lecturerCourseClass = lecturerCourseClassRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy phân công giảng viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ASSIGNMENT_NOT_FOUND));
         return lecturerCourseClassMapper.toResponseDTO(lecturerCourseClass);
     }
 
     @Override
     @Transactional
     public void delete(UUID id) {
+        log.info("Deleting lecturer course class assignment by id: {}", id);
         LecturerCourseClass lecturerCourseClass = lecturerCourseClassRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy phân công giảng viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ASSIGNMENT_NOT_FOUND));
         lecturerCourseClass.softDelete("system");
         lecturerCourseClassRepository.save(lecturerCourseClass);
     }

@@ -15,7 +15,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,8 +55,9 @@ public class EmployeeControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.employeeCode").value("EMP001"))
-                .andExpect(jsonPath("$.fullName").value("Nguyễn Văn Employee"));
+                .andExpect(jsonPath("$.code").value(201))
+                .andExpect(jsonPath("$.data.employeeCode").value("EMP001"))
+                .andExpect(jsonPath("$.data.fullName").value("Nguyễn Văn Employee"));
     }
 
     @Test
@@ -72,8 +72,9 @@ public class EmployeeControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/employees"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].employeeCode").value("EMP001"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].employeeCode").value("EMP001"));
     }
 
     @Test
@@ -89,7 +90,8 @@ public class EmployeeControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/employees/" + id))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.employeeCode").value("EMP001"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.employeeCode").value("EMP001"));
     }
 
     @Test
@@ -104,7 +106,8 @@ public class EmployeeControllerIT extends BaseIntegrationTest {
         UUID id = emp.getId();
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/employees/" + id))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
 
         entityManager.flush();
         entityManager.clear();

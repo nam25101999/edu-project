@@ -1,5 +1,6 @@
 package com.edu.university.modules.curriculum.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 import java.math.BigDecimal;
@@ -9,6 +10,7 @@ import java.util.UUID;
 
 @Data
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TrainingProgramResponseDTO {
     private UUID id;
     private String programCode;

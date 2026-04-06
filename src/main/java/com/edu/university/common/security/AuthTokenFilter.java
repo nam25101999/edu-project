@@ -27,8 +27,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        // 🔥 BỎ QUA JWT cho UI + login
-        if (path.startsWith("/admin-ui") || path.equals("/login")) {
+        // 🔥 CHẶN TẤT CẢ - YÊU CẦU JWT CHO MỌI API BẢO MẬT
+        if (path.startsWith("/api/auth") || path.equals("/login")) {
             filterChain.doFilter(request, response);
             return;
         }

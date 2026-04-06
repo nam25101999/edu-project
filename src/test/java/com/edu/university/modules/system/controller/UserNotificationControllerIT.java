@@ -2,6 +2,7 @@ package com.edu.university.modules.system.controller;
 
 import com.edu.university.BackendApplication;
 import com.edu.university.BaseIntegrationTest;
+import com.edu.university.builders.UsersBuilder;
 import com.edu.university.modules.auth.entity.Users;
 import com.edu.university.modules.auth.repository.UserRepository;
 import com.edu.university.modules.system.dto.request.UserNotificationRequestDTO;
@@ -39,10 +40,8 @@ public class UserNotificationControllerIT extends BaseIntegrationTest {
     void setUp() {
         userNotificationRepository.deleteAll();
         
-        testUser = userRepository.save(Users.builder()
-                .username("testuser_" + UUID.randomUUID())
-                .password("password")
-                .isActive(true)
+        testUser = userRepository.save(UsersBuilder.aUser()
+                .withUsername("testuser_" + UUID.randomUUID())
                 .build());
                 
         testNotification = notificationRepository.save(Notification.builder()
@@ -63,8 +62,8 @@ public class UserNotificationControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.user.username").value(testUser.getUsername()))
-                .andExpect(jsonPath("$.notification.title").value("System Alert"));
+                .andExpect(jsonPath("$.userId").value(testUser.getId().toString()))
+                .andExpect(jsonPath("$.notificationTitle").value("System Alert"));
     }
 
     @Test
@@ -81,7 +80,7 @@ public class UserNotificationControllerIT extends BaseIntegrationTest {
         mockMvc.perform(get("/api/user-notifications/user/" + testUser.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].isRead").value(false));
+                .andExpect(jsonPath("$[0].read").value(false));
     }
 
     @Test

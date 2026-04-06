@@ -23,6 +23,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.edu.university.modules.auth.repository.RoleRepository;
+import com.edu.university.modules.auth.mapper.AuthMapper;
+import com.edu.university.modules.auth.dto.UserResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,6 +44,7 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
     private final HttpServletRequest httpRequest;
+    private final AuthMapper authMapper;
 
     // ================= LOGIN =================
     @Transactional
@@ -49,26 +54,26 @@ public class AuthService {
         Users user = userRepository.findByIdentifier(request.identifier())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 1. Chống Brute Force: Kiểm tra xem tài khoản có đang bị khóa không
+        // 1. Chá»‘ng Brute Force: Kiá»ƒm tra xem tÃ i khoáº£n cÃ³ Ä‘ang bá»‹ khÃ³a khÃ´ng
         if (user.getLockUntil() != null && user.getLockUntil().isAfter(LocalDateTime.now())) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "Tài khoản đang bị khóa tạm thời do nhập sai quá nhiều lần. Vui lòng thử lại sau.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "TÃ i khoáº£n Ä‘ang bá»‹ khÃ³a táº¡m thá»i do nháº­p sai quÃ¡ nhiá»u láº§n. Vui lÃ²ng thá»­ láº¡i sau.");
         }
 
         Authentication authentication;
         try {
-            // 2. Xác thực Spring Security
+            // 2. XÃ¡c thá»±c Spring Security
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getUsername(), request.password())
             );
         } catch (BadCredentialsException e) {
             handleFailedLogin(user);
-            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Tài khoản hoặc mật khẩu không chính xác.");
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "TÃ i khoáº£n hoáº·c máº­t kháº©u khÃ´ng chÃ­nh xÃ¡c.");
         }
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        // 3. Reset bộ đếm lỗi & Cập nhật Last Login
+        // 3. Reset bá»™ Ä‘áº¿m lá»—i & Cáº­p nháº­t Last Login
         user.setLastLoginAt(LocalDateTime.now());
         user.setFailedLoginAttempts(0);
         user.setLockUntil(null);
@@ -76,30 +81,30 @@ public class AuthService {
         user.setLastLoginUserAgent(getUserAgent());
         userRepository.save(user);
 
-        // 4. Sinh Tokens (Quản lý thiết bị qua TokenService)
+        // 4. Sinh Tokens (Quáº£n lÃ½ thiáº¿t bá»‹ qua TokenService)
         String accessToken = jwtUtils.generateJwtToken(authentication);
 
-        // Cấp Refresh Token mới (Sinh ra 1 Family ID mới cho thiết bị này)
+        // Cáº¥p Refresh Token má»›i (Sinh ra 1 Family ID má»›i cho thiáº¿t bá»‹ nÃ y)
         RefreshToken refreshToken = tokenService.createRefreshToken(user, getClientIp(), getUserAgent(), UUID.randomUUID().toString());
 
-        // Lấy danh sách tất cả các Role của User thay vì chỉ lấy 1
+        // Láº¥y danh sÃ¡ch táº¥t cáº£ cÃ¡c Role cá»§a User thay vÃ¬ chá»‰ láº¥y 1
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(item -> item.getAuthority())
                 .toList();
 
-        // Khởi tạo object UserInfo
+        // Khá»Ÿi táº¡o object UserInfo
         AuthDtos.JwtResponse.UserInfo userInfo = new AuthDtos.JwtResponse.UserInfo(
                 userDetails.getId(),
                 userDetails.getUsername(),
                 roles
         );
 
-        // Trả về cấu trúc JSON chuẩn
+        // Tráº£ vá» cáº¥u trÃºc JSON chuáº©n
         return new JwtResponse(
                 accessToken,
                 refreshToken.getTokenPlain(),
                 "Bearer",
-                3600L, // Thời gian hết hạn tính bằng giây (3600s = 1 giờ)
+                3600L, // Thá»i gian háº¿t háº¡n tÃ­nh báº±ng giÃ¢y (3600s = 1 giá»)
                 userInfo
         );
     }
@@ -108,7 +113,7 @@ public class AuthService {
     // ================= REGISTER =================
     @Transactional
     @LogAction(action = "SIGNUP", entityName = "USER")
-    public Users registerUser(SignupRequest request) {
+    public UserResponseDTO registerUser(SignupRequest request) {
 
         if (userRepository.existsByUsername(request.username())) {
             throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS);
@@ -122,24 +127,24 @@ public class AuthService {
                 .username(request.username())
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
-                .isActive(false) // Mới đăng ký thì chưa active, phải Verify Email
+                .isActive(false) // Má»›i Ä‘Äƒng kÃ½ thÃ¬ chÆ°a active, pháº£i Verify Email
                 .emailVerified(false)
                 .build();
 
-        // Lấy Role từ DB và gán cho User lúc đăng ký
+        // Láº¥y Role tá»« DB vÃ  gÃ¡n cho User lÃºc Ä‘Äƒng kÃ½
         Role studentRole = roleRepository.findByName("ROLE_STUDENT")
-                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Lỗi hệ thống: Chưa cấu hình Role mặc định."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Lá»—i há»‡ thá»‘ng: ChÆ°a cáº¥u hÃ¬nh Role máº·c Ä‘á»‹nh."));
 
         user.getRoles().add(studentRole);
 
-        return userRepository.save(user);
+        Users savedUser = userRepository.save(user); return authMapper.toUserResponseDTO(savedUser);
     }
 
     // ================= LOGOUT =================
     @Transactional
     @LogAction(action = "LOGOUT", entityName = "USER")
     public void logout(String plainRefreshToken) {
-        // 1. Vô hiệu hóa token trong Database (Chuyển is_revoked = true)
+        // 1. VÃ´ hiá»‡u hÃ³a token trong Database (Chuyá»ƒn is_revoked = true)
         tokenService.logout(plainRefreshToken);
     }
 
@@ -150,10 +155,10 @@ public class AuthService {
         Users user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        user.incrementTokenVersion(); // Kick toàn bộ Access Token (Cần check version trong JwtFilter)
+        user.incrementTokenVersion(); // Kick toÃ n bá»™ Access Token (Cáº§n check version trong JwtFilter)
         userRepository.save(user);
 
-        tokenService.revokeAllUserTokens(user); // Thu hồi toàn bộ Refresh Token
+        tokenService.revokeAllUserTokens(user); // Thu há»“i toÃ n bá»™ Refresh Token
     }
 
     // ================= CHANGE PASSWORD =================
@@ -165,16 +170,16 @@ public class AuthService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
-            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Mật khẩu cũ không chính xác!");
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Máº­t kháº©u cÅ© khÃ´ng chÃ­nh xÃ¡c!");
         }
 
         if (passwordEncoder.matches(request.newPassword(), user.getPassword())) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "Mật khẩu mới không được trùng mật khẩu cũ!");
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "Máº­t kháº©u má»›i khÃ´ng Ä‘Æ°á»£c trÃ¹ng máº­t kháº©u cÅ©!");
         }
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         user.setPasswordChangedAt(LocalDateTime.now());
-        user.incrementTokenVersion(); // Buộc đăng nhập lại trên toàn bộ thiết bị
+        user.incrementTokenVersion(); // Buá»™c Ä‘Äƒng nháº­p láº¡i trÃªn toÃ n bá»™ thiáº¿t bá»‹
 
         userRepository.save(user);
         tokenService.revokeAllUserTokens(user);
@@ -198,21 +203,23 @@ public class AuthService {
 
     // ================= CRUD OPERATIONS FOR USER =================
 
-    // 1. GET ALL USERS
-    public List<Users> getAllUsers() {
-        return userRepository.findAll();
+    // 1. GET ALL USERS (PAGINATED)
+    public Page<UserResponseDTO> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(authMapper::toUserResponseDTO);
     }
 
     // 2. GET USER BY ID
-    public Users getUserById(UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy người dùng với ID này"));
+    public UserResponseDTO getUserById(UUID id) {
+        Users user = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y ngÆ°á»i dÃ¹ng vá»›i ID nÃ y"));
+        return authMapper.toUserResponseDTO(user);
     }
 
-    // 3. CREATE USER (Dành cho Admin - Có thể gán Roles tuỳ chỉnh)
+    // 3. CREATE USER (DÃ nh cho Admin - CÃ³ thá»ƒ gÃ¡n Roles tuá»³ chá»‰nh)
     @Transactional
     @LogAction(action = "CREATE", entityName = "USER")
-    public Users createUser(String username, String email, String password, List<String> roleNames, boolean isActive) {
+    public UserResponseDTO createUser(String username, String email, String password, List<String> roleNames, boolean isActive) {
         if (userRepository.existsByUsername(username)) {
             throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS);
         }
@@ -228,28 +235,29 @@ public class AuthService {
                 .emailVerified(isActive)
                 .build();
 
-        // Gán Role
+        // GÃ¡n Role
         if (roleNames != null && !roleNames.isEmpty()) {
             for (String roleName : roleNames) {
                 Role role = roleRepository.findByName(roleName)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Role không tồn tại: " + roleName));
+                        .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Role khÃ´ng tá»“n táº¡i: " + roleName));
                 user.getRoles().add(role);
             }
         } else {
-            // Role mặc định nếu Admin không chọn
+            // Role máº·c Ä‘á»‹nh náº¿u Admin khÃ´ng chá»n
             Role defaultRole = roleRepository.findByName("ROLE_STUDENT")
-                    .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Chưa cấu hình Role mặc định."));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "ChÆ°a cáº¥u hÃ¬nh Role máº·c Ä‘á»‹nh."));
             user.getRoles().add(defaultRole);
         }
 
-        return userRepository.save(user);
+        Users savedUser = userRepository.save(user); return authMapper.toUserResponseDTO(savedUser);
     }
 
     // 4. UPDATE USER
     @Transactional
     @LogAction(action = "UPDATE", entityName = "USER")
-    public Users updateUser(UUID id, String email, Boolean isActive, List<String> roleNames) {
-        Users user = getUserById(id);
+    public UserResponseDTO updateUser(UUID id, String email, Boolean isActive, List<String> roleNames) {
+        Users user = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y ngÆ°á»i dÃ¹ng Ä‘á»ƒ cáº­p nháº­t"));
 
         if (email != null && !email.equals(user.getEmail())) {
             if (userRepository.existsByEmail(email)) {
@@ -261,38 +269,37 @@ public class AuthService {
         if (isActive != null) {
             user.setActive(isActive);
             if (!isActive) {
-                // Nếu khóa tài khoản, ép đăng xuất thiết bị hiện tại
+                // Náº¿u khÃ³a tÃ i khoáº£n, Ã©p Ä‘Äƒng xuáº¥t thiáº¿t bá»‹ hiá»‡n táº¡i
                 user.incrementTokenVersion();
                 tokenService.revokeAllUserTokens(user);
             }
         }
 
-        // Cập nhật Roles
+        // Cáº­p nháº­t Roles
         if (roleNames != null) {
             user.getRoles().clear();
             for (String roleName : roleNames) {
                 Role role = roleRepository.findByName(roleName)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Role không tồn tại: " + roleName));
+                        .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Role khÃ´ng tá»“n táº¡i: " + roleName));
                 user.getRoles().add(role);
             }
         }
 
-        return userRepository.save(user);
+        Users savedUser = userRepository.save(user); return authMapper.toUserResponseDTO(savedUser);
     }
 
-    // 5. DELETE (Xoá mềm hoặc khoá)
     @Transactional
     @LogAction(action = "DELETE", entityName = "USER")
     public void deleteUser(UUID id) {
-        Users user = getUserById(id);
+        Users user = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y ngÆ°á»i dÃ¹ng Ä‘á»ƒ xÃ³a"));
 
-        // Phương pháp tốt nhất cho User là Xóa mềm (Soft Delete)
-        user.setActive(false);
-        // user.setDeletedAt(LocalDateTime.now()); // Mở comment nếu Entity Users của bạn hỗ trợ Audit deletedAt
+        // PhÆ°Æ¡ng phÃ¡p tá»‘t nháº¥t cho User lÃ  XÃ³a má»m (Soft Delete)
+        user.softDelete();
 
         userRepository.save(user);
 
-        // Buộc người dùng bị xóa văng khỏi mọi thiết bị
+        // Buá»™c ngÆ°á»i dÃ¹ng bá»‹ xÃ³a vÄƒng khá»i má»i thiáº¿t bá»‹
         user.incrementTokenVersion();
         tokenService.revokeAllUserTokens(user);
     }
@@ -304,8 +311,8 @@ public class AuthService {
         user.setLastFailedLoginAt(LocalDateTime.now());
 
         if (user.getFailedLoginAttempts() >= 5) {
-            user.setLockUntil(LocalDateTime.now().plusMinutes(15)); // Khóa 15 phút
-            log.warn("Tài khoản {} đã bị khóa 15 phút do Brute Force", user.getUsername());
+            user.setLockUntil(LocalDateTime.now().plusMinutes(15)); // KhÃ³a 15 phÃºt
+            log.warn("TÃ i khoáº£n {} Ä‘Ã£ bá»‹ khÃ³a 15 phÃºt do Brute Force", user.getUsername());
         }
         userRepository.save(user);
     }

@@ -9,13 +9,12 @@ import com.edu.university.modules.hr.mapper.DepartmentMapper;
 import com.edu.university.modules.hr.repository.DepartmentRepository;
 import com.edu.university.modules.hr.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,19 +31,18 @@ public class DepartmentServiceImpl implements DepartmentService {
         }
         Department department = departmentMapper.toEntity(requestDTO);
         department.setActive(true);
-        department.setCreatedAt(LocalDateTime.now());
-        Department saved = departmentRepository.save(department);
-        return departmentMapper.toResponseDTO(saved);
+        return departmentMapper.toResponseDTO(departmentRepository.save(department));
     }
 
     @Override
-    public List<DepartmentResponseDTO> getAllDepartments() {
-        return departmentRepository.findAll().stream()
-                .map(departmentMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<DepartmentResponseDTO> getAllDepartments(Pageable pageable) {
+        return departmentRepository.findAll(pageable)
+                .map(departmentMapper::toResponseDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public DepartmentResponseDTO getDepartmentById(UUID id) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy phòng ban"));
@@ -52,6 +50,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public DepartmentResponseDTO getDepartmentByCode(String code) {
         Department department = departmentRepository.findByCode(code)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy phòng ban"));
@@ -64,7 +63,6 @@ public class DepartmentServiceImpl implements DepartmentService {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy phòng ban"));
         departmentMapper.updateEntityFromDTO(requestDTO, department);
-        department.setUpdatedAt(LocalDateTime.now());
         return departmentMapper.toResponseDTO(departmentRepository.save(department));
     }
 
@@ -73,8 +71,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     public void deleteDepartment(UUID id) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy phòng ban"));
-        department.setActive(false);
-        department.setDeletedAt(LocalDateTime.now());
+        department.softDelete("system");
         departmentRepository.save(department);
     }
 }

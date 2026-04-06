@@ -15,7 +15,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,8 +56,9 @@ public class StudentControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.studentCode").value("STU001"))
-                .andExpect(jsonPath("$.fullName").value("Văn A Nguyễn"));
+                .andExpect(jsonPath("$.code").value(201))
+                .andExpect(jsonPath("$.data.studentCode").value("STU001"))
+                .andExpect(jsonPath("$.data.fullName").value("Văn A Nguyễn"));
     }
 
     @Test
@@ -74,8 +74,9 @@ public class StudentControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/students"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].studentCode").value("STU001"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].studentCode").value("STU001"));
     }
 
     @Test
@@ -92,7 +93,8 @@ public class StudentControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/students/" + id))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.studentCode").value("STU001"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.studentCode").value("STU001"));
     }
 
     @Test
@@ -117,7 +119,8 @@ public class StudentControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.fullName").value("Văn B Nguyễn"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.fullName").value("Văn B Nguyễn"));
     }
 
     @Test
@@ -133,7 +136,8 @@ public class StudentControllerIT extends BaseIntegrationTest {
         UUID id = student.getId();
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/students/" + id))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
 
         entityManager.flush();
         entityManager.clear();

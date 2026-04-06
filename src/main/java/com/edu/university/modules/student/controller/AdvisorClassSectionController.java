@@ -1,15 +1,18 @@
 package com.edu.university.modules.student.controller;
 
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.student.dto.request.AdvisorClassSectionRequestDTO;
 import com.edu.university.modules.student.dto.response.AdvisorClassSectionResponseDTO;
 import com.edu.university.modules.student.service.AdvisorClassSectionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -19,43 +22,44 @@ public class AdvisorClassSectionController {
 
     private final AdvisorClassSectionService advisorService;
 
-    // 1. Gán cố vấn cho lớp
     @PostMapping
-    public ResponseEntity<AdvisorClassSectionResponseDTO> assignAdvisorToClass(
+    public ResponseEntity<BaseResponse<AdvisorClassSectionResponseDTO>> assignAdvisorToClass(
             @Valid @RequestBody AdvisorClassSectionRequestDTO requestDTO) {
-        return new ResponseEntity<>(advisorService.assignAdvisorToClass(requestDTO), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                BaseResponse.created("Gán cố vấn cho lớp thành công", advisorService.assignAdvisorToClass(requestDTO)),
+                HttpStatus.CREATED
+        );
     }
 
-    // 2. Lấy danh sách tất cả
     @GetMapping
-    public ResponseEntity<List<AdvisorClassSectionResponseDTO>> getAll() {
-        return ResponseEntity.ok(advisorService.getAll());
+    public ResponseEntity<BaseResponse<Page<AdvisorClassSectionResponseDTO>>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.ok(advisorService.getAll(pageable)));
     }
 
-    // 3. Lấy các lớp cố vấn phụ trách
     @GetMapping("/advisor/{advisorId}")
-    public ResponseEntity<List<AdvisorClassSectionResponseDTO>> getByAdvisorId(@PathVariable UUID advisorId) {
-        return ResponseEntity.ok(advisorService.getByAdvisorId(advisorId));
+    public ResponseEntity<BaseResponse<Page<AdvisorClassSectionResponseDTO>>> getByAdvisorId(
+            @PathVariable UUID advisorId,
+            @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.ok(advisorService.getByAdvisorId(advisorId, pageable)));
     }
 
-    // 4. Lấy cố vấn của lớp
     @GetMapping("/class/{studentClassesId}")
-    public ResponseEntity<List<AdvisorClassSectionResponseDTO>> getByClassId(@PathVariable UUID studentClassesId) {
-        return ResponseEntity.ok(advisorService.getByClassId(studentClassesId));
+    public ResponseEntity<BaseResponse<Page<AdvisorClassSectionResponseDTO>>> getByClassId(
+            @PathVariable UUID studentClassesId,
+            @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.ok(advisorService.getByClassId(studentClassesId, pageable)));
     }
 
-    // 5. Cập nhật thông tin cố vấn
     @PutMapping("/{id}")
-    public ResponseEntity<AdvisorClassSectionResponseDTO> update(
+    public ResponseEntity<BaseResponse<AdvisorClassSectionResponseDTO>> update(
             @PathVariable UUID id,
             @Valid @RequestBody AdvisorClassSectionRequestDTO requestDTO) {
-        return ResponseEntity.ok(advisorService.update(id, requestDTO));
+        return ResponseEntity.ok(BaseResponse.ok("Cập nhật thông tin cố vấn thành công", advisorService.update(id, requestDTO)));
     }
 
-    // 6. Xóa mềm
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<Void>> delete(@PathVariable UUID id) {
         advisorService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.ok("Xóa phân công cố vấn thành công", null));
     }
 }

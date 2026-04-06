@@ -13,16 +13,18 @@ import com.edu.university.modules.academic.service.StudentCourseSectionService;
 import com.edu.university.modules.student.entity.Student;
 import com.edu.university.modules.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StudentCourseSectionServiceImpl implements StudentCourseSectionService {
 
     private final StudentCourseSectionRepository studentCourseSectionRepository;
@@ -33,21 +35,21 @@ public class StudentCourseSectionServiceImpl implements StudentCourseSectionServ
     @Override
     @Transactional
     public StudentCourseSectionResponseDTO create(StudentCourseSectionRequestDTO requestDTO) {
-        if (studentCourseSectionRepository.findByStudentIdAndCourseSectionId(requestDTO.getStudentId(), requestDTO.getCourseSectionId()).isPresent()) {
-            throw new BusinessException(ErrorCode.ALREADY_EXISTS, "Sinh viên đã đăng ký lớp học phần này");
-        }
-        
-        StudentCourseSection studentCourseSection = studentCourseSectionMapper.toEntity(requestDTO);
+        log.info("Student {} registering for course section {}", requestDTO.getStudentId(), requestDTO.getCourseSectionId());
         
         Student student = studentRepository.findById(requestDTO.getStudentId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy sinh viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
         CourseSection courseSection = courseSectionRepository.findById(requestDTO.getCourseSectionId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học phần"));
-        
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLASS_SECTION_NOT_FOUND));
+
+        if (studentCourseSectionRepository.findByStudentIdAndCourseSectionId(requestDTO.getStudentId(), requestDTO.getCourseSectionId()).isPresent()) {
+            throw new BusinessException(ErrorCode.ALREADY_ENROLLED);
+        }
+
+        StudentCourseSection studentCourseSection = studentCourseSectionMapper.toEntity(requestDTO);
         studentCourseSection.setStudent(student);
         studentCourseSection.setCourseSection(courseSection);
         studentCourseSection.setActive(true);
-        studentCourseSection.setCreatedAt(LocalDateTime.now());
         if (studentCourseSection.getRegisteredAt() == null) {
             studentCourseSection.setRegisteredAt(LocalDateTime.now());
         }
@@ -56,24 +58,28 @@ public class StudentCourseSectionServiceImpl implements StudentCourseSectionServ
     }
 
     @Override
-    public List<StudentCourseSectionResponseDTO> getAll() {
-        return studentCourseSectionRepository.findAll().stream()
-                .map(studentCourseSectionMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<StudentCourseSectionResponseDTO> getAll(Pageable pageable) {
+        log.info("Getting all student course section registrations with pagination: {}", pageable);
+        return studentCourseSectionRepository.findAll(pageable)
+                .map(studentCourseSectionMapper::toResponseDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public StudentCourseSectionResponseDTO getById(UUID id) {
+        log.info("Getting student course section registration by id: {}", id);
         StudentCourseSection studentCourseSection = studentCourseSectionRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy thông tin đăng ký"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENROLLMENT_NOT_FOUND));
         return studentCourseSectionMapper.toResponseDTO(studentCourseSection);
     }
 
     @Override
     @Transactional
     public void delete(UUID id) {
+        log.info("Deleting student course section registration by id: {}", id);
         StudentCourseSection studentCourseSection = studentCourseSectionRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy thông tin đăng ký"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENROLLMENT_NOT_FOUND));
         studentCourseSection.softDelete("system");
         studentCourseSectionRepository.save(studentCourseSection);
     }

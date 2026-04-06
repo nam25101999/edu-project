@@ -11,7 +11,7 @@ public class ExamTypeResponseDTO {
     private UUID id;
     private String name;
     private String description;
-    private Boolean isActive;
+    private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

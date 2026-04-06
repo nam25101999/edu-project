@@ -16,9 +16,11 @@ public interface AdvisorClassSectionMapper {
     AdvisorClassSection toEntity(AdvisorClassSectionRequestDTO requestDTO);
 
     @Mapping(target = "advisorId", source = "advisor.id")
-    @Mapping(target = "advisorName", source = "advisor.fullName") // Map tên cố vấn
+    @Mapping(target = "advisorName", source = "advisor.fullName")
     @Mapping(target = "studentClassesId", source = "studentClass.id")
     @Mapping(target = "className", source = "studentClass.className")
+    @Mapping(target = "startDate", expression = "java(entity.getStartDate() != null ? entity.getStartDate().toLocalDate() : null)")
+    @Mapping(target = "endDate", expression = "java(entity.getEndDate() != null ? entity.getEndDate().toLocalDate() : null)")
     AdvisorClassSectionResponseDTO toResponseDTO(AdvisorClassSection entity);
 
     @Mapping(target = "advisor", ignore = true)

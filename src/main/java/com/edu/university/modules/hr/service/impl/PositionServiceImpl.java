@@ -10,13 +10,12 @@ import com.edu.university.modules.hr.repository.DepartmentRepository;
 import com.edu.university.modules.hr.repository.PositionRepository;
 import com.edu.university.modules.hr.service.PositionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,19 +36,18 @@ public class PositionServiceImpl implements PositionService {
             position.setDepartment(departmentRepository.findById(requestDTO.getDepartmentId()).orElse(null));
         }
         position.setActive(true);
-        position.setCreatedAt(LocalDateTime.now());
-        Position saved = positionRepository.save(position);
-        return positionMapper.toResponseDTO(saved);
+        return positionMapper.toResponseDTO(positionRepository.save(position));
     }
 
     @Override
-    public List<PositionResponseDTO> getAllPositions() {
-        return positionRepository.findAll().stream()
-                .map(positionMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<PositionResponseDTO> getAllPositions(Pageable pageable) {
+        return positionRepository.findAll(pageable)
+                .map(positionMapper::toResponseDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PositionResponseDTO getPositionById(UUID id) {
         Position position = positionRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy chức vụ"));
@@ -57,6 +55,7 @@ public class PositionServiceImpl implements PositionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PositionResponseDTO getPositionByCode(String code) {
         Position position = positionRepository.findByCode(code)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy chức vụ"));
@@ -71,10 +70,7 @@ public class PositionServiceImpl implements PositionService {
         positionMapper.updateEntityFromDTO(requestDTO, position);
         if (requestDTO.getDepartmentId() != null) {
             position.setDepartment(departmentRepository.findById(requestDTO.getDepartmentId()).orElse(null));
-        } else {
-            position.setDepartment(null);
         }
-        position.setUpdatedAt(LocalDateTime.now());
         return positionMapper.toResponseDTO(positionRepository.save(position));
     }
 
@@ -83,8 +79,7 @@ public class PositionServiceImpl implements PositionService {
     public void deletePosition(UUID id) {
         Position position = positionRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy chức vụ"));
-        position.setActive(false);
-        position.setDeletedAt(LocalDateTime.now());
+        position.softDelete("system");
         positionRepository.save(position);
     }
 }

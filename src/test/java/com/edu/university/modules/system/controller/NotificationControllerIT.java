@@ -1,6 +1,5 @@
 package com.edu.university.modules.system.controller;
 
-import com.edu.university.BackendApplication;
 import com.edu.university.BaseIntegrationTest;
 import com.edu.university.modules.auth.entity.Role;
 import com.edu.university.modules.auth.repository.RoleRepository;
@@ -34,7 +33,10 @@ public class NotificationControllerIT extends BaseIntegrationTest {
         notificationRepository.deleteAll();
         // RoleRepository might have data from data seeder, but for isolation let's ensure we have a role
         adminRole = roleRepository.findByName("ROLE_ADMIN")
-                .orElseGet(() -> roleRepository.save(new Role(null, "ROLE_ADMIN", "Admin Role")));
+                .orElseGet(() -> roleRepository.save(Role.builder()
+                        .name("ROLE_ADMIN")
+                        .description("Admin Role")
+                        .build()));
     }
 
     @Test
@@ -50,7 +52,7 @@ public class NotificationControllerIT extends BaseIntegrationTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value("System Update"))
-                .andExpect(jsonPath("$.targetRole.name").value("ROLE_ADMIN"));
+                .andExpect(jsonPath("$.targetRoleName").value("ROLE_ADMIN"));
         
         assertEquals(1, notificationRepository.count());
     }

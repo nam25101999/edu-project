@@ -20,7 +20,7 @@ public class GraduationConditionResponseDTO {
     private String itRequirement;
     private String conductRequired;
     private String note;
-    private Boolean isActive;
+    private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

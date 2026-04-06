@@ -5,6 +5,8 @@ import com.edu.university.modules.schedule.dto.response.BuildingResponseDTO;
 import com.edu.university.modules.schedule.service.BuildingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +27,8 @@ public class BuildingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BuildingResponseDTO>> getAll() {
-        return ResponseEntity.ok(buildingService.getAll());
+    public ResponseEntity<List<BuildingResponseDTO>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(buildingService.getAll(pageable).getContent());
     }
 
     @GetMapping("/{id}")

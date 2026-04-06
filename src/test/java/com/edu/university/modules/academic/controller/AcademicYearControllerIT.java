@@ -1,7 +1,6 @@
 package com.edu.university.modules.academic.controller;
 import com.edu.university.BaseIntegrationTest;
 import com.edu.university.modules.academic.dto.request.AcademicYearRequestDTO;
-import com.edu.university.modules.academic.dto.response.AcademicYearResponseDTO;
 import com.edu.university.modules.academic.entity.AcademicYear;
 import com.edu.university.modules.academic.repository.AcademicYearRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,7 +10,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -51,8 +49,8 @@ public class AcademicYearControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.academicCode").value("AY2024"))
-                .andExpect(jsonPath("$.academicName").value("Năm học 2024-2025"));
+                .andExpect(jsonPath("$.data.academicCode").value("AY2024"))
+                .andExpect(jsonPath("$.data.academicName").value("Năm học 2024-2025"));
     }
 
     @Test
@@ -60,7 +58,29 @@ public class AcademicYearControllerIT extends BaseIntegrationTest {
     void getAllAcademicYears_Success() throws Exception {
         mockMvc.perform(get("/api/academic-years"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)));
+                .andExpect(jsonPath("$.data.content", hasSize(1)));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void getAllAcademicYears_Pagination_Success() throws Exception {
+        // Add more data
+        AcademicYear ay2 = new AcademicYear();
+        ay2.setAcademicCode("AY2024");
+        ay2.setAcademicName("Năm học 2024-2025");
+        ay2.setAcademicYear("2024-2025");
+        ay2.setStartDate(LocalDate.of(2024, 9, 1));
+        ay2.setEndDate(LocalDate.of(2025, 8, 31));
+        ay2.setCreatedBy("system");
+        academicYearRepository.save(ay2);
+
+        mockMvc.perform(get("/api/academic-years")
+                .param("page", "0")
+                .param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content", hasSize(1)))
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.totalPages").value(2));
     }
 
     @Test
@@ -68,7 +88,7 @@ public class AcademicYearControllerIT extends BaseIntegrationTest {
     void getAcademicYearById_Success() throws Exception {
         mockMvc.perform(get("/api/academic-years/{id}", academicYear.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.academicCode").value("AY2023"));
+                .andExpect(jsonPath("$.data.academicCode").value("AY2023"));
     }
 
     @Test
@@ -83,14 +103,17 @@ public class AcademicYearControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.academicCode").value("AY2023_UPDATED"));
+                .andExpect(jsonPath("$.data.academicCode").value("AY2023_UPDATED"));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void deleteAcademicYear_Success() throws Exception {
         mockMvc.perform(delete("/api/academic-years/{id}", academicYear.getId()))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
+
+        entityManager.flush();
+        entityManager.clear();
 
         mockMvc.perform(get("/api/academic-years/{id}", academicYear.getId()))
                 .andExpect(status().isNotFound());

@@ -5,6 +5,8 @@ import com.edu.university.modules.registration.dto.response.EquivalentCourseResp
 import com.edu.university.modules.registration.service.EquivalentCourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +27,8 @@ public class EquivalentCourseController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EquivalentCourseResponseDTO>> getAll() {
-        return ResponseEntity.ok(equivalentCourseService.getAll());
+    public ResponseEntity<List<EquivalentCourseResponseDTO>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(equivalentCourseService.getAll(pageable).getContent());
     }
 
     @GetMapping("/{id}")

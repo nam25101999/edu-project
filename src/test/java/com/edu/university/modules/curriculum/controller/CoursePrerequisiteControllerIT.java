@@ -1,24 +1,28 @@
 package com.edu.university.modules.curriculum.controller;
 
-import com.edu.university.BackendApplication;
 import com.edu.university.BaseIntegrationTest;
+import com.edu.university.builders.CourseBuilder;
+import com.edu.university.builders.DepartmentBuilder;
 import com.edu.university.modules.curriculum.dto.request.CoursePrerequisiteRequestDTO;
 import com.edu.university.modules.curriculum.entity.Course;
 import com.edu.university.modules.curriculum.entity.CoursePrerequisite;
 import com.edu.university.modules.curriculum.repository.CoursePrerequisiteRepository;
 import com.edu.university.modules.curriculum.repository.CourseRepository;
+import com.edu.university.modules.hr.entity.Department;
+import com.edu.university.modules.hr.repository.DepartmentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class CoursePrerequisiteControllerIT extends BaseIntegrationTest {
 
@@ -28,6 +32,9 @@ public class CoursePrerequisiteControllerIT extends BaseIntegrationTest {
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private DepartmentRepository departmentRepository;
+
     private Course course1;
     private Course course2;
 
@@ -35,17 +42,20 @@ public class CoursePrerequisiteControllerIT extends BaseIntegrationTest {
     void setUp() {
         cpRepository.deleteAll();
         courseRepository.deleteAll();
+        departmentRepository.deleteAll();
         
-        course1 = courseRepository.save(Course.builder()
-                .code("MATH101")
-                .name("Mathematics I")
-                .isActive(true)
+        Department dept = departmentRepository.save(DepartmentBuilder.aDepartment().build());
+
+        course1 = courseRepository.save(CourseBuilder.aCourse()
+                .withCode("MATH101")
+                .withName("Mathematics I")
+                .withDepartment(dept)
                 .build());
 
-        course2 = courseRepository.save(Course.builder()
-                .code("MATH102")
-                .name("Mathematics II")
-                .isActive(true)
+        course2 = courseRepository.save(CourseBuilder.aCourse()
+                .withCode("MATH102")
+                .withName("Mathematics II")
+                .withDepartment(dept)
                 .build());
     }
 
@@ -60,8 +70,8 @@ public class CoursePrerequisiteControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.course.code").value("MATH102"))
-                .andExpect(jsonPath("$.prerequisiteCourse.code").value("MATH101"));
+                .andExpect(jsonPath("$.data.courseName").value("Mathematics II"))
+                .andExpect(jsonPath("$.data.prerequisiteCourseName").value("Mathematics I"));
     }
 
     @Test
@@ -75,7 +85,7 @@ public class CoursePrerequisiteControllerIT extends BaseIntegrationTest {
         
         mockMvc.perform(get("/api/course-prerequisites"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.data.content", hasSize(1)));
     }
 
     @Test
@@ -89,12 +99,12 @@ public class CoursePrerequisiteControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/course-prerequisites/" + cp.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.prerequisiteCourse.code").value("MATH101"));
+                .andExpect(jsonPath("$.data.prerequisiteCourseName").value("Mathematics I"));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void delete_ShouldReturn204_AndSoftDelete() throws Exception {
+    void delete_ShouldReturn200_AndSoftDelete() throws Exception {
         CoursePrerequisite cp = cpRepository.save(CoursePrerequisite.builder()
                 .course(course2)
                 .prerequisiteCourse(course1)
@@ -102,7 +112,7 @@ public class CoursePrerequisiteControllerIT extends BaseIntegrationTest {
                 .build());
 
         mockMvc.perform(delete("/api/course-prerequisites/" + cp.getId()))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         entityManager.flush();
         entityManager.clear();

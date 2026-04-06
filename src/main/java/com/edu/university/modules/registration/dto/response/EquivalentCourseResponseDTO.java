@@ -19,7 +19,7 @@ public class EquivalentCourseResponseDTO {
     private Integer equivalenceType;
     private LocalDate effectDate;
     private String note;
-    private Boolean isActive;
+    private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

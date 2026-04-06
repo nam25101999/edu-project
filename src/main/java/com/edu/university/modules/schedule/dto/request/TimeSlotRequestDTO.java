@@ -10,6 +10,9 @@ public class TimeSlotRequestDTO {
     @NotBlank(message = "Mã ca học không được để trống")
     private String slotCode;
 
+    @NotBlank(message = "Tên ca học không được để trống")
+    private String slotName;
+
     @NotNull(message = "Giờ bắt đầu không được để trống")
     private LocalTime startTime;
 

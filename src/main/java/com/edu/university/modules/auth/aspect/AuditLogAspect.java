@@ -37,17 +37,17 @@ public class AuditLogAspect {
         long startTime = System.currentTimeMillis();
 
         HttpServletRequest request = getHttpServletRequest();
-        UUID userId = getCurrentUserId(); // Thay vì Username, ta lấy UUID
-        Integer status = 200; // Mặc định là HTTP 200 SUCCESS
+        UUID userId = getCurrentUserId(); // Thay vÃ¬ Username, ta láº¥y UUID
+        Integer status = 200; // Máº·c Ä‘á»‹nh lÃ  HTTP 200 SUCCESS
         String errorMessage = null;
         String responsePayload = null;
         Object result = null;
 
         try {
-            // Chạy API
+            // Cháº¡y API
             result = joinPoint.proceed();
 
-            // Cập nhật status code thực tế từ Response
+            // Cáº­p nháº­t status code thá»±c táº¿ tá»« Response
             HttpServletResponse response = getHttpServletResponse();
             if (response != null) {
                 status = response.getStatus();
@@ -57,7 +57,7 @@ public class AuditLogAspect {
             return result;
 
         } catch (Exception e) {
-            status = 500; // Nếu xảy ra lỗi (Exception), gán HTTP 500
+            status = 500; // Náº¿u xáº£y ra lá»—i (Exception), gÃ¡n HTTP 500
             errorMessage = e.getMessage();
             throw e;
 
@@ -92,37 +92,37 @@ public class AuditLogAspect {
                     .toList();
             String requestPayload = safeJson(safeArgs);
 
-            // Xử lý an toàn Enum Action từ Annotation
+            // Xá»­ lÃ½ an toÃ n Enum Action tá»« Annotation
             AuditLog.AuditAction actionEnum;
             try {
                 actionEnum = AuditLog.AuditAction.valueOf(logAction.action().toUpperCase());
             } catch (Exception e) {
-                actionEnum = AuditLog.AuditAction.UPDATE; // Fallback an toàn nếu nhập sai Action string
+                actionEnum = AuditLog.AuditAction.UPDATE; // Fallback an toÃ n náº¿u nháº­p sai Action string
             }
 
             AuditLog auditLog = AuditLog.builder()
-                    .userId(userId) // Sử dụng userId UUID
+                    .userId(userId) // Sá»­ dá»¥ng userId UUID
                     .ipAddress(ipAddress)
                     .userAgent(userAgent)
-                    .action(actionEnum) // Truyền vào Enum
+                    .action(actionEnum) // Truyá»n vÃ o Enum
                     .entityName(logAction.entityName())
                     .httpMethod(httpMethod)
                     .endpoint(endpoint)
                     .requestPayload(requestPayload)
                     .responsePayload(responsePayload)
                     .executionTimeMs(executionTime)
-                    .status(status) // Truyền vào HTTP status code
+                    .status(status) // Truyá»n vÃ o HTTP status code
                     .errorMessage(errorMessage)
                     .build();
 
             auditLogRepository.save(auditLog);
 
         } catch (Exception e) {
-            log.error("Lỗi khi lưu AuditLog (Không làm sập hệ thống chính): {}", e.getMessage());
+            log.error("Lá»—i khi lÆ°u AuditLog (KhÃ´ng lÃ m sáº­p há»‡ thá»‘ng chÃ­nh): {}", e.getMessage());
         }
     }
 
-    // Hàm lấy ID (UUID) của User hiện tại thay vì Username
+    // HÃ m láº¥y ID (UUID) cá»§a User hiá»‡n táº¡i thay vÃ¬ Username
     private UUID getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof UserDetailsImpl userDetails) {
@@ -136,7 +136,7 @@ public class AuditLogAspect {
         return attributes != null ? attributes.getRequest() : null;
     }
 
-    // Bổ sung hàm lấy Response để đọc Http Status Code
+    // Bá»• sung hÃ m láº¥y Response Ä‘á»ƒ Ä‘á»c Http Status Code
     private HttpServletResponse getHttpServletResponse() {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         return attributes != null ? attributes.getResponse() : null;

@@ -22,5 +22,6 @@ public class GradeScaleRequestDTO {
     @NotNull(message = "Giá trị GPA không được để trống")
     private BigDecimal gpaValue;
 
-    private boolean isPass;
+    @com.fasterxml.jackson.annotation.JsonProperty("pass")
+    private boolean pass;
 }

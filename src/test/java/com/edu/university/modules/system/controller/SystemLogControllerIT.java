@@ -1,7 +1,7 @@
 package com.edu.university.modules.system.controller;
 
-import com.edu.university.BackendApplication;
 import com.edu.university.BaseIntegrationTest;
+import com.edu.university.builders.UsersBuilder;
 import com.edu.university.modules.auth.entity.Users;
 import com.edu.university.modules.auth.repository.UserRepository;
 import com.edu.university.modules.system.entity.SystemLog;
@@ -30,10 +30,8 @@ public class SystemLogControllerIT extends BaseIntegrationTest {
     void setUp() {
         systemLogRepository.deleteAll();
         
-        testUser = userRepository.save(Users.builder()
-                .username("loguser_" + UUID.randomUUID())
-                .password("password")
-                .isActive(true)
+        testUser = userRepository.save(UsersBuilder.aUser()
+                .withUsername("loguser_" + UUID.randomUUID())
                 .build());
     }
 

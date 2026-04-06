@@ -20,12 +20,12 @@ public interface StudentClassMapper {
     @Mapping(target = "major", ignore = true)
     StudentClass toEntity(StudentClassRequestDTO requestDTO);
 
-    // 2. Chiều Entity -> Response DTO (Read)
-    // Lấy chuỗi academicYear nằm bên trong object AcademicYear
+    // Chiều Entity -> Response DTO (Read)
     @Mapping(target = "academicYear", source = "academicYear.academicYear")
-    // Lấy ID từ các object quan hệ
     @Mapping(target = "departmentId", source = "department.id")
+    @Mapping(target = "departmentName", source = "department.name")
     @Mapping(target = "majorId", source = "major.id")
+    @Mapping(target = "majorName", source = "major.name")
     StudentClassResponseDTO toResponseDTO(StudentClass studentClass);
 
     // 3. Chiều Request DTO -> Entity (Update)

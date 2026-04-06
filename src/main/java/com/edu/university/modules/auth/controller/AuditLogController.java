@@ -1,6 +1,6 @@
 package com.edu.university.modules.auth.controller;
 
-import com.edu.university.common.response.ApiResponse;
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.auth.entity.AuditLog;
 import com.edu.university.modules.auth.repository.AuditLogRepository;
 import com.edu.university.modules.auth.service.AuditLogService;
@@ -14,11 +14,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * Controller quản lý nhật ký hệ thống và phân tích dữ liệu vận hành.
- * Chỉ dành cho quản trị viên (Admin).
+ * Controller quáº£n lÃ½ nháº­t kÃ½ há»‡ thá»‘ng vÃ  phÃ¢n tÃ­ch dá»¯ liá»‡u váº­n hÃ nh.
+ * Chá»‰ dÃ nh cho quáº£n trá»‹ viÃªn (Admin).
  */
 @RestController
-@RequestMapping("/api/audit-logs")
+@RequestMapping("/api/admin/audit-logs")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AuditLogController {
@@ -28,7 +28,7 @@ public class AuditLogController {
     // ================= LIST LOG =================
 
     @GetMapping
-    public ApiResponse<Page<AuditLog>> getAuditLogs(
+    public BaseResponse<Page<AuditLog>> getAuditLogs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String username,
@@ -37,56 +37,56 @@ public class AuditLogController {
         PageRequest pageRequest = PageRequest.of(
                 page,
                 size,
-                Sort.by("createdAt").descending() // Sắp xếp mới nhất lên đầu
+                Sort.by("createdAt").descending() // Sáº¯p xáº¿p má»›i nháº¥t lÃªn Ä‘áº§u
         );
 
         Page<AuditLog> result;
 
         if (status != null && status.equalsIgnoreCase("FAILED")) {
-            // Frontend truyền status=FAILED -> Lấy các log HTTP Error >= 400
+            // Frontend truyá»n status=FAILED -> Láº¥y cÃ¡c log HTTP Error >= 400
             result = auditLogService.getFailedLogs(pageRequest);
         } else if (username != null && !username.isBlank()) {
-            // Frontend truyền username -> tra cứu bằng username
+            // Frontend truyá»n username -> tra cá»©u báº±ng username
             result = auditLogService.searchLogsByUsername(username, pageRequest);
         } else {
-            // Không truyền gì -> Lấy tất cả
+            // KhÃ´ng truyá»n gÃ¬ -> Láº¥y táº¥t cáº£
             result = auditLogService.getAllLogs(pageRequest);
         }
 
-        return ApiResponse.success(result);
+        return BaseResponse.ok(result);
     }
 
     // ================= ANALYTICS =================
 
     /**
-     * Thống kê số lượng log theo trạng thái (HTTP Status Code: 200, 400, 404, 500...)
+     * Thá»‘ng kÃª sá»‘ lÆ°á»£ng log theo tráº¡ng thÃ¡i (HTTP Status Code: 200, 400, 404, 500...)
      */
     @GetMapping("/analytics/status")
-    public ApiResponse<List<AuditLogRepository.StatusCount>> getStatusStats() {
-        return ApiResponse.success(
-                "Thống kê trạng thái hệ thống",
+    public BaseResponse<List<AuditLogRepository.StatusCount>> getStatusStats() {
+        return BaseResponse.ok(
+                "Thá»‘ng kÃª tráº¡ng thÃ¡i há»‡ thá»‘ng",
                 auditLogService.getStatusStatistics()
         );
     }
 
     /**
-     * Thống kê số lượng log theo entity (USER, COURSE, ROLE...)
+     * Thá»‘ng kÃª sá»‘ lÆ°á»£ng log theo entity (USER, COURSE, ROLE...)
      */
     @GetMapping("/analytics/entities")
-    public ApiResponse<List<AuditLogRepository.EntityCount>> getEntityStats() {
-        return ApiResponse.success(
-                "Thống kê tài nguyên hệ thống",
+    public BaseResponse<List<AuditLogRepository.EntityCount>> getEntityStats() {
+        return BaseResponse.ok(
+                "Thá»‘ng kÃª tÃ i nguyÃªn há»‡ thá»‘ng",
                 auditLogService.getEntityStatistics()
         );
     }
 
     /**
-     * Top 10 API chạy chậm nhất để tối ưu hiệu năng
+     * Top 10 API cháº¡y cháº­m nháº¥t Ä‘á»ƒ tá»‘i Æ°u hiá»‡u nÄƒng
      */
     @GetMapping("/analytics/slow-apis")
-    public ApiResponse<List<AuditLog>> getSlowestApis() {
-        return ApiResponse.success(
-                "Danh sách các thao tác phản hồi chậm",
+    public BaseResponse<List<AuditLog>> getSlowestApis() {
+        return BaseResponse.ok(
+                "Danh sÃ¡ch cÃ¡c thao tÃ¡c pháº£n há»“i cháº­m",
                 auditLogService.getSlowestOperations()
         );
     }

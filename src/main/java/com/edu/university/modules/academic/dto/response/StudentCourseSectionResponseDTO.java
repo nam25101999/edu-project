@@ -1,5 +1,6 @@
 package com.edu.university.modules.academic.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -7,6 +8,7 @@ import java.util.UUID;
 
 @Data
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class StudentCourseSectionResponseDTO {
     private UUID id;
     private UUID studentId;

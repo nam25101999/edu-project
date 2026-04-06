@@ -10,5 +10,6 @@ import java.util.UUID;
 @Repository
 public interface AcademicYearRepository extends JpaRepository<AcademicYear, UUID> {
     Optional<AcademicYear> findByAcademicCode(String academicCode);
+    Optional<AcademicYear> findByAcademicYear(String academicYear);
     boolean existsByAcademicCode(String academicCode);
 }

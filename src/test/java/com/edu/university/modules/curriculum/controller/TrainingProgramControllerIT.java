@@ -1,14 +1,17 @@
 package com.edu.university.modules.curriculum.controller;
 
-import com.edu.university.BackendApplication;
 import com.edu.university.BaseIntegrationTest;
+import com.edu.university.builders.FacultyBuilder;
+import com.edu.university.builders.MajorBuilder;
 import com.edu.university.modules.curriculum.dto.request.TrainingProgramRequestDTO;
 import com.edu.university.modules.curriculum.entity.Major;
 import com.edu.university.modules.curriculum.entity.TrainingProgram;
 import com.edu.university.modules.curriculum.repository.MajorRepository;
 import com.edu.university.modules.curriculum.repository.TrainingProgramRepository;
 import com.edu.university.modules.hr.entity.Department;
+import com.edu.university.modules.hr.entity.Faculty;
 import com.edu.university.modules.hr.repository.DepartmentRepository;
+import com.edu.university.modules.hr.repository.FacultyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +21,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class TrainingProgramControllerIT extends BaseIntegrationTest {
 
@@ -33,6 +38,9 @@ public class TrainingProgramControllerIT extends BaseIntegrationTest {
     @Autowired
     private DepartmentRepository departmentRepository;
 
+    @Autowired
+    private FacultyRepository facultyRepository;
+
     private Major testMajor;
     private Department testDept;
 
@@ -41,6 +49,7 @@ public class TrainingProgramControllerIT extends BaseIntegrationTest {
         trainingProgramRepository.deleteAll();
         majorRepository.deleteAll();
         departmentRepository.deleteAll();
+        facultyRepository.deleteAll();
         
         testDept = departmentRepository.save(Department.builder()
                 .code("DEPT_TP")
@@ -48,10 +57,15 @@ public class TrainingProgramControllerIT extends BaseIntegrationTest {
                 .isActive(true)
                 .build());
 
-        testMajor = majorRepository.save(Major.builder()
-                .code("MAJOR_TP")
-                .name("TP Major")
-                .isActive(true)
+        Faculty faculty = facultyRepository.save(FacultyBuilder.aFaculty()
+                .withCode("FAC_TP")
+                .withName("TP Faculty")
+                .build());
+
+        testMajor = majorRepository.save(MajorBuilder.aMajor()
+                .withCode("MAJOR_TP")
+                .withName("TP Major")
+                .withFaculty(faculty)
                 .build());
     }
 
@@ -69,8 +83,8 @@ public class TrainingProgramControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.programCode").value("PROG_01"))
-                .andExpect(jsonPath("$.major.code").value("MAJOR_TP"));
+                .andExpect(jsonPath("$.data.programCode").value("PROG_01"))
+                .andExpect(jsonPath("$.data.majorName").value("TP Major"));
     }
 
     @Test
@@ -95,7 +109,7 @@ public class TrainingProgramControllerIT extends BaseIntegrationTest {
         
         mockMvc.perform(get("/api/training-programs"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.data.content", hasSize(1)));
     }
 
     @Test
@@ -105,7 +119,7 @@ public class TrainingProgramControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/training-programs/" + tp.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.programCode").value("P2"));
+                .andExpect(jsonPath("$.data.programCode").value("P2"));
     }
 
     @Test
@@ -122,16 +136,16 @@ public class TrainingProgramControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.programName").value("Updated Program"));
+                .andExpect(jsonPath("$.data.programName").value("Updated Program"));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void delete_ShouldReturn204_AndSoftDelete() throws Exception {
+    void delete_ShouldReturn200_AndSoftDelete() throws Exception {
         TrainingProgram tp = trainingProgramRepository.save(TrainingProgram.builder().programCode("P4").programName("Prog 4").isActive(true).build());
 
         mockMvc.perform(delete("/api/training-programs/" + tp.getId()))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         entityManager.flush();
         entityManager.clear();

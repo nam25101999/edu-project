@@ -1,15 +1,18 @@
 package com.edu.university.modules.hr.controller;
 
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.hr.dto.request.DepartmentRequestDTO;
 import com.edu.university.modules.hr.dto.response.DepartmentResponseDTO;
 import com.edu.university.modules.hr.service.DepartmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -20,35 +23,38 @@ public class DepartmentController {
     private final DepartmentService departmentService;
 
     @PostMapping
-    public ResponseEntity<DepartmentResponseDTO> createDepartment(@Valid @RequestBody DepartmentRequestDTO requestDTO) {
-        return new ResponseEntity<>(departmentService.createDepartment(requestDTO), HttpStatus.CREATED);
+    public ResponseEntity<BaseResponse<DepartmentResponseDTO>> createDepartment(@Valid @RequestBody DepartmentRequestDTO requestDTO) {
+        return new ResponseEntity<>(
+                BaseResponse.created("Tạo phòng ban thành công", departmentService.createDepartment(requestDTO)),
+                HttpStatus.CREATED
+        );
     }
 
     @GetMapping
-    public ResponseEntity<List<DepartmentResponseDTO>> getAllDepartments() {
-        return ResponseEntity.ok(departmentService.getAllDepartments());
+    public ResponseEntity<BaseResponse<Page<DepartmentResponseDTO>>> getAllDepartments(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.ok(departmentService.getAllDepartments(pageable)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DepartmentResponseDTO> getDepartmentById(@PathVariable UUID id) {
-        return ResponseEntity.ok(departmentService.getDepartmentById(id));
+    public ResponseEntity<BaseResponse<DepartmentResponseDTO>> getDepartmentById(@PathVariable UUID id) {
+        return ResponseEntity.ok(BaseResponse.ok(departmentService.getDepartmentById(id)));
     }
 
     @GetMapping("/code/{code}")
-    public ResponseEntity<DepartmentResponseDTO> getDepartmentByCode(@PathVariable String code) {
-        return ResponseEntity.ok(departmentService.getDepartmentByCode(code));
+    public ResponseEntity<BaseResponse<DepartmentResponseDTO>> getDepartmentByCode(@PathVariable String code) {
+        return ResponseEntity.ok(BaseResponse.ok(departmentService.getDepartmentByCode(code)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DepartmentResponseDTO> updateDepartment(
+    public ResponseEntity<BaseResponse<DepartmentResponseDTO>> updateDepartment(
             @PathVariable UUID id,
             @Valid @RequestBody DepartmentRequestDTO requestDTO) {
-        return ResponseEntity.ok(departmentService.updateDepartment(id, requestDTO));
+        return ResponseEntity.ok(BaseResponse.ok("Cập nhật phòng ban thành công", departmentService.updateDepartment(id, requestDTO)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDepartment(@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<Void>> deleteDepartment(@PathVariable UUID id) {
         departmentService.deleteDepartment(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.ok("Xóa phòng ban thành công", null));
     }
 }

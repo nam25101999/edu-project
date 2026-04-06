@@ -1,47 +1,53 @@
 package com.edu.university.modules.academic.controller;
 
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.academic.dto.request.SemesterRequestDTO;
 import com.edu.university.modules.academic.dto.response.SemesterResponseDTO;
 import com.edu.university.modules.academic.service.SemesterService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/semesters")
 @RequiredArgsConstructor
+@Validated
 public class SemesterController {
 
     private final SemesterService semesterService;
 
     @PostMapping
-    public ResponseEntity<SemesterResponseDTO> create(@Valid @RequestBody SemesterRequestDTO requestDTO) {
-        return new ResponseEntity<>(semesterService.create(requestDTO), HttpStatus.CREATED);
+    public ResponseEntity<BaseResponse<SemesterResponseDTO>> create(@Valid @RequestBody SemesterRequestDTO requestDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(BaseResponse.created("Tạo học kỳ thành công", semesterService.create(requestDTO)));
     }
 
     @GetMapping
-    public ResponseEntity<List<SemesterResponseDTO>> getAll() {
-        return ResponseEntity.ok(semesterService.getAll());
+    public ResponseEntity<BaseResponse<Page<SemesterResponseDTO>>> getAll(@PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.ok("Lấy danh sách học kỳ thành công", semesterService.getAll(pageable)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SemesterResponseDTO> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(semesterService.getById(id));
+    public ResponseEntity<BaseResponse<SemesterResponseDTO>> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(BaseResponse.ok("Lấy thông tin học kỳ thành công", semesterService.getById(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SemesterResponseDTO> update(@PathVariable UUID id, @Valid @RequestBody SemesterRequestDTO requestDTO) {
-        return ResponseEntity.ok(semesterService.update(id, requestDTO));
+    public ResponseEntity<BaseResponse<SemesterResponseDTO>> update(@PathVariable UUID id, @Valid @RequestBody SemesterRequestDTO requestDTO) {
+        return ResponseEntity.ok(BaseResponse.ok("Cập nhật học kỳ thành công", semesterService.update(id, requestDTO)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<Void>> delete(@PathVariable UUID id) {
         semesterService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.ok("Xóa học kỳ thành công", null));
     }
 }

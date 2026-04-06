@@ -17,7 +17,7 @@ public class TuitionFeeResponseDTO {
     private BigDecimal pricePerCredit;
     private BigDecimal baseTuition;
     private LocalDate effectiveDate;
-    private Boolean isActive;
+    private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

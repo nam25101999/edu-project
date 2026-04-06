@@ -1,6 +1,6 @@
 package com.edu.university.modules.student.controller;
 
-import com.edu.university.common.response.ApiResponse;
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.student.dto.response.StudentResponseDTO;
 import com.edu.university.modules.student.service.StudentService;
 import lombok.RequiredArgsConstructor;
@@ -23,17 +23,15 @@ public class MeController {
      * Lấy thông tin hồ sơ của sinh viên đang đăng nhập.
      */
     @GetMapping("/profile")
-    public ResponseEntity<ApiResponse<StudentResponseDTO>> getMyProfile() {
-        StudentResponseDTO profile = studentService.getCurrentStudentProfile();
-        return ResponseEntity.ok(ApiResponse.success("Lấy thông tin cá nhân thành công", profile));
+    public ResponseEntity<BaseResponse<StudentResponseDTO>> getMyProfile() {
+        return ResponseEntity.ok(BaseResponse.ok("Lấy thông tin cá nhân thành công", studentService.getCurrentStudentProfile()));
     }
 
     /**
      * Lấy lịch học của sinh viên đang đăng nhập.
      */
     @GetMapping("/schedule")
-    public ResponseEntity<ApiResponse<List<StudentScheduleResponseDTO>>> getMySchedule() {
-        List<StudentScheduleResponseDTO> schedule = studentService.getMySchedule();
-        return ResponseEntity.ok(ApiResponse.success("Lấy lịch học thành công", schedule));
+    public ResponseEntity<BaseResponse<List<StudentScheduleResponseDTO>>> getMySchedule() {
+        return ResponseEntity.ok(BaseResponse.ok("Lấy lịch học thành công", studentService.getMySchedule()));
     }
 }

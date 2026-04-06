@@ -20,20 +20,20 @@ import java.time.Instant;
 import java.util.Base64;
 
 /**
- * Token Service - Phiên bản Security Level 10 (Optimized)
- * Áp dụng: Hash Storage, Token Rotation, Reuse Detection (Family Token), SecureRandom Generation
+ * Token Service - PhiÃªn báº£n Security Level 10 (Optimized)
+ * Ãp dá»¥ng: Hash Storage, Token Rotation, Reuse Detection (Family Token), SecureRandom Generation
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TokenService {
 
-    @Value("${spring.security.jwt.refreshExpirationMs:604800000}") // 7 ngày
+    @Value("${spring.security.jwt.refreshExpirationMs:604800000}") // 7 ngÃ y
     private Long refreshTokenDurationMs;
 
     private final RefreshTokenRepository refreshTokenRepository;
 
-    // Sử dụng SecureRandom thay vì UUID để sinh token an toàn tuyệt đối về mặt mật mã học
+    // Sá»­ dá»¥ng SecureRandom thay vÃ¬ UUID Ä‘á»ƒ sinh token an toÃ n tuyá»‡t Ä‘á»‘i vá» máº·t máº­t mÃ£ há»c
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final Base64.Encoder BASE64_URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
 
@@ -41,10 +41,10 @@ public class TokenService {
     @Transactional
     public RefreshToken createRefreshToken(Users user, String ipAddress, String userAgent, String familyId) {
 
-        // 1. Sinh chuỗi Token ngẫu nhiên chuẩn Cryptography
+        // 1. Sinh chuá»—i Token ngáº«u nhiÃªn chuáº©n Cryptography
         String plainToken = generateSecureToken();
 
-        // 2. Hash Token để lưu vào Database
+        // 2. Hash Token Ä‘á»ƒ lÆ°u vÃ o Database
         String hashedToken = hashToken(plainToken);
 
         RefreshToken refreshToken = RefreshToken.builder()
@@ -59,7 +59,7 @@ public class TokenService {
 
         RefreshToken savedToken = refreshTokenRepository.save(refreshToken);
 
-        // Truyền Plain Token qua Transient field để trả về cho Client
+        // Truyá»n Plain Token qua Transient field Ä‘á»ƒ tráº£ vá» cho Client
         savedToken.setTokenPlain(plainToken);
         return savedToken;
     }
@@ -69,46 +69,46 @@ public class TokenService {
     public RefreshToken rotateToken(String oldPlainToken, String ipAddress, String userAgent) {
 
         if (!StringUtils.hasText(oldPlainToken)) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED, "Token không được để trống.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "Token khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
         }
 
         String hashedOldToken = hashToken(oldPlainToken);
 
         RefreshToken oldToken = refreshTokenRepository.findByTokenHash(hashedOldToken)
-                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED, "Refresh Token không hợp lệ hoặc không tồn tại."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED, "Refresh Token khÃ´ng há»£p lá»‡ hoáº·c khÃ´ng tá»“n táº¡i."));
 
-        // 🔥 PHÁT HIỆN REUSE (TOKEN BỊ ĐÁNH CẮP VÀ SỬ DỤNG LẠI)
+        // ðŸ”¥ PHÃT HIá»†N REUSE (TOKEN Bá»Š ÄÃNH Cáº®P VÃ€ Sá»¬ Dá»¤NG Láº I)
         if (oldToken.isRevoked()) {
-            log.warn("🚨 CẢNH BÁO BẢO MẬT: Phát hiện sử dụng lại Token cũ! User: {} | Family: {} | IP: {}",
+            log.warn("ðŸš¨ Cáº¢NH BÃO Báº¢O Máº¬T: PhÃ¡t hiá»‡n sá»­ dá»¥ng láº¡i Token cÅ©! User: {} | Family: {} | IP: {}",
                     oldToken.getUser().getUsername(), oldToken.getFamilyId(), ipAddress);
 
-            // THU HỒI TOÀN BỘ FAMILY (Cắt đứng phiên đăng nhập trên thiết bị đó)
+            // THU Há»’I TOÃ€N Bá»˜ FAMILY (Cáº¯t Ä‘á»©ng phiÃªn Ä‘Äƒng nháº­p trÃªn thiáº¿t bá»‹ Ä‘Ã³)
             revokeFamilyTokens(oldToken.getFamilyId());
-            throw new BusinessException(ErrorCode.UNAUTHORIZED, "Phát hiện hành vi bất thường. Phiên đăng nhập đã bị vô hiệu hóa để bảo vệ tài khoản!");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "PhÃ¡t hiá»‡n hÃ nh vi báº¥t thÆ°á»ng. PhiÃªn Ä‘Äƒng nháº­p Ä‘Ã£ bá»‹ vÃ´ hiá»‡u hÃ³a Ä‘á»ƒ báº£o vá»‡ tÃ i khoáº£n!");
         }
 
-        // 🔥 Kiểm tra hết hạn (Không được xóa token ở đây để giữ Audit Trail cho Reuse Detection)
+        // ðŸ”¥ Kiá»ƒm tra háº¿t háº¡n (KhÃ´ng Ä‘Æ°á»£c xÃ³a token á»Ÿ Ä‘Ã¢y Ä‘á»ƒ giá»¯ Audit Trail cho Reuse Detection)
         if (oldToken.isExpired()) {
             oldToken.setRevoked(true);
-            // Không xóa (delete) oldToken, chỉ đánh dấu revoked để nếu hacker dùng lại token hết hạn này ta vẫn track được family
-            throw new BusinessException(ErrorCode.UNAUTHORIZED, "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+            // KhÃ´ng xÃ³a (delete) oldToken, chá»‰ Ä‘Ã¡nh dáº¥u revoked Ä‘á»ƒ náº¿u hacker dÃ¹ng láº¡i token háº¿t háº¡n nÃ y ta váº«n track Ä‘Æ°á»£c family
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "PhiÃªn Ä‘Äƒng nháº­p Ä‘Ã£ háº¿t háº¡n. Vui lÃ²ng Ä‘Äƒng nháº­p láº¡i.");
         }
 
-        // 1. Sinh token mới trước
+        // 1. Sinh token má»›i trÆ°á»›c
         String newPlainToken = generateSecureToken();
         String newHashedToken = hashToken(newPlainToken);
 
-        // 2. Revoke token cũ, cập nhật thông tin
-        // Lưu ý: Giả định entity RefreshToken của bạn có hàm revoke() nhận vào hash của token kế nhiệm
+        // 2. Revoke token cÅ©, cáº­p nháº­t thÃ´ng tin
+        // LÆ°u Ã½: Giáº£ Ä‘á»‹nh entity RefreshToken cá»§a báº¡n cÃ³ hÃ m revoke() nháº­n vÃ o hash cá»§a token káº¿ nhiá»‡m
         oldToken.revoke(newHashedToken);
         oldToken.markAsUsed();
-        // refreshTokenRepository.save(oldToken); // Không cần thiết vì oldToken là Managed Entity trong @Transactional
+        // refreshTokenRepository.save(oldToken); // KhÃ´ng cáº§n thiáº¿t vÃ¬ oldToken lÃ  Managed Entity trong @Transactional
 
-        // 3. Tạo token mới KẾ THỪA FAMILY ID CŨ
+        // 3. Táº¡o token má»›i Káº¾ THá»ªA FAMILY ID CÅ¨
         RefreshToken newToken = RefreshToken.builder()
                 .user(oldToken.getUser())
                 .tokenHash(newHashedToken)
-                .familyId(oldToken.getFamilyId()) // Giữ nguyên Family
+                .familyId(oldToken.getFamilyId()) // Giá»¯ nguyÃªn Family
                 .expiryDate(Instant.now().plusMillis(refreshTokenDurationMs))
                 .ipAddress(ipAddress)
                 .userAgent(userAgent)
@@ -129,7 +129,7 @@ public class TokenService {
         refreshTokenRepository.findByTokenHash(hashedToken).ifPresent(token -> {
             token.setRevoked(true);
             token.setRevokedAt(Instant.now());
-            // Entity thuộc Transactional sẽ tự động commit thay đổi xuống DB
+            // Entity thuá»™c Transactional sáº½ tá»± Ä‘á»™ng commit thay Ä‘á»•i xuá»‘ng DB
         });
     }
 
@@ -147,8 +147,8 @@ public class TokenService {
     }
 
     /**
-     * Sinh token an toàn bằng SecureRandom thay vì UUID
-     * Độ dài 64 bytes (512 bits) mã hóa Base64 URL safe.
+     * Sinh token an toÃ n báº±ng SecureRandom thay vÃ¬ UUID
+     * Äá»™ dÃ i 64 bytes (512 bits) mÃ£ hÃ³a Base64 URL safe.
      */
     private String generateSecureToken() {
         byte[] randomBytes = new byte[64];
@@ -157,7 +157,7 @@ public class TokenService {
     }
 
     /**
-     * Băm Token bằng SHA-256 (Tốc độ cao hơn Bcrypt, an toàn tuyệt đối với chuỗi dài sinh bằng SecureRandom).
+     * BÄƒm Token báº±ng SHA-256 (Tá»‘c Ä‘á»™ cao hÆ¡n Bcrypt, an toÃ n tuyá»‡t Ä‘á»‘i vá»›i chuá»—i dÃ i sinh báº±ng SecureRandom).
      */
     private String hashToken(String plainToken) {
         try {
@@ -165,8 +165,8 @@ public class TokenService {
             byte[] hash = digest.digest(plainToken.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(hash);
         } catch (NoSuchAlgorithmException e) {
-            log.error("Lỗi khởi tạo thuật toán mã hóa SHA-256", e);
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Lỗi mã hóa hệ thống.");
+            log.error("Lá»—i khá»Ÿi táº¡o thuáº­t toÃ¡n mÃ£ hÃ³a SHA-256", e);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Lá»—i mÃ£ hÃ³a há»‡ thá»‘ng.");
         }
     }
 }

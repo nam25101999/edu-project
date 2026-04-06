@@ -52,12 +52,21 @@ public enum ErrorCode {
     MAJOR_CODE_EXISTS(409, "STD_006", "Mã Ngành đã tồn tại", HttpStatus.CONFLICT),
     CLASS_NOT_FOUND(404, "STD_007", "Không tìm thấy Lớp hành chính", HttpStatus.NOT_FOUND),
     CLASS_CODE_EXISTS(409, "STD_008", "Mã Lớp hành chính đã tồn tại", HttpStatus.CONFLICT),
-
+    
     // === LỖI NGHIỆP VỤ ĐÀO TẠO & MÔN HỌC (CRS) ===
-    COURSE_NOT_FOUND(404, "CRS_001", "Không tìm thấy môn học", HttpStatus.NOT_FOUND),
-    COURSE_ALREADY_EXISTS(409, "CRS_002", "Mã môn học đã tồn tại", HttpStatus.CONFLICT),
-    INVALID_PREREQUISITE(400, "CRS_003", "Môn tiên quyết không hợp lệ", HttpStatus.BAD_REQUEST),
-    CLASS_SECTION_NOT_FOUND(404, "CRS_004", "Không tìm thấy lớp học phần", HttpStatus.NOT_FOUND),
+    ACADEMIC_YEAR_NOT_FOUND(404, "CRS_001", "Không tìm thấy năm học", HttpStatus.NOT_FOUND),
+    ACADEMIC_YEAR_CODE_EXISTS(409, "CRS_002", "Mã năm học đã tồn tại", HttpStatus.CONFLICT),
+    SEMESTER_NOT_FOUND(404, "CRS_003", "Không tìm thấy học kỳ", HttpStatus.NOT_FOUND),
+    SEMESTER_CODE_EXISTS(409, "CRS_004", "Mã học kỳ đã tồn tại", HttpStatus.CONFLICT),
+    COURSE_NOT_FOUND(404, "CRS_005", "Không tìm thấy môn học", HttpStatus.NOT_FOUND),
+    COURSE_ALREADY_EXISTS(409, "CRS_006", "Mã môn học đã tồn tại", HttpStatus.CONFLICT),
+    INVALID_PREREQUISITE(400, "CRS_007", "Môn tiên quyết không hợp lệ", HttpStatus.BAD_REQUEST),
+    CLASS_SECTION_NOT_FOUND(404, "CRS_008", "Không tìm thấy lớp học phần", HttpStatus.NOT_FOUND),
+    ASSIGNMENT_NOT_FOUND(404, "CRS_009", "Không tìm thấy thông tin phân công giảng viên", HttpStatus.NOT_FOUND),
+    TRAINING_PROGRAM_NOT_FOUND(404, "CRS_010", "Không tìm thấy chương trình đào tạo", HttpStatus.NOT_FOUND),
+    TRAINING_PROGRAM_CODE_EXISTS(409, "CRS_011", "Mã chương trình đào tạo đã tồn tại", HttpStatus.CONFLICT),
+    TRAINING_PROGRAM_COURSE_NOT_FOUND(404, "CRS_012", "Không tìm thấy môn học trong chương trình đào tạo", HttpStatus.NOT_FOUND),
+    COURSE_PREREQUISITE_NOT_FOUND(404, "CRS_013", "Không tìm thấy điều kiện tiên quyết của môn học", HttpStatus.NOT_FOUND),
 
     // === LỖI NGHIỆP VỤ ĐĂNG KÝ TÍN CHỈ (ENR) ===
     ENROLLMENT_NOT_FOUND(404, "ENR_001", "Không tìm thấy thông tin đăng ký", HttpStatus.NOT_FOUND),

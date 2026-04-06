@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Service xử lý Audit Log + Analytics
+ * Service xá»­ lÃ½ Audit Log + Analytics
  */
 @Slf4j
 @Service
@@ -28,9 +28,9 @@ import java.util.UUID;
 public class AuditLogService {
 
     private final AuditLogRepository auditLogRepo;
-    private final UserRepository userRepository; // Dùng để tìm userId từ username
+    private final UserRepository userRepository; // DÃ¹ng Ä‘á»ƒ tÃ¬m userId tá»« username
 
-    // ================= CORE LOG METHOD (QUAN TRỌNG NHẤT) =================
+    // ================= CORE LOG METHOD (QUAN TRá»ŒNG NHáº¤T) =================
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(
             AuditLog.AuditAction action,
@@ -60,7 +60,7 @@ public class AuditLogService {
             auditLogRepo.save(auditLog);
 
         } catch (Exception e) {
-            log.error("❌ Lỗi khi ghi AuditLog: {}", e.getMessage());
+            log.error("âŒ Lá»—i khi ghi AuditLog: {}", e.getMessage());
         }
     }
 
@@ -73,7 +73,7 @@ public class AuditLogService {
             }
             auditLogRepo.save(auditLog);
         } catch (Exception e) {
-            log.error("❌ Lỗi khi lưu AuditLog: {}", e.getMessage());
+            log.error("âŒ Lá»—i khi lÆ°u AuditLog: {}", e.getMessage());
         }
     }
 
@@ -96,17 +96,17 @@ public class AuditLogService {
 
     @Transactional(readOnly = true)
     public Page<AuditLog> searchLogsByUsername(String username, Pageable pageable) {
-        // Chuyển từ username -> userId để truy vấn
+        // Chuyá»ƒn tá»« username -> userId Ä‘á»ƒ truy váº¥n
         Optional<Users> userOpt = userRepository.findByUsername(username);
         if (userOpt.isPresent()) {
             return auditLogRepo.findByUserIdOrderByCreatedAtDesc(userOpt.get().getId(), pageable);
         }
-        return Page.empty(pageable); // Trả về list rỗng nếu không tìm thấy user
+        return Page.empty(pageable); // Tráº£ vá» list rá»—ng náº¿u khÃ´ng tÃ¬m tháº¥y user
     }
 
     @Transactional(readOnly = true)
     public Page<AuditLog> getFailedLogs(Pageable pageable) {
-        // Lọc các log có mã HTTP Status >= 400 (Client Error hoặc Server Error)
+        // Lá»c cÃ¡c log cÃ³ mÃ£ HTTP Status >= 400 (Client Error hoáº·c Server Error)
         return auditLogRepo.findByStatusGreaterThanEqualOrderByCreatedAtDesc(400, pageable);
     }
 

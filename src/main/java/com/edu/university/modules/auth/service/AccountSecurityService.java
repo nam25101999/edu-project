@@ -29,7 +29,7 @@ public class AccountSecurityService {
     private final UserRepository userRepository;
     private final OtpTokenRepository otpTokenRepo;
     private final EmailService emailService;
-    private final PasswordEncoder encoder; // Dùng để hash OTP
+    private final PasswordEncoder encoder; // DÃ¹ng Ä‘á»ƒ hash OTP
     private final HttpServletRequest httpRequest;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -41,10 +41,10 @@ public class AccountSecurityService {
     @Transactional
     public void generateAndSendPasswordOtp(ForgotPasswordRequest request) {
         Users user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy tài khoản với email này!"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n vá»›i email nÃ y!"));
 
         if (!user.isActive()) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "Tài khoản của bạn chưa được kích hoạt hoặc đã bị khóa!");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "TÃ i khoáº£n cá»§a báº¡n chÆ°a Ä‘Æ°á»£c kÃ­ch hoáº¡t hoáº·c Ä‘Ã£ bá»‹ khÃ³a!");
         }
 
         sendOtpToUser(user, OtpToken.OtpType.RESET_PASSWORD);
@@ -54,11 +54,11 @@ public class AccountSecurityService {
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         Users user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy tài khoản!"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n!"));
 
         validateAndConsumeOtp(user, request.otp(), OtpToken.OtpType.RESET_PASSWORD);
 
-        // Đổi pass, tăng Token Version để kick toàn bộ session cũ
+        // Äá»•i pass, tÄƒng Token Version Ä‘á»ƒ kick toÃ n bá»™ session cÅ©
         user.setPassword(encoder.encode(request.newPassword()));
         user.setPasswordChangedAt(LocalDateTime.now());
         user.setLockUntil(null);
@@ -69,17 +69,17 @@ public class AccountSecurityService {
     }
 
     // =========================
-    // 2. VERIFY EMAIL (ĐĂNG KÝ)
+    // 2. VERIFY EMAIL (ÄÄ‚NG KÃ)
     // =========================
 
     @LogAction(action = "VERIFY_EMAIL", entityName = "USER")
     @Transactional
     public void verifyEmail(VerifyEmailRequest request) {
         Users user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy tài khoản!"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n!"));
 
         if (user.isEmailVerified()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "Tài khoản này đã được xác thực trước đó!");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "TÃ i khoáº£n nÃ y Ä‘Ã£ Ä‘Æ°á»£c xÃ¡c thá»±c trÆ°á»›c Ä‘Ã³!");
         }
 
         validateAndConsumeOtp(user, request.otp(), OtpToken.OtpType.REGISTER);
@@ -91,21 +91,21 @@ public class AccountSecurityService {
     }
 
     // =========================
-    // 3. RESEND OTP (DÙNG CHUNG)
+    // 3. RESEND OTP (DÃ™NG CHUNG)
     // =========================
 
     @LogAction(action = "RESEND_OTP", entityName = "USER")
     @Transactional
     public void resendOtp(ResendOtpRequest request) {
         Users user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy tài khoản!"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y tÃ i khoáº£n!"));
 
-        // BỔ SUNG CHECK: Không gửi lại OTP đăng ký nếu tài khoản đã xác thực
+        // Bá»” SUNG CHECK: KhÃ´ng gá»­i láº¡i OTP Ä‘Äƒng kÃ½ náº¿u tÃ i khoáº£n Ä‘Ã£ xÃ¡c thá»±c
         if (user.isEmailVerified()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "Tài khoản này đã được xác thực, không cần nhận thêm mã OTP nữa!");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "TÃ i khoáº£n nÃ y Ä‘Ã£ Ä‘Æ°á»£c xÃ¡c thá»±c, khÃ´ng cáº§n nháº­n thÃªm mÃ£ OTP ná»¯a!");
         }
 
-        // Giả sử gọi resend cho Register mặc định (Có thể mở rộng DTO để truyền type)
+        // Giáº£ sá»­ gá»i resend cho Register máº·c Ä‘á»‹nh (CÃ³ thá»ƒ má»Ÿ rá»™ng DTO Ä‘á»ƒ truyá»n type)
         sendOtpToUser(user, OtpToken.OtpType.REGISTER);
     }
 
@@ -114,22 +114,22 @@ public class AccountSecurityService {
     // =========================
 
     public void sendOtpToUser(Users user, OtpToken.OtpType type) {
-        // 1. Thu hồi toàn bộ OTP cũ đang valid của user cho loại hình này (Latest Only)
-        // Yêu cầu repo có hàm: findValidOtpsByUserAndType(user, type)
+        // 1. Thu há»“i toÃ n bá»™ OTP cÅ© Ä‘ang valid cá»§a user cho loáº¡i hÃ¬nh nÃ y (Latest Only)
+        // YÃªu cáº§u repo cÃ³ hÃ m: findValidOtpsByUserAndType(user, type)
         otpTokenRepo.findByUserAndOtpTypeAndIsUsedFalseAndIsRevokedFalseAndDeletedAtIsNull(user, type)
                 .forEach(otp -> {
-                    // Cần đảm bảo entity OtpToken có hàm revoke() để set isRevoked = true
+                    // Cáº§n Ä‘áº£m báº£o entity OtpToken cÃ³ hÃ m revoke() Ä‘á»ƒ set isRevoked = true
                     otp.revoke();
                 });
 
-        // Không cần gọi otpTokenRepo.save(otp) trong vòng lặp vì các entity OTP này đã được
-        // Hibernate quản lý (Managed Entities) nhờ @Transactional. Nó sẽ tự update xuống DB.
+        // KhÃ´ng cáº§n gá»i otpTokenRepo.save(otp) trong vÃ²ng láº·p vÃ¬ cÃ¡c entity OTP nÃ y Ä‘Ã£ Ä‘Æ°á»£c
+        // Hibernate quáº£n lÃ½ (Managed Entities) nhá» @Transactional. NÃ³ sáº½ tá»± update xuá»‘ng DB.
 
-        // 2. Sinh OTP mới (plain text để gửi, hash để lưu)
+        // 2. Sinh OTP má»›i (plain text Ä‘á»ƒ gá»­i, hash Ä‘á»ƒ lÆ°u)
         String plainOtp = String.format("%06d", secureRandom.nextInt(1000000));
 
         OtpToken otpToken = OtpToken.builder()
-                .otpHash(encoder.encode(plainOtp)) // Lưu chuỗi Hash, tuyệt đối không lưu plain text
+                .otpHash(encoder.encode(plainOtp)) // LÆ°u chuá»—i Hash, tuyá»‡t Ä‘á»‘i khÃ´ng lÆ°u plain text
                 .otpType(type)
                 .user(user)
                 .expiresAt(LocalDateTime.now().plusMinutes(5))
@@ -142,36 +142,36 @@ public class AccountSecurityService {
         try {
             emailService.sendOtpEmail(user.getEmail(), plainOtp);
         } catch (Exception e) {
-            log.error("Lỗi khi gửi OTP qua Email: ", e);
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Không thể kết nối dịch vụ Email. Vui lòng thử lại sau.");
+            log.error("Lá»—i khi gá»­i OTP qua Email: ", e);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "KhÃ´ng thá»ƒ káº¿t ná»‘i dá»‹ch vá»¥ Email. Vui lÃ²ng thá»­ láº¡i sau.");
         }
     }
 
     private void validateAndConsumeOtp(Users user, String incomingOtp, OtpToken.OtpType type) {
-        // Lấy ra OTP mới nhất, chưa dùng, chưa bị thu hồi
-        // Yêu cầu repo có hàm: findLatestValidOtp(user, type)
+        // Láº¥y ra OTP má»›i nháº¥t, chÆ°a dÃ¹ng, chÆ°a bá»‹ thu há»“i
+        // YÃªu cáº§u repo cÃ³ hÃ m: findLatestValidOtp(user, type)
         OtpToken otpToken = otpTokenRepo.findTopByUserAndOtpTypeAndIsUsedFalseAndIsRevokedFalseAndDeletedAtIsNullOrderByCreatedAtDesc(user, type)
-                .orElseThrow(() -> new BusinessException(ErrorCode.OTP_INVALID, "Bạn chưa yêu cầu mã OTP hoặc mã đã bị hủy!"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.OTP_INVALID, "Báº¡n chÆ°a yÃªu cáº§u mÃ£ OTP hoáº·c mÃ£ Ä‘Ã£ bá»‹ há»§y!"));
 
         if (otpToken.isExpired()) {
-            throw new BusinessException(ErrorCode.OTP_EXPIRED, "Mã OTP đã hết hạn!");
+            throw new BusinessException(ErrorCode.OTP_EXPIRED, "MÃ£ OTP Ä‘Ã£ háº¿t háº¡n!");
         }
 
         if (otpToken.isLockedOut()) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "OTP đã bị khóa do nhập sai quá nhiều lần. Vui lòng yêu cầu mã mới!");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "OTP Ä‘Ã£ bá»‹ khÃ³a do nháº­p sai quÃ¡ nhiá»u láº§n. Vui lÃ²ng yÃªu cáº§u mÃ£ má»›i!");
         }
 
-        // So khớp Hash
+        // So khá»›p Hash
         if (!encoder.matches(incomingOtp, otpToken.getOtpHash())) {
             otpToken.recordFailedAttempt();
-            // otpTokenRepo.save(otpToken); // Không cần thiết vì có @Transactional
+            // otpTokenRepo.save(otpToken); // KhÃ´ng cáº§n thiáº¿t vÃ¬ cÃ³ @Transactional
             throw new BusinessException(ErrorCode.OTP_INVALID,
-                    "Mã OTP không chính xác! Bạn còn " + (OtpToken.MAX_ATTEMPTS - otpToken.getAttemptCount()) + " lần thử.");
+                    "MÃ£ OTP khÃ´ng chÃ­nh xÃ¡c! Báº¡n cÃ²n " + (OtpToken.MAX_ATTEMPTS - otpToken.getAttemptCount()) + " láº§n thá»­.");
         }
 
-        // Đánh dấu thành công
+        // ÄÃ¡nh dáº¥u thÃ nh cÃ´ng
         otpToken.markAsUsed();
-        // otpTokenRepo.save(otpToken); // Không cần thiết vì có @Transactional
+        // otpTokenRepo.save(otpToken); // KhÃ´ng cáº§n thiáº¿t vÃ¬ cÃ³ @Transactional
     }
 
     private String getClientIp() {

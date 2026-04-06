@@ -11,13 +11,12 @@ import com.edu.university.modules.curriculum.service.MajorService;
 import com.edu.university.modules.hr.entity.Faculty;
 import com.edu.university.modules.hr.repository.FacultyRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,30 +30,34 @@ public class MajorServiceImpl implements MajorService {
     @Transactional
     public MajorResponseDTO create(MajorRequestDTO requestDTO) {
         if (majorRepository.existsByCode(requestDTO.getCode())) {
-            throw new BusinessException(ErrorCode.ALREADY_EXISTS, "Mã ngành đã tồn tại");
+            throw new BusinessException(ErrorCode.MAJOR_CODE_EXISTS);
         }
-        Major major = majorMapper.toEntity(requestDTO);
+
+        Faculty faculty = null;
         if (requestDTO.getFacultyId() != null) {
-            Faculty faculty = facultyRepository.findById(requestDTO.getFacultyId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy khoa"));
-            major.setFaculty(faculty);
+            faculty = facultyRepository.findById(requestDTO.getFacultyId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FACULTY_NOT_FOUND));
         }
+
+        Major major = majorMapper.toEntity(requestDTO);
+        major.setFaculty(faculty);
         major.setActive(true);
-        major.setCreatedAt(LocalDateTime.now());
+
         return majorMapper.toResponseDTO(majorRepository.save(major));
     }
 
     @Override
-    public List<MajorResponseDTO> getAll() {
-        return majorRepository.findAll().stream()
-                .map(majorMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<MajorResponseDTO> getAll(Pageable pageable) {
+        return majorRepository.findAll(pageable)
+                .map(majorMapper::toResponseDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MajorResponseDTO getById(UUID id) {
         Major major = majorRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy ngành"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MAJOR_NOT_FOUND));
         return majorMapper.toResponseDTO(major);
     }
 
@@ -62,16 +65,18 @@ public class MajorServiceImpl implements MajorService {
     @Transactional
     public MajorResponseDTO update(UUID id, MajorRequestDTO requestDTO) {
         Major major = majorRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy ngành"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MAJOR_NOT_FOUND));
+
         majorMapper.updateEntityFromDTO(requestDTO, major);
+
         if (requestDTO.getFacultyId() != null) {
             Faculty faculty = facultyRepository.findById(requestDTO.getFacultyId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy khoa"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.FACULTY_NOT_FOUND));
             major.setFaculty(faculty);
         } else {
             major.setFaculty(null);
         }
-        major.setUpdatedAt(LocalDateTime.now());
+
         return majorMapper.toResponseDTO(majorRepository.save(major));
     }
 
@@ -79,7 +84,7 @@ public class MajorServiceImpl implements MajorService {
     @Transactional
     public void delete(UUID id) {
         Major major = majorRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy ngành"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MAJOR_NOT_FOUND));
         major.softDelete("system");
         majorRepository.save(major);
     }

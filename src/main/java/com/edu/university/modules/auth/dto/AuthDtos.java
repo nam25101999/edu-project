@@ -8,38 +8,38 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Gom nhóm các Data Transfer Objects (DTO) liên quan đến Xác thực và Bảo mật tài khoản.
+ * Gom nhÃ³m cÃ¡c Data Transfer Objects (DTO) liÃªn quan Ä‘áº¿n XÃ¡c thá»±c vÃ  Báº£o máº­t tÃ i khoáº£n.
  */
 public class AuthDtos {
 
     // --- REQUESTS ---
 
     public record LoginRequest(
-            @NotBlank(message = "Username không được để trống") String identifier,
-            @NotBlank(message = "Password không được để trống") String password
+            @NotBlank(message = "Username khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng") String identifier,
+            @NotBlank(message = "Password khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng") String password
     ) {
-        // Tự động trim khoảng trắng thừa khi user copy/paste
+        // Tá»± Ä‘á»™ng trim khoáº£ng tráº¯ng thá»«a khi user copy/paste
         public LoginRequest {
             identifier = identifier != null ? identifier.trim() : null;
         }
     }
 
     public record SignupRequest(
-            @NotBlank(message = "Username không được để trống")
-            @Size(min = 3, max = 50, message = "Username phải từ 3 đến 50 ký tự")
+            @NotBlank(message = "Username khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng")
+            @Size(min = 3, max = 50, message = "Username pháº£i tá»« 3 Ä‘áº¿n 50 kÃ½ tá»±")
             String username,
 
-            @NotBlank(message = "Password không được để trống")
-            @Size(min = 8, message = "Password phải có ít nhất 8 ký tự")
+            @NotBlank(message = "Password khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng")
+            @Size(min = 8, message = "Password pháº£i cÃ³ Ã­t nháº¥t 8 kÃ½ tá»±")
             String password,
 
-            @NotBlank(message = "Email không được để trống")
-            @Email(message = "Email không đúng định dạng")
+            @NotBlank(message = "Email khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng")
+            @Email(message = "Email khÃ´ng Ä‘Ãºng Ä‘á»‹nh dáº¡ng")
             String email,
 
             String role
     ) {
-        // Chuẩn hóa Username và đưa Email về chữ thường
+        // Chuáº©n hÃ³a Username vÃ  Ä‘Æ°a Email vá» chá»¯ thÆ°á»ng
         public SignupRequest {
             username = username != null ? username.trim() : null;
             email = email != null ? email.trim().toLowerCase() : null;
@@ -47,16 +47,16 @@ public class AuthDtos {
     }
 
     public record ChangePasswordRequest(
-            @NotBlank(message = "Mật khẩu cũ không được để trống")
+            @NotBlank(message = "Máº­t kháº©u cÅ© khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng")
             String oldPassword,
 
-            @NotBlank(message = "Mật khẩu mới không được để trống")
-            @Size(min = 8, message = "Mật khẩu mới phải có ít nhất 8 ký tự")
+            @NotBlank(message = "Máº­t kháº©u má»›i khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng")
+            @Size(min = 8, message = "Máº­t kháº©u má»›i pháº£i cÃ³ Ã­t nháº¥t 8 kÃ½ tá»±")
             String newPassword
     ) {}
 
     public record TokenRefreshRequest(
-            @NotBlank(message = "Refresh Token không được để trống")
+            @NotBlank(message = "Refresh Token khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng")
             String refreshToken
     ) {
         public TokenRefreshRequest {
@@ -64,9 +64,9 @@ public class AuthDtos {
         }
     }
 
-    // Bổ sung LogoutRequest để map JSON body từ client khi gọi API đăng xuất
+    // Bá»• sung LogoutRequest Ä‘á»ƒ map JSON body tá»« client khi gá»i API Ä‘Äƒng xuáº¥t
     public record LogoutRequest(
-            @NotBlank(message = "Refresh Token không được để trống")
+            @NotBlank(message = "Refresh Token khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng")
             String refreshToken
     ) {
         public LogoutRequest {
@@ -75,8 +75,8 @@ public class AuthDtos {
     }
 
     public record VerifyEmailRequest(
-            @NotBlank(message = "Email không được để trống") @Email String email,
-            @NotBlank(message = "Mã OTP không được để trống") String otp
+            @NotBlank(message = "Email khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng") @Email String email,
+            @NotBlank(message = "MÃ£ OTP khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng") String otp
     ) {
         public VerifyEmailRequest {
             email = email != null ? email.trim().toLowerCase() : null;
@@ -85,7 +85,7 @@ public class AuthDtos {
     }
 
     public record ResendOtpRequest(
-            @NotBlank(message = "Email không được để trống") @Email String email
+            @NotBlank(message = "Email khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng") @Email String email
     ) {
         public ResendOtpRequest {
             email = email != null ? email.trim().toLowerCase() : null;
@@ -118,18 +118,18 @@ public class AuthDtos {
         }
     }
 
-    // ================= DTOs DÀNH RIÊNG CHO CRUD USERS =================
+    // ================= DTOs DÃ€NH RIÃŠNG CHO CRUD USERS =================
 
     public record UserCreateRequest(
-            @NotBlank(message = "Tên đăng nhập không được để trống") String username,
-            @NotBlank(message = "Email không được để trống") @Email(message = "Email không hợp lệ") String email,
-            @NotBlank(message = "Mật khẩu không được để trống") String password,
+            @NotBlank(message = "TÃªn Ä‘Äƒng nháº­p khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng") String username,
+            @NotBlank(message = "Email khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng") @Email(message = "Email khÃ´ng há»£p lá»‡") String email,
+            @NotBlank(message = "Máº­t kháº©u khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng") String password,
             List<String> roles,
             boolean isActive
     ) {}
 
     public record UserUpdateRequest(
-            @Email(message = "Email không hợp lệ") String email,
+            @Email(message = "Email khÃ´ng há»£p lá»‡") String email,
             Boolean isActive,
             List<String> roles
     ) {}

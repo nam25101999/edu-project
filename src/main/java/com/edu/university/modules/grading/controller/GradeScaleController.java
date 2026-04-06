@@ -5,6 +5,8 @@ import com.edu.university.modules.grading.dto.response.GradeScaleResponseDTO;
 import com.edu.university.modules.grading.service.GradeScaleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +27,8 @@ public class GradeScaleController {
     }
 
     @GetMapping
-    public ResponseEntity<List<GradeScaleResponseDTO>> getAll() {
-        return ResponseEntity.ok(gradeScaleService.getAll());
+    public ResponseEntity<List<GradeScaleResponseDTO>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(gradeScaleService.getAll(pageable).getContent());
     }
 
     @GetMapping("/{id}")

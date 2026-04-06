@@ -5,6 +5,8 @@ import com.edu.university.modules.schedule.dto.response.RoomResponseDTO;
 import com.edu.university.modules.schedule.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +27,8 @@ public class RoomController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RoomResponseDTO>> getAll() {
-        return ResponseEntity.ok(roomService.getAll());
+    public ResponseEntity<List<RoomResponseDTO>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(roomService.getAll(pageable).getContent());
     }
 
     @GetMapping("/{id}")

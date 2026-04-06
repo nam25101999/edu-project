@@ -41,8 +41,8 @@ public class CourseControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.code").value("CS101"))
-                .andExpect(jsonPath("$.name").value("Introduction to Computer Science"));
+                .andExpect(jsonPath("$.data.code").value("CS101"))
+                .andExpect(jsonPath("$.data.name").value("Introduction to Computer Science"));
     }
 
     @Test
@@ -65,9 +65,9 @@ public class CourseControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/courses"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].code").value("CS101"))
-                .andExpect(jsonPath("$[1].code").value("CS102"));
+                .andExpect(jsonPath("$.data.content", hasSize(2)))
+                .andExpect(jsonPath("$.data.content[0].code").value("CS101"))
+                .andExpect(jsonPath("$.data.content[1].code").value("CS102"));
     }
 
     @Test
@@ -84,8 +84,8 @@ public class CourseControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/courses/" + id))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("CS101"))
-                .andExpect(jsonPath("$.name").value("Course 1"));
+                .andExpect(jsonPath("$.data.code").value("CS101"))
+                .andExpect(jsonPath("$.data.name").value("Course 1"));
     }
 
     @Test
@@ -109,8 +109,8 @@ public class CourseControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("New Name"))
-                .andExpect(jsonPath("$.credits").value(3.5));
+                .andExpect(jsonPath("$.data.name").value("New Name"))
+                .andExpect(jsonPath("$.data.credits").value(3.5));
     }
 
     @Test
@@ -126,7 +126,7 @@ public class CourseControllerIT extends BaseIntegrationTest {
         UUID id = course.getId();
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/courses/" + id))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         entityManager.flush();
         entityManager.clear();

@@ -5,6 +5,8 @@ import com.edu.university.modules.schedule.dto.response.TimeSlotResponseDTO;
 import com.edu.university.modules.schedule.service.TimeSlotService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +27,8 @@ public class TimeSlotController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TimeSlotResponseDTO>> getAll() {
-        return ResponseEntity.ok(timeSlotService.getAll());
+    public ResponseEntity<List<TimeSlotResponseDTO>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(timeSlotService.getAll(pageable).getContent());
     }
 
     @GetMapping("/{id}")

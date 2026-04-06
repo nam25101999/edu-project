@@ -52,17 +52,12 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // Thay đổi Session sang IF_REQUIRED để hỗ trợ lưu trạng thái login trên trình duyệt
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
-                            if (request.getRequestURI().startsWith("/api/")) {
-                                response.setContentType("application/json;charset=UTF-8");
-                                response.setStatus(401);
-                                response.getWriter().write("{\"code\":401,\"message\":\"Unauthorized\"}");
-                            } else {
-                                response.sendRedirect("/login");
-                            }
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(401);
+                            response.getWriter().write("{\"code\":401,\"message\":\"Unauthorized\",\"data\":null}");
                         })
                 )
 
@@ -71,34 +66,11 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-
-                                // Cho phép các đường dẫn giao diện (phải khớp với Controller)
-                                "/",
-                                "/login",
-                                "/dashboard",
-                                "/register",
-
-                                // Cho phép tài nguyên tĩnh
-                                "/css/**", "/js/**", "/images/**", "/static/**"
+                                "/favicon.ico",
+                                "/error"
                         ).permitAll()
-
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        // ... các cấu hình role khác
                         .anyRequest().authenticated()
-                )
-
-                .formLogin(form -> form
-                        .loginPage("/login") // Phải khớp với @GetMapping("/login") trong WebUIController
-                        .defaultSuccessUrl("/dashboard", true)
-                        .permitAll()
-                )
-
-                .logout(logout -> logout
-                        // 🔥 SỬA Ở ĐÂY: Đổi tên URL để KHÔNG ĐÈ lên API của AuthController
-                        // Nếu bạn dùng giao diện web, HTML button logout sẽ trỏ tới "/web-logout"
-                        .logoutUrl("/web-logout")
-                        .logoutSuccessUrl("/login?logout") // Thêm tham số báo hiệu logout thành công cho Web UI
-                        .permitAll()
                 );
 
         http.authenticationProvider(authenticationProvider());

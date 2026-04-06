@@ -11,7 +11,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 /**
- * Service xử lý việc gửi Email thông báo và mã xác thực (OTP).
+ * Service xá»­ lÃ½ viá»‡c gá»­i Email thÃ´ng bÃ¡o vÃ  mÃ£ xÃ¡c thá»±c (OTP).
  */
 @Slf4j
 @Service
@@ -29,27 +29,27 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(to);
-            message.setSubject("[University Portal] Mã xác thực bảo mật");
+            message.setSubject("[University Portal] MÃ£ xÃ¡c thá»±c báº£o máº­t");
 
             String content = String.format(
-                    "Chào bạn,\n\n" +
-                            "Hệ thống vừa nhận được yêu cầu cần xác thực từ tài khoản của bạn.\n" +
-                            "Mã OTP bảo mật của bạn là: %s\n\n" +
-                            "Lưu ý quan trọng:\n" +
-                            "- Mã này có hiệu lực trong vòng 5 phút.\n" +
-                            "- Tuyệt đối KHÔNG chia sẻ mã này hoặc chuyển tiếp email này cho bất kỳ ai, kể cả nhân viên quản trị.\n\n" +
-                            "Trân trọng,\nBan Quản Trị Hệ Thống.",
+                    "ChÃ o báº¡n,\n\n" +
+                            "Há»‡ thá»‘ng vá»«a nháº­n Ä‘Æ°á»£c yÃªu cáº§u cáº§n xÃ¡c thá»±c tá»« tÃ i khoáº£n cá»§a báº¡n.\n" +
+                            "MÃ£ OTP báº£o máº­t cá»§a báº¡n lÃ : %s\n\n" +
+                            "LÆ°u Ã½ quan trá»ng:\n" +
+                            "- MÃ£ nÃ y cÃ³ hiá»‡u lá»±c trong vÃ²ng 5 phÃºt.\n" +
+                            "- Tuyá»‡t Ä‘á»‘i KHÃ”NG chia sáº» mÃ£ nÃ y hoáº·c chuyá»ƒn tiáº¿p email nÃ y cho báº¥t ká»³ ai, ká»ƒ cáº£ nhÃ¢n viÃªn quáº£n trá»‹.\n\n" +
+                            "TrÃ¢n trá»ng,\nBan Quáº£n Trá»‹ Há»‡ Thá»‘ng.",
                     otp
             );
 
             message.setText(content);
             mailSender.send(message);
 
-            log.info("Đã gửi OTP thành công tới email: {}", to);
+            log.info("ÄÃ£ gá»­i OTP thÃ nh cÃ´ng tá»›i email: {}", to);
 
         } catch (Exception e) {
-            log.error("Lỗi hệ thống khi gửi email tới {}: {}", to, e.getMessage());
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "Không thể kết nối đến máy chủ gửi email. Vui lòng thử lại sau.");
+            log.error("Lá»—i há»‡ thá»‘ng khi gá»­i email tá»›i {}: {}", to, e.getMessage());
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "KhÃ´ng thá»ƒ káº¿t ná»‘i Ä‘áº¿n mÃ¡y chá»§ gá»­i email. Vui lÃ²ng thá»­ láº¡i sau.");
         }
     }
 }

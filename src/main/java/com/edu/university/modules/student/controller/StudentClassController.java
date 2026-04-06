@@ -1,15 +1,18 @@
 package com.edu.university.modules.student.controller;
 
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.student.dto.request.StudentClassRequestDTO;
 import com.edu.university.modules.student.dto.response.StudentClassResponseDTO;
 import com.edu.university.modules.student.service.StudentClassService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -19,38 +22,37 @@ public class StudentClassController {
 
     private final StudentClassService studentClassService;
 
-    // 1. Tạo lớp mới
     @PostMapping
-    public ResponseEntity<StudentClassResponseDTO> createClass(@Valid @RequestBody StudentClassRequestDTO requestDTO) {
-        return new ResponseEntity<>(studentClassService.createClass(requestDTO), HttpStatus.CREATED);
+    public ResponseEntity<BaseResponse<StudentClassResponseDTO>> createClass(@Valid @RequestBody StudentClassRequestDTO requestDTO) {
+        return new ResponseEntity<>(
+                BaseResponse.created("Tạo lớp thành công", studentClassService.createClass(requestDTO)),
+                HttpStatus.CREATED
+        );
     }
 
-    // 2 & 6. Lấy danh sách lớp & Lọc lớp theo khoa, ngành
     @GetMapping
-    public ResponseEntity<List<StudentClassResponseDTO>> getClasses(
+    public ResponseEntity<BaseResponse<Page<StudentClassResponseDTO>>> getClasses(
             @RequestParam(required = false) UUID departmentId,
-            @RequestParam(required = false) UUID majorId) {
-        return ResponseEntity.ok(studentClassService.getClassesByDepartmentAndMajor(departmentId, majorId));
+            @RequestParam(required = false) UUID majorId,
+            @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.ok(studentClassService.getClassesByDepartmentAndMajor(departmentId, majorId, pageable)));
     }
 
-    // 3. Lấy chi tiết lớp
     @GetMapping("/{id}")
-    public ResponseEntity<StudentClassResponseDTO> getClassById(@PathVariable UUID id) {
-        return ResponseEntity.ok(studentClassService.getClassById(id));
+    public ResponseEntity<BaseResponse<StudentClassResponseDTO>> getClassById(@PathVariable UUID id) {
+        return ResponseEntity.ok(BaseResponse.ok(studentClassService.getClassById(id)));
     }
 
-    // 4. Cập nhật thông tin lớp
     @PutMapping("/{id}")
-    public ResponseEntity<StudentClassResponseDTO> updateClass(
+    public ResponseEntity<BaseResponse<StudentClassResponseDTO>> updateClass(
             @PathVariable UUID id,
             @Valid @RequestBody StudentClassRequestDTO requestDTO) {
-        return ResponseEntity.ok(studentClassService.updateClass(id, requestDTO));
+        return ResponseEntity.ok(BaseResponse.ok("Cập nhật lớp thành công", studentClassService.updateClass(id, requestDTO)));
     }
 
-    // 5. Xóa mềm lớp
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteClass(@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<Void>> deleteClass(@PathVariable UUID id) {
         studentClassService.deleteClass(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.ok("Xóa lớp thành công", null));
     }
 }

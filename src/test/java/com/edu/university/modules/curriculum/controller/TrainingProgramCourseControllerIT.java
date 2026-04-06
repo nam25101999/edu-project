@@ -1,7 +1,9 @@
 package com.edu.university.modules.curriculum.controller;
 
-import com.edu.university.BackendApplication;
 import com.edu.university.BaseIntegrationTest;
+import com.edu.university.builders.CourseBuilder;
+import com.edu.university.builders.TrainingProgramBuilder;
+import com.edu.university.builders.DepartmentBuilder;
 import com.edu.university.modules.curriculum.dto.request.TrainingProgramCourseRequestDTO;
 import com.edu.university.modules.curriculum.entity.Course;
 import com.edu.university.modules.curriculum.entity.TrainingProgram;
@@ -9,18 +11,21 @@ import com.edu.university.modules.curriculum.entity.TrainingProgramCourse;
 import com.edu.university.modules.curriculum.repository.CourseRepository;
 import com.edu.university.modules.curriculum.repository.TrainingProgramCourseRepository;
 import com.edu.university.modules.curriculum.repository.TrainingProgramRepository;
+import com.edu.university.modules.hr.entity.Department;
+import com.edu.university.modules.hr.repository.DepartmentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class TrainingProgramCourseControllerIT extends BaseIntegrationTest {
 
@@ -33,6 +38,9 @@ public class TrainingProgramCourseControllerIT extends BaseIntegrationTest {
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private DepartmentRepository departmentRepository;
+
     private TrainingProgram testTP;
     private Course testCourse;
 
@@ -41,18 +49,20 @@ public class TrainingProgramCourseControllerIT extends BaseIntegrationTest {
         tpCourseRepository.deleteAll();
         tpRepository.deleteAll();
         courseRepository.deleteAll();
+        departmentRepository.deleteAll();
         
-        testTP = tpRepository.save(TrainingProgram.builder()
-                .programCode("TP_01")
-                .programName("Test Program")
-                .isActive(true)
+        Department dept = departmentRepository.save(DepartmentBuilder.aDepartment().build());
+
+        testTP = tpRepository.save(TrainingProgramBuilder.aTrainingProgram()
+                .withProgramCode("TP_01")
+                .withProgramName("Test Program")
+                .withDepartment(dept)
                 .build());
 
-        testCourse = courseRepository.save(Course.builder()
-                .code("C_01")
-                .name("Test Course")
-                .credits(new BigDecimal("3"))
-                .isActive(true)
+        testCourse = courseRepository.save(CourseBuilder.aCourse()
+                .withCode("C_01")
+                .withName("Test Course")
+                .withDepartment(dept)
                 .build());
     }
 
@@ -68,8 +78,8 @@ public class TrainingProgramCourseControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.trainingProgram.programCode").value("TP_01"))
-                .andExpect(jsonPath("$.course.code").value("C_01"));
+                .andExpect(jsonPath("$.data.trainingProgramId").value(testTP.getId().toString()))
+                .andExpect(jsonPath("$.data.courseCode").value("C_01"));
     }
 
     @Test
@@ -83,7 +93,7 @@ public class TrainingProgramCourseControllerIT extends BaseIntegrationTest {
         
         mockMvc.perform(get("/api/training-program-courses"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.data.content", hasSize(1)));
     }
 
     @Test
@@ -97,7 +107,7 @@ public class TrainingProgramCourseControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/training-program-courses/" + tpc.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.course.code").value("C_01"));
+                .andExpect(jsonPath("$.data.courseCode").value("C_01"));
     }
 
     @Test
@@ -118,12 +128,12 @@ public class TrainingProgramCourseControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.isRequired").value(false));
+                .andExpect(jsonPath("$.data.isRequired").value(false));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void delete_ShouldReturn204_AndSoftDelete() throws Exception {
+    void delete_ShouldReturn200_AndSoftDelete() throws Exception {
         TrainingProgramCourse tpc = tpCourseRepository.save(TrainingProgramCourse.builder()
                 .trainingProgram(testTP)
                 .course(testCourse)
@@ -131,7 +141,7 @@ public class TrainingProgramCourseControllerIT extends BaseIntegrationTest {
                 .build());
 
         mockMvc.perform(delete("/api/training-program-courses/" + tpc.getId()))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         entityManager.flush();
         entityManager.clear();

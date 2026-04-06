@@ -13,14 +13,20 @@ public interface StudentStatusMapper {
 
     // Bỏ qua object student khi map từ DTO -> Entity (Sẽ set ở tầng Service)
     @Mapping(target = "student", ignore = true)
+    @Mapping(target = "statusName", source = "status")
+    @Mapping(target = "startDate", source = "effectiveDate")
     StudentStatus toEntity(StudentStatusRequestDTO requestDTO);
 
     // Lấy thông tin từ object student bên trong Entity gán ra DTO
     @Mapping(target = "studentId", source = "student.id")
     @Mapping(target = "studentCode", source = "student.studentCode")
     @Mapping(target = "studentName", source = "student.fullName")
+    @Mapping(target = "status", source = "statusName")
+    @Mapping(target = "effectiveDate", source = "startDate")
     StudentStatusResponseDTO toResponseDTO(StudentStatus entity);
 
     @Mapping(target = "student", ignore = true)
+    @Mapping(target = "statusName", source = "status")
+    @Mapping(target = "startDate", source = "effectiveDate")
     void updateEntityFromDTO(StudentStatusRequestDTO requestDTO, @MappingTarget StudentStatus entity);
 }

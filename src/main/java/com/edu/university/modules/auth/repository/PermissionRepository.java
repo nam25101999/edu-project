@@ -8,23 +8,23 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository quản lý thực thể Permission (Quyền hạn).
+ * Repository quáº£n lÃ½ thá»±c thá»ƒ Permission (Quyá»n háº¡n).
  */
 @Repository
 public interface PermissionRepository extends JpaRepository<Permission, Long> {
 
-    // Tìm kiếm quyền theo tên chính xác (VD: "USER_CREATE")
+    // TÃ¬m kiáº¿m quyá»n theo tÃªn chÃ­nh xÃ¡c (VD: "USER_CREATE")
     Optional<Permission> findByName(String name);
 
-    // Tìm kiếm quyền theo Tài nguyên (Resource) và Hành động (Action)
+    // TÃ¬m kiáº¿m quyá»n theo TÃ i nguyÃªn (Resource) vÃ  HÃ nh Ä‘á»™ng (Action)
     Optional<Permission> findByResourceAndAction(String resource, String action);
 
-    // Lấy toàn bộ danh sách quyền thuộc về một Tài nguyên cụ thể (VD: "STUDENT")
+    // Láº¥y toÃ n bá»™ danh sÃ¡ch quyá»n thuá»™c vá» má»™t TÃ i nguyÃªn cá»¥ thá»ƒ (VD: "STUDENT")
     List<Permission> findByResource(String resource);
 
-    // Lấy danh sách các quyền đang được kích hoạt
+    // Láº¥y danh sÃ¡ch cÃ¡c quyá»n Ä‘ang Ä‘Æ°á»£c kÃ­ch hoáº¡t
     List<Permission> findByIsActiveTrue();
 
-    // Kiểm tra xem một quyền đã tồn tại theo tên chưa
+    // Kiá»ƒm tra xem má»™t quyá»n Ä‘Ã£ tá»“n táº¡i theo tÃªn chÆ°a
     boolean existsByName(String name);
 }

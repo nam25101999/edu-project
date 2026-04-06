@@ -11,13 +11,12 @@ import com.edu.university.modules.curriculum.service.CourseService;
 import com.edu.university.modules.hr.entity.Department;
 import com.edu.university.modules.hr.repository.DepartmentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,30 +30,34 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     public CourseResponseDTO create(CourseRequestDTO requestDTO) {
         if (courseRepository.existsByCode(requestDTO.getCode())) {
-            throw new BusinessException(ErrorCode.ALREADY_EXISTS, "Mã môn học đã tồn tại");
+            throw new BusinessException(ErrorCode.COURSE_ALREADY_EXISTS);
         }
-        Course course = courseMapper.toEntity(requestDTO);
+        
+        Department department = null;
         if (requestDTO.getDepartmentId() != null) {
-            Department department = departmentRepository.findById(requestDTO.getDepartmentId())
+            department = departmentRepository.findById(requestDTO.getDepartmentId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy khoa"));
-            course.setDepartment(department);
         }
+
+        Course course = courseMapper.toEntity(requestDTO);
+        course.setDepartment(department);
         course.setActive(true);
-        course.setCreatedAt(LocalDateTime.now());
+        
         return courseMapper.toResponseDTO(courseRepository.save(course));
     }
 
     @Override
-    public List<CourseResponseDTO> getAll() {
-        return courseRepository.findAll().stream()
-                .map(courseMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<CourseResponseDTO> getAll(Pageable pageable) {
+        return courseRepository.findAll(pageable)
+                .map(courseMapper::toResponseDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CourseResponseDTO getById(UUID id) {
         Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy môn học"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
         return courseMapper.toResponseDTO(course);
     }
 
@@ -62,16 +65,18 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     public CourseResponseDTO update(UUID id, CourseRequestDTO requestDTO) {
         Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy môn học"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+        
         courseMapper.updateEntityFromDTO(requestDTO, course);
+        
         if (requestDTO.getDepartmentId() != null) {
             Department department = departmentRepository.findById(requestDTO.getDepartmentId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy khoa"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy khoa"));
             course.setDepartment(department);
         } else {
             course.setDepartment(null);
         }
-        course.setUpdatedAt(LocalDateTime.now());
+        
         return courseMapper.toResponseDTO(courseRepository.save(course));
     }
 
@@ -79,7 +84,7 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     public void delete(UUID id) {
         Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy môn học"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
         course.softDelete("system");
         courseRepository.save(course);
     }

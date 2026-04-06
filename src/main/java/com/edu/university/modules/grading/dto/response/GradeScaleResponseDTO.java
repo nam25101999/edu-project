@@ -15,8 +15,10 @@ public class GradeScaleResponseDTO {
     private BigDecimal maxScore;
     private String letterGrade;
     private BigDecimal gpaValue;
-    private boolean isPass;
-    private Boolean isActive;
+    @com.fasterxml.jackson.annotation.JsonProperty("pass")
+    private boolean pass;
+    @com.fasterxml.jackson.annotation.JsonProperty("active")
+    private boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

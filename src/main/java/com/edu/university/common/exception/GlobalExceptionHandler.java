@@ -1,6 +1,6 @@
 package com.edu.university.common.exception;
 
-import com.edu.university.common.response.ApiResponse;
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.common.security.UserDetailsImpl;
 import com.edu.university.modules.auth.entity.AuditLog;
 import com.edu.university.modules.auth.service.AuditLogService;
@@ -18,6 +18,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import jakarta.validation.ConstraintViolationException;
+import java.util.stream.Collectors;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,12 +47,12 @@ public class GlobalExceptionHandler {
         } catch (Exception e) {
             // Ignore
         }
-        return null; // Trả về null nếu là khách (Guest) chưa đăng nhập
+        return null; // Tráº£ vá» null náº¿u lÃ  khÃ¡ch (Guest) chÆ°a Ä‘Äƒng nháº­p
     }
 
     // ===== 1. BUSINESS EXCEPTION =====
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBusinessException(
+    public ResponseEntity<BaseResponse<Void>> handleBusinessException(
             BusinessException ex, HttpServletRequest request) {
 
         String traceId = generateTraceId();
@@ -62,12 +64,12 @@ public class GlobalExceptionHandler {
         log.warn("[TraceID: {}] Business Exception [{}]: {}", traceId,
                 errorCode.getInternalCode(), message);
 
-        // 🔥 AUDIT LOG
+        // ðŸ”¥ AUDIT LOG
         auditLogService.log(
-                AuditLog.AuditAction.UPDATE, // Dùng UPDATE tạm (có thể thêm BUSINESS_ERROR vào Enum)
+                AuditLog.AuditAction.UPDATE, // DÃ¹ng UPDATE táº¡m (cÃ³ thá»ƒ thÃªm BUSINESS_ERROR vÃ o Enum)
                 "SYSTEM",
                 null,
-                errorCode.getStatus(), // Status dạng Integer (400, 404,...)
+                errorCode.getStatus(), // Status dáº¡ng Integer (400, 404,...)
                 request.getRequestURI(),
                 request.getMethod(),
                 getCurrentUserId(),
@@ -77,7 +79,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
-                .body(ApiResponse.error(
+                .body(BaseResponse.error(
                         errorCode.getStatus(),
                         errorCode.getInternalCode(),
                         message,
@@ -88,7 +90,7 @@ public class GlobalExceptionHandler {
 
     // ===== 2. VALIDATION ERROR =====
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(
+    public ResponseEntity<BaseResponse<Map<String, String>>> handleValidationExceptions(
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
 
@@ -103,7 +105,7 @@ public class GlobalExceptionHandler {
 
         log.warn("[TraceID: {}] Validation Error: {}", traceId, errors);
 
-        // 🔥 AUDIT LOG
+        // ðŸ”¥ AUDIT LOG
         auditLogService.log(
                 AuditLog.AuditAction.UPDATE,
                 "USER",
@@ -118,7 +120,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(ErrorCode.INVALID_INPUT.getHttpStatus())
-                .body(ApiResponse.error(
+                .body(BaseResponse.error(
                         ErrorCode.INVALID_INPUT.getStatus(),
                         ErrorCode.INVALID_INPUT.getInternalCode(),
                         ErrorCode.INVALID_INPUT.getMessage(),
@@ -130,7 +132,7 @@ public class GlobalExceptionHandler {
 
     // ===== 3. ACCESS DENIED =====
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(
+    public ResponseEntity<BaseResponse<Void>> handleAccessDeniedException(
             AccessDeniedException ex,
             HttpServletRequest request) {
 
@@ -138,7 +140,7 @@ public class GlobalExceptionHandler {
 
         log.warn("[TraceID: {}] Access Denied: {}", traceId, ex.getMessage());
 
-        // 🔥 AUDIT LOG
+        // ðŸ”¥ AUDIT LOG
         auditLogService.log(
                 AuditLog.AuditAction.UPDATE,
                 "SECURITY",
@@ -153,7 +155,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(ErrorCode.FORBIDDEN.getHttpStatus())
-                .body(ApiResponse.error(
+                .body(BaseResponse.error(
                         ErrorCode.FORBIDDEN.getStatus(),
                         ErrorCode.FORBIDDEN.getInternalCode(),
                         ErrorCode.FORBIDDEN.getMessage(),
@@ -164,7 +166,7 @@ public class GlobalExceptionHandler {
 
     // ===== 4. RUNTIME EXCEPTION =====
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ApiResponse<Void>> handleRuntimeException(
+    public ResponseEntity<BaseResponse<Void>> handleRuntimeException(
             RuntimeException ex,
             HttpServletRequest request) {
 
@@ -172,7 +174,7 @@ public class GlobalExceptionHandler {
 
         log.error("[TraceID: {}] Runtime Exception: {}", traceId, ex.getMessage(), ex);
 
-        // 🔥 AUDIT LOG
+        // ðŸ”¥ AUDIT LOG
         auditLogService.log(
                 AuditLog.AuditAction.UPDATE,
                 "SYSTEM",
@@ -187,7 +189,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus())
-                .body(ApiResponse.error(
+                .body(BaseResponse.error(
                         ErrorCode.INTERNAL_SERVER_ERROR.getStatus(),
                         ErrorCode.INTERNAL_SERVER_ERROR.getInternalCode(),
                         ex.getMessage(),
@@ -198,7 +200,7 @@ public class GlobalExceptionHandler {
 
     // ===== 5. GLOBAL EXCEPTION =====
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGlobalException(
+    public ResponseEntity<BaseResponse<Void>> handleGlobalException(
             Exception ex,
             HttpServletRequest request) {
 
@@ -206,7 +208,7 @@ public class GlobalExceptionHandler {
 
         log.error("[TraceID: {}] Internal Server Error: {}", traceId, ex.getMessage(), ex);
 
-        // 🔥 AUDIT LOG
+        // ðŸ”¥ AUDIT LOG
         auditLogService.log(
                 AuditLog.AuditAction.UPDATE,
                 "SYSTEM",
@@ -221,7 +223,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus())
-                .body(ApiResponse.error(
+                .body(BaseResponse.error(
                         ErrorCode.INTERNAL_SERVER_ERROR.getStatus(),
                         ErrorCode.INTERNAL_SERVER_ERROR.getInternalCode(),
                         ErrorCode.INTERNAL_SERVER_ERROR.getMessage(),
@@ -230,9 +232,51 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    // ===== 6. BAD CREDENTIALS =====
+    // ===== 6. CONSTRAINT VIOLATION (Jakarta) =====
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<BaseResponse<Map<String, String>>> handleConstraintViolationException(
+            ConstraintViolationException ex,
+            HttpServletRequest request) {
+
+        String traceId = generateTraceId();
+        Map<String, String> errors = new HashMap<>();
+
+        ex.getConstraintViolations().forEach(violation -> {
+            String propertyPath = violation.getPropertyPath().toString();
+            String message = violation.getMessage();
+            errors.put(propertyPath, message);
+        });
+
+        log.warn("[TraceID: {}] Constraint Violation Error: {}", traceId, errors);
+
+        // ðŸ”¥ AUDIT LOG
+        auditLogService.log(
+                AuditLog.AuditAction.UPDATE,
+                "USER",
+                null,
+                ErrorCode.INVALID_INPUT.getStatus(),
+                request.getRequestURI(),
+                request.getMethod(),
+                getCurrentUserId(),
+                errors.toString(),
+                request
+        );
+
+        return ResponseEntity
+                .status(ErrorCode.INVALID_INPUT.getHttpStatus())
+                .body(BaseResponse.error(
+                        ErrorCode.INVALID_INPUT.getStatus(),
+                        ErrorCode.INVALID_INPUT.getInternalCode(),
+                        ErrorCode.INVALID_INPUT.getMessage(),
+                        errors,
+                        request.getRequestURI(),
+                        traceId
+                ));
+    }
+
+    // ===== 7. BAD CREDENTIALS =====
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBadCredentials(
+    public ResponseEntity<BaseResponse<Void>> handleBadCredentials(
             BadCredentialsException ex,
             HttpServletRequest request) {
 
@@ -240,9 +284,9 @@ public class GlobalExceptionHandler {
 
         log.warn("[TraceID: {}] Bad Credentials: {}", traceId, ex.getMessage());
 
-        // 🔥 Audit log
+        // ðŸ”¥ Audit log
         auditLogService.log(
-                AuditLog.AuditAction.LOGIN_FAILED, // Ánh xạ chuẩn với Enum LOGIN_FAILED
+                AuditLog.AuditAction.LOGIN_FAILED, // Ãnh xáº¡ chuáº©n vá»›i Enum LOGIN_FAILED
                 "SECURITY",
                 null,
                 400,
@@ -255,10 +299,10 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(
+                .body(BaseResponse.error(
                         400,
                         "AUTH_003", // INVALID_CREDENTIALS
-                        "Thông tin đăng nhập không chính xác",
+                        "ThÃ´ng tin Ä‘Äƒng nháº­p khÃ´ng chÃ­nh xÃ¡c",
                         request.getRequestURI(),
                         traceId
                 ));
@@ -266,7 +310,7 @@ public class GlobalExceptionHandler {
 
     // ===== 7. USER NOT FOUND =====
     @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleUserNotFound(
+    public ResponseEntity<BaseResponse<Void>> handleUserNotFound(
             UsernameNotFoundException ex,
             HttpServletRequest request) {
 
@@ -274,9 +318,9 @@ public class GlobalExceptionHandler {
 
         log.warn("[TraceID: {}] User Not Found: {}", traceId, ex.getMessage());
 
-        // 🔥 Audit log
+        // ðŸ”¥ Audit log
         auditLogService.log(
-                AuditLog.AuditAction.LOGIN_FAILED, // Ánh xạ chuẩn với Enum LOGIN_FAILED
+                AuditLog.AuditAction.LOGIN_FAILED, // Ãnh xáº¡ chuáº©n vá»›i Enum LOGIN_FAILED
                 "SECURITY",
                 null,
                 404,
@@ -289,10 +333,10 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error(
+                .body(BaseResponse.error(
                         404,
                         "AUTH_002", // USER_NOT_FOUND
-                        "Không tìm thấy người dùng",
+                        "KhÃ´ng tÃ¬m tháº¥y ngÆ°á»i dÃ¹ng",
                         request.getRequestURI(),
                         traceId
                 ));

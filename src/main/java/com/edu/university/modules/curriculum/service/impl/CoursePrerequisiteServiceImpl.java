@@ -11,13 +11,12 @@ import com.edu.university.modules.curriculum.repository.CoursePrerequisiteReposi
 import com.edu.university.modules.curriculum.repository.CourseRepository;
 import com.edu.university.modules.curriculum.service.CoursePrerequisiteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,38 +29,44 @@ public class CoursePrerequisiteServiceImpl implements CoursePrerequisiteService 
     @Override
     @Transactional
     public CoursePrerequisiteResponseDTO create(CoursePrerequisiteRequestDTO requestDTO) {
-        CoursePrerequisite coursePrerequisite = coursePrerequisiteMapper.toEntity(requestDTO);
         Course course = courseRepository.findById(requestDTO.getCourseId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy môn học"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
         Course prerequisiteCourse = courseRepository.findById(requestDTO.getPrerequisiteCourseId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy môn tiên quyết"));
-        coursePrerequisite.setCourse(course);
-        coursePrerequisite.setPrerequisiteCourse(prerequisiteCourse);
-        coursePrerequisite.setActive(true);
-        coursePrerequisite.setCreatedAt(LocalDateTime.now());
-        return coursePrerequisiteMapper.toResponseDTO(coursePrerequisiteRepository.save(coursePrerequisite));
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND, "Không tìm thấy môn tiên quyết"));
+
+        if (requestDTO.getCourseId().equals(requestDTO.getPrerequisiteCourseId())) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "Môn học không thể tự là môn tiên quyết của chính nó");
+        }
+
+        CoursePrerequisite cp = coursePrerequisiteMapper.toEntity(requestDTO);
+        cp.setCourse(course);
+        cp.setPrerequisiteCourse(prerequisiteCourse);
+        cp.setActive(true);
+
+        return coursePrerequisiteMapper.toResponseDTO(coursePrerequisiteRepository.save(cp));
     }
 
     @Override
-    public List<CoursePrerequisiteResponseDTO> getAll() {
-        return coursePrerequisiteRepository.findAll().stream()
-                .map(coursePrerequisiteMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<CoursePrerequisiteResponseDTO> getAll(Pageable pageable) {
+        return coursePrerequisiteRepository.findAll(pageable)
+                .map(coursePrerequisiteMapper::toResponseDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CoursePrerequisiteResponseDTO getById(UUID id) {
-        CoursePrerequisite coursePrerequisite = coursePrerequisiteRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy thông tin môn tiên quyết"));
-        return coursePrerequisiteMapper.toResponseDTO(coursePrerequisite);
+        CoursePrerequisite cp = coursePrerequisiteRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_PREREQUISITE_NOT_FOUND));
+        return coursePrerequisiteMapper.toResponseDTO(cp);
     }
 
     @Override
     @Transactional
     public void delete(UUID id) {
-        CoursePrerequisite coursePrerequisite = coursePrerequisiteRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy thông tin môn tiên quyết"));
-        coursePrerequisite.softDelete("system");
-        coursePrerequisiteRepository.save(coursePrerequisite);
+        CoursePrerequisite cp = coursePrerequisiteRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_PREREQUISITE_NOT_FOUND));
+        cp.softDelete("system");
+        coursePrerequisiteRepository.save(cp);
     }
 }

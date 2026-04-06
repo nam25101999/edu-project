@@ -1,6 +1,5 @@
 package com.edu.university.modules.hr.controller;
 
-import com.edu.university.BackendApplication;
 import com.edu.university.BaseIntegrationTest;
 import com.edu.university.modules.hr.dto.request.DepartmentRequestDTO;
 import com.edu.university.modules.hr.entity.Department;
@@ -11,11 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import java.util.UUID;
-
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class DepartmentControllerIT extends BaseIntegrationTest {
 
@@ -38,8 +36,9 @@ public class DepartmentControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.code").value("IT_DEPT"))
-                .andExpect(jsonPath("$.name").value("Information Technology"));
+                .andExpect(jsonPath("$.code").value(201))
+                .andExpect(jsonPath("$.data.code").value("IT_DEPT"))
+                .andExpect(jsonPath("$.data.name").value("Information Technology"));
     }
 
     @Test
@@ -60,12 +59,13 @@ public class DepartmentControllerIT extends BaseIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void getAllDepartments_ShouldReturnList() throws Exception {
+    void getAllDepartments_ShouldReturnPaginated() throws Exception {
         departmentRepository.save(Department.builder().code("D1").name("Name 1").isActive(true).build());
         
         mockMvc.perform(get("/api/departments"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.content.length()").value(1));
     }
 
     @Test
@@ -75,7 +75,8 @@ public class DepartmentControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/departments/" + d.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("D2"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.code").value("D2"));
     }
 
     @Test
@@ -85,7 +86,8 @@ public class DepartmentControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/departments/code/D3"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Name 3"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.name").value("Name 3"));
     }
 
     @Test
@@ -101,16 +103,18 @@ public class DepartmentControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Updated Name"));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.name").value("Updated Name"));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void deleteDepartment_ShouldReturn204_AndSoftDelete() throws Exception {
+    void deleteDepartment_ShouldReturn200_AndSoftDelete() throws Exception {
         Department d = departmentRepository.save(Department.builder().code("D5").name("Name 5").isActive(true).build());
 
         mockMvc.perform(delete("/api/departments/" + d.getId()))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
 
         entityManager.flush();
         entityManager.clear();

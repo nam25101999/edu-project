@@ -45,7 +45,7 @@ public class GradeScale {
 
     @Builder.Default
     @Column(name = "is_pass")
-    private boolean isPass = false;
+    private boolean pass = false;
 
     // --- Auditing & System fields ---
     @CreatedDate
@@ -72,11 +72,11 @@ public class GradeScale {
 
     @Builder.Default
     @Column(name = "is_active", nullable = false)
-    private boolean isActive = true;
+    private boolean active = true;
 
     public void softDelete(String deletedByActionUser) {
         this.deletedAt = LocalDateTime.now();
         this.deletedBy = deletedByActionUser;
-        this.isActive = false;
+        this.active = false;
     }
 }

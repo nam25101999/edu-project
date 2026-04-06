@@ -13,13 +13,12 @@ import com.edu.university.modules.hr.repository.EmployeeRepository;
 import com.edu.university.modules.hr.repository.PositionRepository;
 import com.edu.university.modules.hr.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,19 +49,18 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         employee.setActive(true);
-        employee.setCreatedAt(LocalDateTime.now());
-        Employee saved = employeeRepository.save(employee);
-        return employeeMapper.toResponseDTO(saved);
+        return employeeMapper.toResponseDTO(employeeRepository.save(employee));
     }
 
     @Override
-    public List<EmployeeResponseDTO> getAllEmployees() {
-        return employeeRepository.findAll().stream()
-                .map(employeeMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<EmployeeResponseDTO> getAllEmployees(Pageable pageable) {
+        return employeeRepository.findAll(pageable)
+                .map(employeeMapper::toResponseDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public EmployeeResponseDTO getEmployeeById(UUID id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy nhân viên"));
@@ -70,6 +68,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public EmployeeResponseDTO getEmployeeByCode(String code) {
         Employee employee = employeeRepository.findByEmployeeCode(code)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy nhân viên"));
@@ -85,21 +84,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         
         if (requestDTO.getUserId() != null) {
             employee.setUser(userRepository.findById(requestDTO.getUserId()).orElse(null));
-        } else {
-            employee.setUser(null);
         }
         if (requestDTO.getDepartmentId() != null) {
             employee.setDepartment(departmentRepository.findById(requestDTO.getDepartmentId()).orElse(null));
-        } else {
-            employee.setDepartment(null);
         }
         if (requestDTO.getPositionId() != null) {
             employee.setPosition(positionRepository.findById(requestDTO.getPositionId()).orElse(null));
-        } else {
-            employee.setPosition(null);
         }
 
-        employee.setUpdatedAt(LocalDateTime.now());
         return employeeMapper.toResponseDTO(employeeRepository.save(employee));
     }
 
@@ -108,8 +100,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void deleteEmployee(UUID id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy nhân viên"));
-        employee.setActive(false);
-        employee.setDeletedAt(LocalDateTime.now());
+        employee.softDelete("system");
         employeeRepository.save(employee);
     }
 
@@ -119,7 +110,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy nhân viên"));
         employee.setActive(requestDTO.getIsActive());
-        employee.setUpdatedAt(LocalDateTime.now());
         return employeeMapper.toResponseDTO(employeeRepository.save(employee));
     }
 }

@@ -4,13 +4,15 @@ import com.edu.university.modules.student.dto.request.StudentRequestDTO;
 import com.edu.university.modules.student.dto.request.StudentStatusChangeRequestDTO;
 import com.edu.university.modules.student.dto.response.StudentResponseDTO;
 import com.edu.university.modules.schedule.dto.response.StudentScheduleResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface StudentService {
     StudentResponseDTO createStudent(StudentRequestDTO requestDTO);
-    List<StudentResponseDTO> getAllStudents();
+    Page<StudentResponseDTO> getAllStudents(Pageable pageable);
     StudentResponseDTO getStudentById(UUID id);
     StudentResponseDTO getStudentByCode(String studentCode);
     StudentResponseDTO updateStudent(UUID id, StudentRequestDTO requestDTO);

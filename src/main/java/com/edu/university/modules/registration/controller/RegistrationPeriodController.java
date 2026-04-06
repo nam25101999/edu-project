@@ -5,6 +5,8 @@ import com.edu.university.modules.registration.dto.response.RegistrationPeriodRe
 import com.edu.university.modules.registration.service.RegistrationPeriodService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +27,8 @@ public class RegistrationPeriodController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RegistrationPeriodResponseDTO>> getAll() {
-        return ResponseEntity.ok(registrationPeriodService.getAll());
+    public ResponseEntity<List<RegistrationPeriodResponseDTO>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(registrationPeriodService.getAll(pageable).getContent());
     }
 
     @GetMapping("/{id}")

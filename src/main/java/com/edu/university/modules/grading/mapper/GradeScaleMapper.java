@@ -4,6 +4,7 @@ import com.edu.university.modules.grading.dto.request.GradeScaleRequestDTO;
 import com.edu.university.modules.grading.dto.response.GradeScaleResponseDTO;
 import com.edu.university.modules.grading.entity.GradeScale;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 

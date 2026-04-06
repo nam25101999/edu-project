@@ -14,6 +14,7 @@ public class CourseRegistrationResponseDTO {
     private String studentCode;
     private UUID courseSectionId;
     private String classCode;
+    private String courseCode;
     private String courseName;
     private UUID registrationPeriodId;
     private String registrationPeriodName;

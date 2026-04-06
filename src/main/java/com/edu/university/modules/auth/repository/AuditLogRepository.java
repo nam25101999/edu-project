@@ -14,13 +14,13 @@ import java.util.UUID;
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
 
-    // Hàm tìm kiếm theo UUID của User
+    // HÃ m tÃ¬m kiáº¿m theo UUID cá»§a User
     Page<AuditLog> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
-    // Hàm tìm kiếm theo Tên và ID của Entity
+    // HÃ m tÃ¬m kiáº¿m theo TÃªn vÃ  ID cá»§a Entity
     Page<AuditLog> findByEntityNameAndEntityIdOrderByCreatedAtDesc(String entityName, String entityId, Pageable pageable);
 
-    // Hàm tìm kiếm theo Action và khoảng thời gian
+    // HÃ m tÃ¬m kiáº¿m theo Action vÃ  khoáº£ng thá»i gian
     Page<AuditLog> findByActionAndCreatedAtBetweenOrderByCreatedAtDesc(
             AuditLog.AuditAction action,
             LocalDateTime startDate,
@@ -28,29 +28,29 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
             Pageable pageable
     );
 
-    // Hàm lấy tất cả log trong một khoảng thời gian
+    // HÃ m láº¥y táº¥t cáº£ log trong má»™t khoáº£ng thá»i gian
     Page<AuditLog> findByCreatedAtBetweenOrderByCreatedAtDesc(
             LocalDateTime startDate,
             LocalDateTime endDate,
             Pageable pageable
     );
 
-    // Hàm đếm số lần thao tác của 1 IP (dùng cho Rate Limiting/Block IP)
+    // HÃ m Ä‘áº¿m sá»‘ láº§n thao tÃ¡c cá»§a 1 IP (dÃ¹ng cho Rate Limiting/Block IP)
     long countByIpAddressAndActionAndCreatedAtAfter(
             String ipAddress,
             AuditLog.AuditAction action,
             LocalDateTime since
     );
 
-    // ================== CÁC HÀM DÙNG CHO PHÂN TÍCH & BÁO CÁO ==================
+    // ================== CÃC HÃ€M DÃ™NG CHO PHÃ‚N TÃCH & BÃO CÃO ==================
 
-    // Lấy log bị lỗi (ví dụ status >= 400 là có lỗi Http Bad Request, Server Error, v.v)
+    // Láº¥y log bá»‹ lá»—i (vÃ­ dá»¥ status >= 400 lÃ  cÃ³ lá»—i Http Bad Request, Server Error, v.v)
     Page<AuditLog> findByStatusGreaterThanEqualOrderByCreatedAtDesc(Integer status, Pageable pageable);
 
-    // Lấy top 10 API thực thi chậm nhất
+    // Láº¥y top 10 API thá»±c thi cháº­m nháº¥t
     List<AuditLog> findTop10ByOrderByExecutionTimeMsDesc();
 
-    // Interface để Map kết quả đếm trạng thái (Analytics)
+    // Interface Ä‘á»ƒ Map káº¿t quáº£ Ä‘áº¿m tráº¡ng thÃ¡i (Analytics)
     interface StatusCount {
         Integer getStatus();
         Long getCount();
@@ -59,7 +59,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
     @Query("SELECT a.status as status, COUNT(a) as count FROM AuditLog a GROUP BY a.status")
     List<StatusCount> countLogsByStatus();
 
-    // Interface để Map kết quả đếm tài nguyên tác động (Analytics)
+    // Interface Ä‘á»ƒ Map káº¿t quáº£ Ä‘áº¿m tÃ i nguyÃªn tÃ¡c Ä‘á»™ng (Analytics)
     interface EntityCount {
         String getEntityName();
         Long getCount();

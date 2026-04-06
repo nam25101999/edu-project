@@ -31,6 +31,9 @@ public class TimeSlot {
     @Column(name = "slot_code", length = 50)
     private String slotCode;
 
+    @Column(name = "slot_name", length = 100)
+    private String slotName;
+
     @Column(name = "start_time")
     private LocalTime startTime;
 
