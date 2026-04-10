@@ -1,9 +1,12 @@
+server:
+  port: ${PORT:8080}
+
 spring:
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: nguyennam25101999@gmail.com
-    password: bsqk yevj zxqk zase
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:nguyennam25101999@gmail.com}
+    password: ${MAIL_PASSWORD:bsqk yevj zxqk zase}
     properties:
       mail:
         smtp:
@@ -12,16 +15,17 @@ spring:
             enable: true
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
 
   application:
     name: backend
 
   datasource:
-    url: jdbc:sqlserver://den1.mssql8.gear.host:1433;databaseName=education11;encrypt=true;trustServerCertificate=true
-    username: education11
-    password: Cw86~BTxrx!Y
+    url: ${DATABASE_URL:jdbc:sqlserver://den1.mssql8.gear.host:1433;databaseName=education11;encrypt=true;trustServerCertificate=true}
+    username: ${DATABASE_USERNAME:education11}
+    password: ${DATABASE_PASSWORD:Cw86~BTxrx!Y}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
@@ -58,5 +62,6 @@ springdoc:
 
 app:
   jwt:
-    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-    expirationMs: 86400000
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    expirationMs: ${JWT_EXPIRATION:86400000}
+

@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: education-backend
+    env: docker
+    plan: free # or your preferred plan
+    region: singapore # or your preferred region
+    dockerCommand: "" # Uses Dockerfile default
+    healthCheckPath: /swagger-ui/index.html # Using swagger as a basic health check
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DATABASE_URL
+        sync: false # Set this in Render Dashboard
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: education-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: education-redis
+          property: port
+      - key: REDIS_PASSWORD
+        fromService:
+          type: redis
+          name: education-redis
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+
+  - type: redis
+    name: education-redis
+    plan: free
+    region: singapore
+    ipAllowList: [] # Only allow internal connections
