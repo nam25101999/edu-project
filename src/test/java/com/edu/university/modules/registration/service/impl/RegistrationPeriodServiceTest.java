@@ -98,7 +98,7 @@ class RegistrationPeriodServiceTest {
 
         // Act & Assert
         BusinessException ex = assertThrows(BusinessException.class, () -> registrationPeriodService.create(requestDTO));
-        assertEquals(ErrorCode.NOT_FOUND, ex.getErrorCode());
+        assertEquals(ErrorCode.SEMESTER_NOT_FOUND, ex.getErrorCode());
     }
 
     @Test

@@ -1,14 +1,11 @@
 package com.edu.university.modules.auth.entity;
 
+import com.edu.university.common.entity.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLRestriction;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -21,18 +18,17 @@ import java.util.UUID;
         indexes = {
                 @Index(name = "idx_user_username", columnList = "username", unique = true),
                 @Index(name = "idx_user_email", columnList = "email", unique = true),
-                @Index(name = "idx_user_active_deleted", columnList = "isActive, deletedAt"),
-                @Index(name = "idx_user_lock_until", columnList = "lockUntil")
+                @Index(name = "idx_user_active_deleted", columnList = "is_active, deleted_at"),
+                @Index(name = "idx_user_lock_until", columnList = "lock_until")
         }
 )
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@EntityListeners(AuditingEntityListener.class)
+@SuperBuilder
 @SQLRestriction("deleted_at IS NULL")
-public class Users {
+public class Users extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -45,8 +41,17 @@ public class Users {
     @Column(nullable = false, length = 255)
     private String password;
 
+    @Column(name = "full_name", nullable = false, length = 100)
+    private String fullName;
+
     @Column(unique = true, nullable = false, length = 100)
     private String email;
+
+    @Column(length = 20)
+    private String phone;
+
+    @Column(name = "avatar_url", length = 255)
+    private String avatarUrl;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -56,10 +61,6 @@ public class Users {
     )
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
-
-    @Builder.Default
-    @Column(name = "is_active", nullable = false)
-    private boolean isActive = true;
 
     @Builder.Default
     @Column(name = "two_factor_enabled", nullable = false)
@@ -104,30 +105,6 @@ public class Users {
 
     @Column(name = "last_login_user_agent", length = 500)
     private String lastLoginUserAgent;
-
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @CreatedBy
-    @Column(name = "created_by", updatable = false)
-    private String createdBy;
-
-    @LastModifiedBy
-    @Column(name = "updated_by")
-    private String updatedBy;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    public void softDelete() {
-        this.deletedAt = LocalDateTime.now();
-        this.isActive = false;
-    }
 
     public void incrementTokenVersion() {
         this.tokenVersion++;

@@ -1,5 +1,7 @@
 package com.edu.university.modules.grading.service.impl;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.grading.dto.request.StudentSummaryRequestDTO;
 import com.edu.university.modules.grading.dto.response.StudentSummaryResponseDTO;
 import com.edu.university.modules.grading.entity.GradeScale;
@@ -14,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -36,17 +37,14 @@ public class StudentSummaryServiceImpl implements StudentSummaryService {
         
         if (summary.getId() == null) {
             CourseRegistration registration = courseRegistrationRepository.findById(requestDTO.getRegistrationId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đăng ký học phần"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy đăng ký học phần"));
             summary.setCourseRegistration(registration);
             summary.setActive(true);
-            summary.setCreatedAt(LocalDateTime.now());
-        } else {
-            summary.setUpdatedAt(LocalDateTime.now());
         }
         
         if (requestDTO.getScaleId() != null) {
             GradeScale scale = gradeScaleRepository.findById(requestDTO.getScaleId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy thang điểm"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy thang điểm"));
             summary.setGradeScale(scale);
         }
         
@@ -54,9 +52,10 @@ public class StudentSummaryServiceImpl implements StudentSummaryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public StudentSummaryResponseDTO getByRegistrationId(UUID registrationId) {
         StudentSummary summary = studentSummaryRepository.findByCourseRegistrationId(registrationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tổng kết điểm"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy tổng kết điểm"));
         return studentSummaryMapper.toResponseDTO(summary);
     }
 
@@ -64,7 +63,7 @@ public class StudentSummaryServiceImpl implements StudentSummaryService {
     @Transactional
     public void delete(UUID id) {
         StudentSummary summary = studentSummaryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tổng kết điểm"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy tổng kết điểm"));
         summary.softDelete("system");
         studentSummaryRepository.save(summary);
     }

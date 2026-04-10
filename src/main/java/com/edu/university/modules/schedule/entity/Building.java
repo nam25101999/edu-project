@@ -27,10 +27,10 @@ public class Building {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "building_code", length = 10, unique = true)
+    @Column(name = "code", length = 10, unique = true)
     private String buildingCode;
 
-    @Column(name = "building_name", length = 100)
+    @Column(name = "name", length = 100)
     private String buildingName;
 
     @Column(length = 200)

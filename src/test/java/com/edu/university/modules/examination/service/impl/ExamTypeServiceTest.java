@@ -72,15 +72,18 @@ class ExamTypeServiceTest {
     @Test
     void getAll_Success() {
         // Arrange
-        when(examTypeRepository.findAll()).thenReturn(Collections.singletonList(examType));
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        org.springframework.data.domain.Page<ExamType> page = new org.springframework.data.domain.PageImpl<>(Collections.singletonList(examType));
+        
+        when(examTypeRepository.findAll(pageable)).thenReturn(page);
         when(examTypeMapper.toResponseDTO(any())).thenReturn(responseDTO);
 
         // Act
-        List<ExamTypeResponseDTO> result = examTypeService.getAll();
+        org.springframework.data.domain.Page<ExamTypeResponseDTO> result = examTypeService.getAll(pageable);
 
         // Assert
-        assertEquals(1, result.size());
-        verify(examTypeRepository).findAll();
+        assertEquals(1, result.getTotalElements());
+        verify(examTypeRepository).findAll(pageable);
     }
 
     @Test

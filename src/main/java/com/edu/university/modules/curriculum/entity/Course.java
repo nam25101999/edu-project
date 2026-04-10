@@ -15,7 +15,15 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "courses")
+@Table(
+        name = "courses",
+        indexes = {
+                @Index(name = "idx_courses_course_code", columnList = "course_code"),
+                @Index(name = "idx_courses_name", columnList = "name"),
+                @Index(name = "idx_courses_department_id", columnList = "department_id"),
+                @Index(name = "idx_courses_is_active", columnList = "is_active")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -34,19 +42,19 @@ public class Course {
     private Department department;
 
     @Column(name = "code", length = 20)
-    private String code;
+    private String courseCode;
 
     @Column(name = "name", length = 255)
     private String name;
 
-    @Column(name = "course_name_en", length = 255)
+    @Column(name = "name_en", length = 255)
     private String courseNameEn;
 
     @Column(precision = 5, scale = 1)
     private BigDecimal credits;
 
     // Ánh xạ đúng tên cột "cource_type" như thiết kế của bạn (mặc dù có thể là typo của "course_type")
-    @Column(name = "cource_type", length = 20)
+    @Column(name = "course_type", length = 20)
     private String courseType;
 
     @Column(name = "theory_hours", precision = 5, scale = 1)

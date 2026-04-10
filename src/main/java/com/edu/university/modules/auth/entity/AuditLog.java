@@ -33,8 +33,10 @@ public class AuditLog {
     private UUID userId;
 
     public enum AuditAction {
+        READ,
         CREATE, UPDATE, DELETE,
-        LOGIN_SUCCESS, LOGIN_FAILED, LOGOUT,
+        LOGIN, LOGIN_SUCCESS, LOGIN_FAILED, LOGOUT,
+        SIGNUP, CHANGE_PASSWORD,
         EXPORT, IMPORT
     }
 

@@ -11,13 +11,13 @@ import com.edu.university.modules.examination.service.ExamRoomService;
 import com.edu.university.modules.schedule.entity.Room;
 import com.edu.university.modules.schedule.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,10 +45,9 @@ public class ExamRoomServiceImpl implements ExamRoomService {
     }
 
     @Override
-    public List<ExamRoomResponseDTO> getByExamId(UUID examId) {
-        return examRoomRepository.findByExamId(examId).stream()
-                .map(examRoomMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public Page<ExamRoomResponseDTO> getByExamId(UUID examId, Pageable pageable) {
+        return examRoomRepository.findByExamId(examId, pageable)
+                .map(examRoomMapper::toResponseDTO);
     }
 
     @Override

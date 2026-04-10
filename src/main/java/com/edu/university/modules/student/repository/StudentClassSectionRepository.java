@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
+import java.util.List;
 
 @Repository
 public interface StudentClassSectionRepository extends JpaRepository<StudentClassSection, UUID> {
@@ -14,8 +15,10 @@ public interface StudentClassSectionRepository extends JpaRepository<StudentClas
     Page<StudentClassSection> findByStudentId(UUID studentId, Pageable pageable);
 
     Page<StudentClassSection> findByStudentClassId(UUID studentClassId, Pageable pageable);
+    List<StudentClassSection> findByStudentClassId(UUID studentClassId);
 
     Page<StudentClassSection> findByStudentClassIdAndIsActiveTrue(UUID studentClassId, Pageable pageable);
+    List<StudentClassSection> findByStudentClassIdAndIsActiveTrue(UUID studentClassId);
 
     boolean existsByStudentIdAndStudentClassId(UUID studentId, UUID studentClassId);
 }

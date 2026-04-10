@@ -7,9 +7,10 @@ import java.util.UUID;
 @Data
 public class MajorRequestDTO {
     private UUID facultyId;
+    private UUID departmentId;
 
     @NotBlank(message = "Mã ngành không được để trống")
-    private String code;
+    private String majorCode;
 
     @NotBlank(message = "Tên ngành không được để trống")
     private String name;

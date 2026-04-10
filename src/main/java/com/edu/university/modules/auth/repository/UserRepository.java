@@ -34,9 +34,11 @@ public interface UserRepository extends JpaRepository<Users, UUID> {
     Optional<Users> findByIdentifier(@Param("identifier") String identifier);
 
     /**
-     * Äáº¿m sá»‘ lÆ°á»£ng ngÆ°á»i dÃ¹ng theo vai trÃ² (Role).
+     * Ä áº¿m sá»‘ lÆ°á»£ng ngÆ°á» i dÃ¹ng theo vai trÃ² (Role).
      * @param role Vai trÃ² cáº§n Ä‘áº¿m (ADMIN, STUDENT, LECTURER...)
-     * @return Sá»‘ lÆ°á»£ng ngÆ°á»i dÃ¹ng thuá»™c vai trÃ² Ä‘Ã³.
+     * @return Sá»‘ lÆ°á»£ng ngÆ°á» i dÃ¹ng thuá»™c vai trÃ² Ä‘Ã³.
      */
-    long countByRolesContaining(Role role); // ÄÃƒ Sá»¬A: Äá»•i countByRole thÃ nh countByRolesContaining
+    long countByRolesContaining(Role role); // Ä Ãƒ Sá»¬A: Ä á»•i countByRole thÃ nh countByRolesContaining
+
+    org.springframework.data.domain.Page<Users> findByRoles_Name(String roleName, org.springframework.data.domain.Pageable pageable);
 }

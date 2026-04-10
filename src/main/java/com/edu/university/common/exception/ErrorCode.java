@@ -25,6 +25,7 @@ public enum ErrorCode {
     NOT_FOUND(404, "SYS_004", "Không tìm thấy tài nguyên", HttpStatus.NOT_FOUND),
     INTERNAL_SERVER_ERROR(500, "SYS_500", "Lỗi hệ thống nội bộ! Vui lòng thử lại sau", HttpStatus.INTERNAL_SERVER_ERROR),
     BAD_REQUEST(400, "SYS_400", "Yêu cầu không hợp lệ", HttpStatus.BAD_REQUEST),
+    TOO_MANY_REQUESTS(429, "SYS_429", "Bạn đang thao tác quá nhanh. Vui lòng thử lại sau.", HttpStatus.TOO_MANY_REQUESTS),
 
     // Alias cho các lỗi hệ thống cũ để tránh lỗi biên dịch
     SYSTEM_ERROR(500, "SYS_500", "Lỗi hệ thống nội bộ", HttpStatus.INTERNAL_SERVER_ERROR),
@@ -80,6 +81,7 @@ public enum ErrorCode {
     MAX_CREDITS_EXCEEDED(400, "ENR_009", "Vượt quá số tín chỉ tối đa cho phép", HttpStatus.BAD_REQUEST),
     ACADEMIC_SUSPENSION(403, "ENR_010", "Bạn đang bị đình chỉ hoặc cấm đăng ký", HttpStatus.FORBIDDEN),
     TUITION_DEBT_EXISTS(403, "ENR_011", "Bạn chưa hoàn thành học phí các kỳ trước", HttpStatus.FORBIDDEN),
+    REGISTRATION_PERIOD_NOT_FOUND(404, "ENR_012", "Không tìm thấy đợt đăng ký tín chỉ", HttpStatus.NOT_FOUND),
 
     // Alias cho EnrollmentService cũ
     REGISTRATION_NOT_STARTED(400, "ENR_004", "Chưa đến thời gian đăng ký tín chỉ", HttpStatus.BAD_REQUEST),

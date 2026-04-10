@@ -1,15 +1,17 @@
 package com.edu.university.modules.elearning.controller;
 
-import com.edu.university.common.response.BaseResponse;
+import com.edu.university.common.response.ApiResponse;
 import com.edu.university.modules.elearning.dto.request.AttendanceRequest;
-import com.edu.university.modules.elearning.entity.Attendance;
-import com.edu.university.modules.elearning.entity.AttendanceRecord;
+import com.edu.university.modules.elearning.dto.response.AttendanceRecordResponseDTO;
+import com.edu.university.modules.elearning.dto.response.AttendanceResponseDTO;
 import com.edu.university.modules.elearning.service.AttendanceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import java.util.List;
+
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -20,20 +22,25 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
 
     @PostMapping
-    public ResponseEntity<BaseResponse<Attendance>> createAttendance(@RequestBody AttendanceRequest request) {
-        Attendance attendance = attendanceService.createAttendance(request);
-        return ResponseEntity.ok(BaseResponse.ok("Ghi nhận điểm danh thành công", attendance));
+    public ResponseEntity<ApiResponse<AttendanceResponseDTO>> createAttendance(@RequestBody AttendanceRequest request) {
+        AttendanceResponseDTO attendance = attendanceService.createAttendance(request);
+        return ResponseEntity.ok(ApiResponse.success("Ghi nhận điểm danh thành công", attendance));
     }
 
     @GetMapping("/course-section/{id}")
-    public ResponseEntity<BaseResponse<List<Attendance>>> getAttendanceByCourseSection(@PathVariable UUID id) {
-        List<Attendance> attendances = attendanceService.getAttendanceByCourseSection(id);
-        return ResponseEntity.ok(BaseResponse.ok(attendances));
+    public ResponseEntity<ApiResponse<List<AttendanceResponseDTO>>> getAttendanceByCourseSection(
+            @PathVariable UUID id,
+            Pageable pageable) {
+        List<AttendanceResponseDTO> list = attendanceService.getAttendanceByCourseSection(id, pageable).getContent();
+        return ResponseEntity.ok(ApiResponse.success(list));
     }
 
     @GetMapping("/course-section/{id}/student/{studentId}")
-    public ResponseEntity<BaseResponse<List<AttendanceRecord>>> getStudentAttendanceHistory(@PathVariable UUID id, @PathVariable UUID studentId) {
-        List<AttendanceRecord> history = attendanceService.getStudentAttendanceHistory(id, studentId);
-        return ResponseEntity.ok(BaseResponse.ok(history));
+    public ResponseEntity<ApiResponse<List<AttendanceRecordResponseDTO>>> getStudentAttendanceHistory(
+            @PathVariable UUID id, 
+            @PathVariable UUID studentId,
+            Pageable pageable) {
+        List<AttendanceRecordResponseDTO> list = attendanceService.getStudentAttendanceHistory(id, studentId, pageable).getContent();
+        return ResponseEntity.ok(ApiResponse.success(list));
     }
 }

@@ -1,5 +1,7 @@
 package com.edu.university.modules.examination.service.impl;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.examination.dto.request.ExamRegistrationRequestDTO;
 import com.edu.university.modules.examination.dto.response.ExamRegistrationResponseDTO;
 import com.edu.university.modules.examination.entity.Exam;
@@ -13,13 +15,12 @@ import com.edu.university.modules.examination.service.ExamRegistrationService;
 import com.edu.university.modules.student.entity.Student;
 import com.edu.university.modules.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,42 +38,41 @@ public class ExamRegistrationServiceImpl implements ExamRegistrationService {
         ExamRegistration registration = examRegistrationMapper.toEntity(requestDTO);
         
         Exam exam = examRepository.findById(requestDTO.getExamId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy kỳ thi"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy kỳ thi"));
         Student student = studentRepository.findById(requestDTO.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sinh viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy sinh viên"));
         
         if (requestDTO.getExamRoomId() != null) {
             ExamRoom room = examRoomRepository.findById(requestDTO.getExamRoomId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy phòng thi"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy phòng thi"));
             registration.setExamRoom(room);
         }
         
         registration.setExam(exam);
         registration.setStudent(student);
         registration.setActive(true);
-        registration.setCreatedAt(LocalDateTime.now());
         return examRegistrationMapper.toResponseDTO(examRegistrationRepository.save(registration));
     }
 
     @Override
-    public List<ExamRegistrationResponseDTO> getByExamId(UUID examId) {
-        return examRegistrationRepository.findByExamId(examId).stream()
-                .map(examRegistrationMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<ExamRegistrationResponseDTO> getByExamId(UUID examId, Pageable pageable) {
+        return examRegistrationRepository.findByExamId(examId, pageable)
+                .map(examRegistrationMapper::toResponseDTO);
     }
 
     @Override
-    public List<ExamRegistrationResponseDTO> getByStudentId(UUID studentId) {
-        return examRegistrationRepository.findByStudentId(studentId).stream()
-                .map(examRegistrationMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<ExamRegistrationResponseDTO> getByStudentId(UUID studentId, Pageable pageable) {
+        return examRegistrationRepository.findByStudentId(studentId, pageable)
+                .map(examRegistrationMapper::toResponseDTO);
     }
 
     @Override
     @Transactional
     public void delete(UUID id) {
         ExamRegistration registration = examRegistrationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đăng ký thi"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy đăng ký thi"));
         registration.softDelete("system");
         examRegistrationRepository.save(registration);
     }

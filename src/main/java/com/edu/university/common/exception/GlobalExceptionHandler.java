@@ -2,11 +2,12 @@ package com.edu.university.common.exception;
 
 import com.edu.university.common.response.BaseResponse;
 import com.edu.university.common.security.UserDetailsImpl;
+import com.edu.university.modules.auth.aspect.AuditLogAspect;
 import com.edu.university.modules.auth.entity.AuditLog;
 import com.edu.university.modules.auth.service.AuditLogService;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -27,17 +28,16 @@ import java.util.UUID;
 
 @RestControllerAdvice
 @Slf4j
-@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
-    private final AuditLogService auditLogService;
+    @Autowired(required = false)
+    private AuditLogService auditLogService;
 
     // ===== UTIL =====
     private String generateTraceId() {
         return UUID.randomUUID().toString();
     }
 
-    // Lấy UUID của User thay vì Username để phù hợp với chuẩn Log mới
     private UUID getCurrentUserId() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -47,35 +47,39 @@ public class GlobalExceptionHandler {
         } catch (Exception e) {
             // Ignore
         }
-        return null; // Tráº£ vá» null náº¿u lÃ  khÃ¡ch (Guest) chÆ°a Ä‘Äƒng nháº­p
+        return null;
     }
 
-    // ===== 1. BUSINESS EXCEPTION =====
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<BaseResponse<Void>> handleBusinessException(
-            BusinessException ex, HttpServletRequest request) {
+    private void logAudit(AuditLog.AuditAction action, String entity, String entityId, Integer status, 
+                          HttpServletRequest request, String message) {
+        if (auditLogService != null && request.getAttribute(AuditLogAspect.AUDIT_LOGGED_ATTRIBUTE) == null) {
+            auditLogService.log(
+                    action,
+                    entity,
+                    entityId,
+                    status,
+                    request.getRequestURI(),
+                    request.getMethod(),
+                    getCurrentUserId(),
+                    message,
+                    request
+            );
+        }
+    }
+
+    // ===== 1. APP EXCEPTION (Standardized) =====
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<BaseResponse<Void>> handleAppException(
+            AppException ex, HttpServletRequest request) {
 
         String traceId = generateTraceId();
         ErrorCode errorCode = ex.getErrorCode();
-        String message = ex.getCustomMessage() != null
-                ? ex.getCustomMessage()
-                : errorCode.getMessage();
+        String message = ex.getMessage();
 
-        log.warn("[TraceID: {}] Business Exception [{}]: {}", traceId,
+        log.warn("[TraceID: {}] App Exception [{}]: {}", traceId,
                 errorCode.getInternalCode(), message);
 
-        // ðŸ”¥ AUDIT LOG
-        auditLogService.log(
-                AuditLog.AuditAction.UPDATE, // DÃ¹ng UPDATE táº¡m (cÃ³ thá»ƒ thÃªm BUSINESS_ERROR vÃ o Enum)
-                "SYSTEM",
-                null,
-                errorCode.getStatus(), // Status dáº¡ng Integer (400, 404,...)
-                request.getRequestURI(),
-                request.getMethod(),
-                getCurrentUserId(),
-                message,
-                request
-        );
+        logAudit(AuditLog.AuditAction.UPDATE, "SYSTEM", null, errorCode.getStatus(), request, message);
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
@@ -88,7 +92,12 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    // ===== 2. VALIDATION ERROR =====
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<BaseResponse<Void>> handleBusinessException(
+            BusinessException ex, HttpServletRequest request) {
+        return handleAppException(new AppException(ex.getErrorCode(), ex.getMessage()), request);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<BaseResponse<Map<String, String>>> handleValidationExceptions(
             MethodArgumentNotValidException ex,
@@ -96,62 +105,33 @@ public class GlobalExceptionHandler {
 
         String traceId = generateTraceId();
         Map<String, String> errors = new HashMap<>();
-
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
 
-        log.warn("[TraceID: {}] Validation Error: {}", traceId, errors);
-
-        // ðŸ”¥ AUDIT LOG
-        auditLogService.log(
-                AuditLog.AuditAction.UPDATE,
-                "USER",
-                null,
-                ErrorCode.INVALID_INPUT.getStatus(),
-                request.getRequestURI(),
-                request.getMethod(),
-                getCurrentUserId(),
-                errors.toString(),
-                request
-        );
-
         return ResponseEntity
-                .status(ErrorCode.INVALID_INPUT.getHttpStatus())
+                .status(HttpStatus.BAD_REQUEST)
                 .body(BaseResponse.error(
-                        ErrorCode.INVALID_INPUT.getStatus(),
-                        ErrorCode.INVALID_INPUT.getInternalCode(),
-                        ErrorCode.INVALID_INPUT.getMessage(),
+                        400,
+                        "VALIDATION_ERROR",
+                        "Dữ liệu không hợp lệ",
                         errors,
                         request.getRequestURI(),
                         traceId
                 ));
     }
 
-    // ===== 3. ACCESS DENIED =====
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<BaseResponse<Void>> handleAccessDeniedException(
             AccessDeniedException ex,
             HttpServletRequest request) {
 
         String traceId = generateTraceId();
-
         log.warn("[TraceID: {}] Access Denied: {}", traceId, ex.getMessage());
 
-        // ðŸ”¥ AUDIT LOG
-        auditLogService.log(
-                AuditLog.AuditAction.UPDATE,
-                "SECURITY",
-                null,
-                ErrorCode.FORBIDDEN.getStatus(),
-                request.getRequestURI(),
-                request.getMethod(),
-                getCurrentUserId(),
-                ex.getMessage(),
-                request
-        );
+        logAudit(AuditLog.AuditAction.UPDATE, "SECURITY", null, ErrorCode.FORBIDDEN.getStatus(), request, ex.getMessage());
 
         return ResponseEntity
                 .status(ErrorCode.FORBIDDEN.getHttpStatus())
@@ -164,28 +144,15 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    // ===== 4. RUNTIME EXCEPTION =====
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<BaseResponse<Void>> handleRuntimeException(
             RuntimeException ex,
             HttpServletRequest request) {
 
         String traceId = generateTraceId();
-
         log.error("[TraceID: {}] Runtime Exception: {}", traceId, ex.getMessage(), ex);
 
-        // ðŸ”¥ AUDIT LOG
-        auditLogService.log(
-                AuditLog.AuditAction.UPDATE,
-                "SYSTEM",
-                null,
-                ErrorCode.INTERNAL_SERVER_ERROR.getStatus(),
-                request.getRequestURI(),
-                request.getMethod(),
-                getCurrentUserId(),
-                ex.getMessage(),
-                request
-        );
+        logAudit(AuditLog.AuditAction.UPDATE, "SYSTEM", null, ErrorCode.INTERNAL_SERVER_ERROR.getStatus(), request, ex.getMessage());
 
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus())
@@ -198,28 +165,15 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    // ===== 5. GLOBAL EXCEPTION =====
     @ExceptionHandler(Exception.class)
     public ResponseEntity<BaseResponse<Void>> handleGlobalException(
             Exception ex,
             HttpServletRequest request) {
 
         String traceId = generateTraceId();
-
         log.error("[TraceID: {}] Internal Server Error: {}", traceId, ex.getMessage(), ex);
 
-        // ðŸ”¥ AUDIT LOG
-        auditLogService.log(
-                AuditLog.AuditAction.UPDATE,
-                "SYSTEM",
-                null,
-                ErrorCode.INTERNAL_SERVER_ERROR.getStatus(),
-                request.getRequestURI(),
-                request.getMethod(),
-                getCurrentUserId(),
-                ex.getMessage(),
-                request
-        );
+        logAudit(AuditLog.AuditAction.UPDATE, "SYSTEM", null, ErrorCode.INTERNAL_SERVER_ERROR.getStatus(), request, ex.getMessage());
 
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus())
@@ -232,7 +186,6 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    // ===== 6. CONSTRAINT VIOLATION (Jakarta) =====
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<BaseResponse<Map<String, String>>> handleConstraintViolationException(
             ConstraintViolationException ex,
@@ -249,18 +202,7 @@ public class GlobalExceptionHandler {
 
         log.warn("[TraceID: {}] Constraint Violation Error: {}", traceId, errors);
 
-        // ðŸ”¥ AUDIT LOG
-        auditLogService.log(
-                AuditLog.AuditAction.UPDATE,
-                "USER",
-                null,
-                ErrorCode.INVALID_INPUT.getStatus(),
-                request.getRequestURI(),
-                request.getMethod(),
-                getCurrentUserId(),
-                errors.toString(),
-                request
-        );
+        logAudit(AuditLog.AuditAction.UPDATE, "USER", null, ErrorCode.INVALID_INPUT.getStatus(), request, errors.toString());
 
         return ResponseEntity
                 .status(ErrorCode.INVALID_INPUT.getHttpStatus())
@@ -274,69 +216,43 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    // ===== 7. BAD CREDENTIALS =====
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<BaseResponse<Void>> handleBadCredentials(
             BadCredentialsException ex,
             HttpServletRequest request) {
 
         String traceId = generateTraceId();
-
         log.warn("[TraceID: {}] Bad Credentials: {}", traceId, ex.getMessage());
 
-        // ðŸ”¥ Audit log
-        auditLogService.log(
-                AuditLog.AuditAction.LOGIN_FAILED, // Ãnh xáº¡ chuáº©n vá»›i Enum LOGIN_FAILED
-                "SECURITY",
-                null,
-                400,
-                request.getRequestURI(),
-                request.getMethod(),
-                getCurrentUserId(),
-                ex.getMessage(),
-                request
-        );
+        logAudit(AuditLog.AuditAction.LOGIN_FAILED, "SECURITY", null, 400, request, ex.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(BaseResponse.error(
                         400,
-                        "AUTH_003", // INVALID_CREDENTIALS
-                        "ThÃ´ng tin Ä‘Äƒng nháº­p khÃ´ng chÃ­nh xÃ¡c",
+                        "AUTH_003",
+                        "Thông tin đăng nhập không chính xác",
                         request.getRequestURI(),
                         traceId
                 ));
     }
 
-    // ===== 7. USER NOT FOUND =====
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<BaseResponse<Void>> handleUserNotFound(
             UsernameNotFoundException ex,
             HttpServletRequest request) {
 
         String traceId = generateTraceId();
-
         log.warn("[TraceID: {}] User Not Found: {}", traceId, ex.getMessage());
 
-        // ðŸ”¥ Audit log
-        auditLogService.log(
-                AuditLog.AuditAction.LOGIN_FAILED, // Ãnh xáº¡ chuáº©n vá»›i Enum LOGIN_FAILED
-                "SECURITY",
-                null,
-                404,
-                request.getRequestURI(),
-                request.getMethod(),
-                getCurrentUserId(),
-                ex.getMessage(),
-                request
-        );
+        logAudit(AuditLog.AuditAction.LOGIN_FAILED, "SECURITY", null, 404, request, ex.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(BaseResponse.error(
                         404,
-                        "AUTH_002", // USER_NOT_FOUND
-                        "KhÃ´ng tÃ¬m tháº¥y ngÆ°á»i dÃ¹ng",
+                        "AUTH_002",
+                        "Không tìm thấy người dùng",
                         request.getRequestURI(),
                         traceId
                 ));

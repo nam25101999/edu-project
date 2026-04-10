@@ -102,14 +102,17 @@ class UserNotificationServiceTest {
     @Test
     void getByUserId_Success() {
         // Arrange
-        when(userNotificationRepository.findByUserId(userId)).thenReturn(Collections.singletonList(un));
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        org.springframework.data.domain.Page<UserNotification> page = new org.springframework.data.domain.PageImpl<>(Collections.singletonList(un));
+        
+        when(userNotificationRepository.findByUserId(userId, pageable)).thenReturn(page);
         when(userNotificationMapper.toResponseDTO(any())).thenReturn(responseDTO);
 
         // Act
-        List<UserNotificationResponseDTO> results = userNotificationService.getByUserId(userId);
+        org.springframework.data.domain.Page<UserNotificationResponseDTO> results = userNotificationService.getByUserId(userId, pageable);
 
         // Assert
-        assertEquals(1, results.size());
+        assertEquals(1, results.getTotalElements());
     }
 
     @Test

@@ -27,8 +27,19 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        // 🔥 CHẶN TẤT CẢ - YÊU CẦU JWT CHO MỌI API BẢO MẬT
-        if (path.startsWith("/api/auth") || path.equals("/login")) {
+        // 🔥 CHỈ BỎ QUA - Các API thực sự công khai (Login, Register, các API quên mật khẩu)
+        // Các API còn lại bắt đầu bằng /api/auth (như /api/auth/me) VẪN cần kiểm tra JWT.
+        boolean isPublicAuthPath = path.equals("/api/auth/login") || 
+                                  path.equals("/api/auth/register") ||
+                                  path.equals("/api/auth/refresh-token") ||
+                                  path.equals("/api/auth/forgot-password") ||
+                                  path.equals("/api/auth/reset-password") ||
+                                  path.equals("/api/auth/verify-email") ||
+                                  path.equals("/api/auth/resend-otp") ||
+                                  path.equals("/api/auth/verify-reset-otp") ||
+                                  path.equals("/api/auth/verify-otp");
+
+        if (isPublicAuthPath || path.equals("/login") || path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs")) {
             filterChain.doFilter(request, response);
             return;
         }

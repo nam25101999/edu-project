@@ -109,6 +109,6 @@ public class MeControllerIT extends BaseIntegrationTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/me/schedule")
                 .header("Authorization", "Bearer " + studentAccessToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.data.content").isEmpty());
     }
 }

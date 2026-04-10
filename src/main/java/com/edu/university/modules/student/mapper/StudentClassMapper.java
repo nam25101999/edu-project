@@ -18,6 +18,7 @@ public interface StudentClassMapper {
     // Ta cũng sẽ bỏ qua và set chúng ở tầng Service
     @Mapping(target = "department", ignore = true)
     @Mapping(target = "major", ignore = true)
+    @Mapping(target = "advisor", ignore = true)
     StudentClass toEntity(StudentClassRequestDTO requestDTO);
 
     // Chiều Entity -> Response DTO (Read)
@@ -26,6 +27,8 @@ public interface StudentClassMapper {
     @Mapping(target = "departmentName", source = "department.name")
     @Mapping(target = "majorId", source = "major.id")
     @Mapping(target = "majorName", source = "major.name")
+    @Mapping(target = "advisorId", source = "advisor.id")
+    @Mapping(target = "advisorName", source = "advisor.fullName")
     StudentClassResponseDTO toResponseDTO(StudentClass studentClass);
 
     // 3. Chiều Request DTO -> Entity (Update)
@@ -33,5 +36,6 @@ public interface StudentClassMapper {
     @Mapping(target = "academicYear", ignore = true)
     @Mapping(target = "department", ignore = true)
     @Mapping(target = "major", ignore = true)
+    @Mapping(target = "advisor", ignore = true)
     void updateEntityFromDTO(StudentClassRequestDTO requestDTO, @MappingTarget StudentClass studentClass);
 }

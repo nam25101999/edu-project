@@ -14,5 +14,5 @@ public class DepartmentRequestDTO {
 
     private String description;
     
-    private LocalDate establishedYear;
+    private LocalDate establishedDate;
 }

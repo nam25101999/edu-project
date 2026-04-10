@@ -52,6 +52,9 @@ public class Student {
     @Column(length = 100)
     private String email;
 
+    @Column(length = 20)
+    private String phone;
+
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 

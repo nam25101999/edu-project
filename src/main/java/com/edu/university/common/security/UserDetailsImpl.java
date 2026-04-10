@@ -15,8 +15,12 @@ public class UserDetailsImpl implements UserDetails {
     private UUID id;
     private String username;
     private String password;
-    private Collection<? extends GrantedAuthority> authorities;
+    private String email;
+    private boolean emailVerified;
+    private java.util.Set<String> roles;
+    private java.util.Collection<? extends GrantedAuthority> authorities;
     private boolean isActive; // Thêm trường này để quản lý trạng thái tài khoản
+    private java.time.LocalDateTime lastLoginAt;
 
     // ========================
     // OVERRIDE METHODS
@@ -54,7 +58,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        // Đã sửa: Trả về trạng thái thực tế của User thay vì luôn luôn là true
-        return isActive;
+        // Đã sửa: Trả về trạng thái thực tế của User thay vì luôn luôn là true, xử lý null-safe
+        return Boolean.TRUE.equals(isActive);
     }
 }

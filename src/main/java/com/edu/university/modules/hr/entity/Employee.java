@@ -34,7 +34,7 @@ public class Employee {
     @JoinColumn(name = "user_id")
     private Users user;
 
-    @Column(name = "employee_code", length = 20)
+    @Column(name = "code", length = 20)
     private String employeeCode;
 
     @Column(name = "full_name", length = 100)

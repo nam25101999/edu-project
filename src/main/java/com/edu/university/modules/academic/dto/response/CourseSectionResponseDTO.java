@@ -16,6 +16,8 @@ public class CourseSectionResponseDTO {
     private String courseName;
     private UUID semesterId;
     private String semesterName;
+    private UUID majorId;
+    private String majorName;
     private String academicYear;
     private UUID lecturerId;
     private String lecturerUsername;
@@ -28,6 +30,7 @@ public class CourseSectionResponseDTO {
     private LocalDateTime registrationStart;
     private LocalDateTime registrationEnd;
     private String note;
+    private Boolean isSystem;
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

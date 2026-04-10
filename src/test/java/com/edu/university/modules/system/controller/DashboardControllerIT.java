@@ -113,7 +113,7 @@ public class DashboardControllerIT extends BaseIntegrationTest {
                 .withCode("CS01")
                 .withFaculty(faculty)
                 .build());
-        courseRepository.save(Course.builder().name("Java Programming").code("JAVA01").credits(new BigDecimal("3")).isActive(true).build());
+        courseRepository.save(Course.builder().name("Java Programming").courseCode("JAVA01").credits(new BigDecimal("3")).isActive(true).build());
         
         majorRepository.flush();
         courseRepository.flush();

@@ -1,5 +1,5 @@
 package com.edu.university.modules.grading.controller;
-
+ 
 import com.edu.university.modules.grading.dto.request.GradeScaleRequestDTO;
 import com.edu.university.modules.grading.dto.response.GradeScaleResponseDTO;
 import com.edu.university.modules.grading.service.GradeScaleService;
@@ -10,37 +10,38 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+ 
 import java.util.List;
 import java.util.UUID;
-
+ 
 @RestController
 @RequestMapping("/api/grade-scales")
 @RequiredArgsConstructor
 public class GradeScaleController {
-
+ 
     private final GradeScaleService gradeScaleService;
-
+ 
     @PostMapping
     public ResponseEntity<GradeScaleResponseDTO> create(@Valid @RequestBody GradeScaleRequestDTO requestDTO) {
-        return new ResponseEntity<>(gradeScaleService.create(requestDTO), HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(gradeScaleService.create(requestDTO));
     }
-
+ 
     @GetMapping
-    public ResponseEntity<List<GradeScaleResponseDTO>> getAll(@PageableDefault Pageable pageable) {
+    public ResponseEntity<List<GradeScaleResponseDTO>> getAll(@PageableDefault(size = 100) Pageable pageable) {
         return ResponseEntity.ok(gradeScaleService.getAll(pageable).getContent());
     }
-
+ 
     @GetMapping("/{id}")
     public ResponseEntity<GradeScaleResponseDTO> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(gradeScaleService.getById(id));
     }
-
+ 
     @PutMapping("/{id}")
     public ResponseEntity<GradeScaleResponseDTO> update(@PathVariable UUID id, @Valid @RequestBody GradeScaleRequestDTO requestDTO) {
         return ResponseEntity.ok(gradeScaleService.update(id, requestDTO));
     }
-
+ 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         gradeScaleService.delete(id);

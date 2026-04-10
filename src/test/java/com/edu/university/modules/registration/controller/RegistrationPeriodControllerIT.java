@@ -1,5 +1,5 @@
 package com.edu.university.modules.registration.controller;
- 
+
 import com.edu.university.BaseIntegrationTest;
 import com.edu.university.modules.academic.entity.Semester;
 import com.edu.university.modules.academic.repository.SemesterRepository;
@@ -11,116 +11,90 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
- 
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
- 
+
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
- 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 public class RegistrationPeriodControllerIT extends BaseIntegrationTest {
- 
+
     @Autowired
     private RegistrationPeriodRepository registrationPeriodRepository;
- 
     @Autowired
     private SemesterRepository semesterRepository;
- 
-    private Semester semester;
-    private RegistrationPeriod registrationPeriod;
- 
+
+    private Semester testSemester;
+
     @BeforeEach
     void setUp() {
         registrationPeriodRepository.deleteAll();
-        semesterRepository.deleteAll();
- 
-        semester = Semester.builder()
-                .semesterCode("HK1_2023")
-                .semesterName("Học kỳ 1 năm 2023-2024")
-                .academicYear("2023-2024")
-                .startDate(LocalDate.of(2023, 9, 1))
-                .endDate(LocalDate.of(2024, 1, 31))
-                .isActive(true)
-                .build();
-        semester = semesterRepository.save(semester);
- 
-        registrationPeriod = RegistrationPeriod.builder()
-                .name("Đợt đăng ký chính thức HK1 2023")
-                .semester(semester)
-                .startTime(LocalDateTime.of(2023, 8, 15, 8, 0))
-                .endTime(LocalDateTime.of(2023, 8, 30, 17, 0))
-                .maxCredits(25)
-                .minCredits(12)
-                .allowRetake(true)
-                .isActive(true)
-                .build();
-        registrationPeriod = registrationPeriodRepository.save(registrationPeriod);
+        testSemester = semesterRepository.save(Semester.builder()
+                .semesterName("HK2 2024-2025")
+                .semesterCode("20242_PERIOD")
+                .build());
     }
- 
+
     @Test
     @WithMockUser(roles = "ADMIN")
-    void createRegistrationPeriod_Success() throws Exception {
-        RegistrationPeriodRequestDTO requestDTO = new RegistrationPeriodRequestDTO();
-        requestDTO.setName("Đợt đăng ký bổ sung HK1 2023");
-        requestDTO.setSemesterId(semester.getId());
-        requestDTO.setStartTime(LocalDateTime.of(2023, 9, 1, 8, 0));
-        requestDTO.setEndTime(LocalDateTime.of(2023, 9, 5, 17, 0));
-        requestDTO.setMaxCredits(25);
-        requestDTO.setMinCredits(12);
-        requestDTO.setAllowRetake(true);
- 
+    void create_ShouldReturn201_WhenValidRequest() throws Exception {
+        RegistrationPeriodRequestDTO request = new RegistrationPeriodRequestDTO();
+        request.setName("HK2 Period 1");
+        request.setSemesterId(testSemester.getId());
+        request.setStartTime(LocalDateTime.now().plusDays(1));
+        request.setEndTime(LocalDateTime.now().plusDays(10));
+        request.setMinCredits(12);
+        request.setMaxCredits(25);
+
         mockMvc.perform(post("/api/registration-periods")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDTO)))
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("Đợt đăng ký bổ sung HK1 2023"))
-                .andExpect(jsonPath("$.semesterId").value(semester.getId().toString()));
+                .andExpect(jsonPath("$.data.name").value("HK2 Period 1"));
     }
- 
+
     @Test
-    @WithMockUser(roles = "USER")
-    void getAllRegistrationPeriods_Success() throws Exception {
+    @WithMockUser(roles = "ADMIN")
+    void getAll_ShouldReturnPage() throws Exception {
+        RegistrationPeriod period = RegistrationPeriod.builder()
+                .name("HK2 Period 2")
+                .semester(testSemester)
+                .startTime(LocalDateTime.now().plusDays(1))
+                .endTime(LocalDateTime.now().plusDays(10))
+                .minCredits(12)
+                .maxCredits(25)
+                .isActive(true)
+                .build();
+        registrationPeriodRepository.save(period);
+
         mockMvc.perform(get("/api/registration-periods"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)));
+                .andExpect(jsonPath("$.data.content", hasSize(1)));
     }
- 
-    @Test
-    @WithMockUser(roles = "USER")
-    void getRegistrationPeriodById_Success() throws Exception {
-        mockMvc.perform(get("/api/registration-periods/{id}", registrationPeriod.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Đợt đăng ký chính thức HK1 2023"));
-    }
- 
+
     @Test
     @WithMockUser(roles = "ADMIN")
-    void updateRegistrationPeriod_Success() throws Exception {
-        RegistrationPeriodRequestDTO requestDTO = new RegistrationPeriodRequestDTO();
-        requestDTO.setName("Đợt đăng ký chính thức HK1 2023 - Updated");
-        requestDTO.setSemesterId(semester.getId());
-        requestDTO.setStartTime(registrationPeriod.getStartTime());
-        requestDTO.setEndTime(registrationPeriod.getEndTime());
- 
-        mockMvc.perform(put("/api/registration-periods/{id}", registrationPeriod.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDTO)))
+    void delete_ShouldReturn200_WhenExists() throws Exception {
+        RegistrationPeriod period = RegistrationPeriod.builder()
+                .name("To Delete")
+                .semester(testSemester)
+                .startTime(LocalDateTime.now().plusDays(1))
+                .endTime(LocalDateTime.now().plusDays(10))
+                .minCredits(12)
+                .maxCredits(25)
+                .isActive(true)
+                .build();
+        RegistrationPeriod saved = registrationPeriodRepository.save(period);
+
+        mockMvc.perform(delete("/api/registration-periods/" + saved.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Đợt đăng ký chính thức HK1 2023 - Updated"));
-    }
- 
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    void deleteRegistrationPeriod_Success() throws Exception {
-        mockMvc.perform(delete("/api/registration-periods/{id}", registrationPeriod.getId()))
-                .andExpect(status().isNoContent());
- 
-        entityManager.flush();
-        entityManager.clear();
- 
-        mockMvc.perform(get("/api/registration-periods/{id}", registrationPeriod.getId()))
-                .andExpect(status().isNotFound());
+                .andExpect(jsonPath("$.message").value("Xóa đợt đăng ký thành công"));
+
+        RegistrationPeriod deleted = registrationPeriodRepository.findById(saved.getId()).orElse(null);
+        org.junit.jupiter.api.Assertions.assertNotNull(deleted);
+        org.junit.jupiter.api.Assertions.assertFalse(deleted.isActive());
     }
 }

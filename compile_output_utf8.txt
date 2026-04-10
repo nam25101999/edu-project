@@ -1,0 +1,59 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------------< com.edu:backend >---------------------------
+[INFO] Building  0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ backend ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ backend ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 477 source files with javac [debug release 21] to target\classes
+[INFO] -------------------------------------------------------------
+[WARNING] COMPILATION WARNING : 
+[INFO] -------------------------------------------------------------
+[WARNING] /E:/edu_project/backend/src/main/java/com/edu/university/modules/elearning/mapper/AssignmentMapper.java:[13,27] Unmapped target property: "isActive".
+[WARNING] /E:/edu_project/backend/src/main/java/com/edu/university/modules/elearning/mapper/MaterialMapper.java:[13,25] Unmapped target property: "isActive".
+[WARNING] /E:/edu_project/backend/src/main/java/com/edu/university/modules/elearning/mapper/SubmissionMapper.java:[16,27] Unmapped target properties: "isGraded, isActive".
+[INFO] 3 warnings 
+[INFO] -------------------------------------------------------------
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /E:/edu_project/backend/src/main/java/com/edu/university/modules/academic/mapper/SemesterMapper.java:[12,14] Can't map property "String academicYear" to "AcademicYear academicYear". Consider to declare/implement a mapping method: "AcademicYear map(String value)".
+[ERROR] /E:/edu_project/backend/src/main/java/com/edu/university/modules/auth/seeder/DataSeeder.java:[76,23] cannot find symbol
+  symbol:   class AcademicYearService
+  location: class com.edu.university.modules.auth.seeder.DataSeeder
+[ERROR] /E:/edu_project/backend/src/main/java/com/edu/university/modules/auth/seeder/DataSeeder.java:[61,1] cannot find symbol
+  symbol:   class AcademicYearService
+  location: class com.edu.university.modules.auth.seeder.DataSeeder
+[ERROR] /E:/edu_project/backend/src/main/java/com/edu/university/modules/student/mapper/StudentClassMapper.java:[12,8] No implementation was created for StudentClassMapper due to having a problem in the erroneous element com.edu.university.modules.student.entity.StudentClass.StudentClassBuilder. Hint: this often means that some other annotation processor was supposed to process the erroneous element. You can also enable MapStruct verbose mode by setting -Amapstruct.verbose=true as a compilation argument.
+[ERROR] /E:/edu_project/backend/src/main/java/com/edu/university/modules/academic/mapper/AcademicYearMapper.java:[11,8] No implementation was created for AcademicYearMapper due to having a problem in the erroneous element com.edu.university.modules.academic.entity.AcademicYear.AcademicYearBuilder. Hint: this often means that some other annotation processor was supposed to process the erroneous element. You can also enable MapStruct verbose mode by setting -Amapstruct.verbose=true as a compilation argument.
+[INFO] 5 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  36.498 s
+[INFO] Finished at: 2026-04-09T01:29:07+07:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project backend: Compilation failure: Compilation failure: 
+[ERROR] /E:/edu_project/backend/src/main/java/com/edu/university/modules/academic/mapper/SemesterMapper.java:[12,14] Can't map property "String academicYear" to "AcademicYear academicYear". Consider to declare/implement a mapping method: "AcademicYear map(String value)".
+[ERROR] /E:/edu_project/backend/src/main/java/com/edu/university/modules/auth/seeder/DataSeeder.java:[76,23] cannot find symbol
+[ERROR]   symbol:   class AcademicYearService
+[ERROR]   location: class com.edu.university.modules.auth.seeder.DataSeeder
+[ERROR] /E:/edu_project/backend/src/main/java/com/edu/university/modules/auth/seeder/DataSeeder.java:[61,1] cannot find symbol
+[ERROR]   symbol:   class AcademicYearService
+[ERROR]   location: class com.edu.university.modules.auth.seeder.DataSeeder
+[ERROR] /E:/edu_project/backend/src/main/java/com/edu/university/modules/student/mapper/StudentClassMapper.java:[12,8] No implementation was created for StudentClassMapper due to having a problem in the erroneous element com.edu.university.modules.student.entity.StudentClass.StudentClassBuilder. Hint: this often means that some other annotation processor was supposed to process the erroneous element. You can also enable MapStruct verbose mode by setting -Amapstruct.verbose=true as a compilation argument.
+[ERROR] /E:/edu_project/backend/src/main/java/com/edu/university/modules/academic/mapper/AcademicYearMapper.java:[11,8] No implementation was created for AcademicYearMapper due to having a problem in the erroneous element com.edu.university.modules.academic.entity.AcademicYear.AcademicYearBuilder. Hint: this often means that some other annotation processor was supposed to process the erroneous element. You can also enable MapStruct verbose mode by setting -Amapstruct.verbose=true as a compilation argument.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

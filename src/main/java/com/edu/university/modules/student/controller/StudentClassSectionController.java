@@ -1,12 +1,12 @@
 package com.edu.university.modules.student.controller;
 
+import com.edu.university.common.dto.PageResponse;
 import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.student.dto.request.StudentClassSectionRequestDTO;
 import com.edu.university.modules.student.dto.response.StudentClassSectionResponseDTO;
 import com.edu.university.modules.student.service.StudentClassSectionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -32,22 +32,22 @@ public class StudentClassSectionController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<Page<StudentClassSectionResponseDTO>>> getAll(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(sectionService.getAll(pageable)));
+    public ResponseEntity<BaseResponse<PageResponse<StudentClassSectionResponseDTO>>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.okPage(sectionService.getAll(pageable)));
     }
 
     @GetMapping("/student/{studentId}")
-    public ResponseEntity<BaseResponse<Page<StudentClassSectionResponseDTO>>> getByStudentId(
+    public ResponseEntity<BaseResponse<PageResponse<StudentClassSectionResponseDTO>>> getByStudentId(
             @PathVariable UUID studentId,
             @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(sectionService.getByStudentId(studentId, pageable)));
+        return ResponseEntity.ok(BaseResponse.okPage(sectionService.getByStudentId(studentId, pageable)));
     }
 
     @GetMapping("/class/{studentClassesId}")
-    public ResponseEntity<BaseResponse<Page<StudentClassSectionResponseDTO>>> getByClassId(
+    public ResponseEntity<BaseResponse<PageResponse<StudentClassSectionResponseDTO>>> getByClassId(
             @PathVariable UUID studentClassesId,
             @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(sectionService.getByClassId(studentClassesId, pageable)));
+        return ResponseEntity.ok(BaseResponse.okPage(sectionService.getByClassId(studentClassesId, pageable)));
     }
 
     @PutMapping("/{id}")

@@ -1,5 +1,7 @@
 package com.edu.university.modules.schedule.controller;
 
+import com.edu.university.common.dto.PageResponse;
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.schedule.dto.request.BuildingRequestDTO;
 import com.edu.university.modules.schedule.dto.response.BuildingResponseDTO;
 import com.edu.university.modules.schedule.service.BuildingService;
@@ -22,28 +24,29 @@ public class BuildingController {
     private final BuildingService buildingService;
 
     @PostMapping
-    public ResponseEntity<BuildingResponseDTO> create(@Valid @RequestBody BuildingRequestDTO requestDTO) {
-        return new ResponseEntity<>(buildingService.create(requestDTO), HttpStatus.CREATED);
+    public ResponseEntity<BaseResponse<BuildingResponseDTO>> create(@Valid @RequestBody BuildingRequestDTO requestDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(BaseResponse.created(buildingService.create(requestDTO)));
     }
 
     @GetMapping
-    public ResponseEntity<List<BuildingResponseDTO>> getAll(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(buildingService.getAll(pageable).getContent());
+    public ResponseEntity<BaseResponse<List<BuildingResponseDTO>>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.ok(buildingService.getAll(pageable).getContent()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BuildingResponseDTO> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(buildingService.getById(id));
+    public ResponseEntity<BaseResponse<BuildingResponseDTO>> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(BaseResponse.ok(buildingService.getById(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BuildingResponseDTO> update(@PathVariable UUID id, @Valid @RequestBody BuildingRequestDTO requestDTO) {
-        return ResponseEntity.ok(buildingService.update(id, requestDTO));
+    public ResponseEntity<BaseResponse<BuildingResponseDTO>> update(@PathVariable UUID id, @Valid @RequestBody BuildingRequestDTO requestDTO) {
+        return ResponseEntity.ok(BaseResponse.ok(buildingService.update(id, requestDTO)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<Void>> delete(@PathVariable UUID id) {
         buildingService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.ok());
     }
 }

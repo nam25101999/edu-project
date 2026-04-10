@@ -7,9 +7,10 @@ import com.edu.university.modules.system.service.SystemLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,16 +20,14 @@ public class SystemLogServiceImpl implements SystemLogService {
     private final SystemLogMapper systemLogMapper;
 
     @Override
-    public List<SystemLogResponseDTO> getAll() {
-        return systemLogRepository.findAll().stream()
-                .map(systemLogMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public Page<SystemLogResponseDTO> getAll(Pageable pageable) {
+        return systemLogRepository.findAll(pageable)
+                .map(systemLogMapper::toResponseDTO);
     }
 
     @Override
-    public List<SystemLogResponseDTO> getByUserId(UUID userId) {
-        return systemLogRepository.findByUserId(userId).stream()
-                .map(systemLogMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public Page<SystemLogResponseDTO> getByUserId(UUID userId, Pageable pageable) {
+        return systemLogRepository.findByUserId(userId, pageable)
+                .map(systemLogMapper::toResponseDTO);
     }
 }

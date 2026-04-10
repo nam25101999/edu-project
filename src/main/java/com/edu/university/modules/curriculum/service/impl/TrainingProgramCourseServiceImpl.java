@@ -44,9 +44,12 @@ public class TrainingProgramCourseServiceImpl implements TrainingProgramCourseSe
         TrainingProgramCourse tpc = new TrainingProgramCourse();
         tpc.setTrainingProgram(trainingProgram);
         tpc.setCourse(course);
-        tpc.setCourseCode(course.getCode());
+        tpc.setCourseCode(course.getCourseCode());
         tpc.setCourseName(course.getName());
         tpc.setCredits(course.getCredits());
+        tpc.setSemesterId(requestDTO.getSemesterId());
+        tpc.setSemesterCode(requestDTO.getSemesterCode());
+        tpc.setAcademicYear(requestDTO.getAcademicYear());
         tpc.setPrerequisiteCourse(prerequisiteCourse);
         tpc.setRequired(requestDTO.getIsRequired() != null ? requestDTO.getIsRequired() : true);
         tpc.setActive(true);
@@ -60,7 +63,7 @@ public class TrainingProgramCourseServiceImpl implements TrainingProgramCourseSe
                 .trainingProgramId(entity.getTrainingProgram() != null ? entity.getTrainingProgram().getId() : null)
                 .programName(entity.getTrainingProgram() != null ? entity.getTrainingProgram().getProgramName() : null)
                 .courseId(entity.getCourse() != null ? entity.getCourse().getId() : null)
-                .courseCode(entity.getCourse() != null ? entity.getCourse().getCode() : entity.getCourseCode())
+                .courseCode(entity.getCourse() != null ? entity.getCourse().getCourseCode() : entity.getCourseCode())
                 .courseName(entity.getCourse() != null ? entity.getCourse().getName() : entity.getCourseName())
                 .credits(entity.getCourse() != null ? entity.getCourse().getCredits() : entity.getCredits())
                 .isRequired(entity.isRequired())
@@ -72,15 +75,15 @@ public class TrainingProgramCourseServiceImpl implements TrainingProgramCourseSe
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TrainingProgramCourseResponseDTO> getAll(Pageable pageable) {
-        return trainingProgramCourseRepository.findAll(pageable)
+    public Page<TrainingProgramCourseResponseDTO> getAll(UUID trainingProgramId, Pageable pageable) {
+        return trainingProgramCourseRepository.findPageWithRelations(trainingProgramId, pageable)
                 .map(this::mapToResponseDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public TrainingProgramCourseResponseDTO getById(UUID id) {
-        TrainingProgramCourse tpc = trainingProgramCourseRepository.findById(id)
+        TrainingProgramCourse tpc = trainingProgramCourseRepository.findDetailById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TRAINING_PROGRAM_COURSE_NOT_FOUND));
         return mapToResponseDTO(tpc);
     }
@@ -102,9 +105,12 @@ public class TrainingProgramCourseServiceImpl implements TrainingProgramCourseSe
         
         tpc.setTrainingProgram(trainingProgram);
         tpc.setCourse(course);
-        tpc.setCourseCode(course.getCode());
+        tpc.setCourseCode(course.getCourseCode());
         tpc.setCourseName(course.getName());
         tpc.setCredits(course.getCredits());
+        tpc.setSemesterId(requestDTO.getSemesterId());
+        tpc.setSemesterCode(requestDTO.getSemesterCode());
+        tpc.setAcademicYear(requestDTO.getAcademicYear());
 
         if (requestDTO.getPrerequisiteCourseId() != null) {
             Course prerequisiteCourse = courseRepository.findById(requestDTO.getPrerequisiteCourseId())

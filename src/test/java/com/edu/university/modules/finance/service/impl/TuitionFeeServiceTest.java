@@ -91,14 +91,17 @@ class TuitionFeeServiceTest {
     @Test
     void getAll_Success() {
         // Arrange
-        when(tuitionFeeRepository.findAll()).thenReturn(Collections.singletonList(tuitionFee));
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        org.springframework.data.domain.Page<TuitionFee> page = new org.springframework.data.domain.PageImpl<>(Collections.singletonList(tuitionFee));
+        
+        when(tuitionFeeRepository.findAll(pageable)).thenReturn(page);
         when(tuitionFeeMapper.toResponseDTO(any())).thenReturn(responseDTO);
 
         // Act
-        List<TuitionFeeResponseDTO> results = tuitionFeeService.getAll();
+        org.springframework.data.domain.Page<TuitionFeeResponseDTO> results = tuitionFeeService.getAll(pageable);
 
         // Assert
-        assertEquals(1, results.size());
+        assertEquals(1, results.getTotalElements());
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.edu.university.modules.schedule.controller;
 
+import com.edu.university.common.dto.PageResponse;
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.schedule.dto.request.RoomRequestDTO;
 import com.edu.university.modules.schedule.dto.response.RoomResponseDTO;
 import com.edu.university.modules.schedule.service.RoomService;
@@ -22,8 +24,9 @@ public class RoomController {
     private final RoomService roomService;
 
     @PostMapping
-    public ResponseEntity<RoomResponseDTO> create(@Valid @RequestBody RoomRequestDTO requestDTO) {
-        return new ResponseEntity<>(roomService.create(requestDTO), HttpStatus.CREATED);
+    public ResponseEntity<BaseResponse<RoomResponseDTO>> create(@Valid @RequestBody RoomRequestDTO requestDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(BaseResponse.created(roomService.create(requestDTO)));
     }
 
     @GetMapping
@@ -32,13 +35,14 @@ public class RoomController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RoomResponseDTO> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(roomService.getById(id));
+    public ResponseEntity<BaseResponse<RoomResponseDTO>> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(BaseResponse.ok(roomService.getById(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RoomResponseDTO> update(@PathVariable UUID id, @Valid @RequestBody RoomRequestDTO requestDTO) {
-        return ResponseEntity.ok(roomService.update(id, requestDTO));
+    public ResponseEntity<BaseResponse<RoomResponseDTO>> update(@PathVariable UUID id,
+            @Valid @RequestBody RoomRequestDTO requestDTO) {
+        return ResponseEntity.ok(BaseResponse.ok(roomService.update(id, requestDTO)));
     }
 
     @DeleteMapping("/{id}")

@@ -27,4 +27,28 @@ public class AuthMapper {
                 .lastLoginAt(user.getLastLoginAt() != null ? user.getLastLoginAt().toString() : null)
                 .build();
     }
+
+    public com.edu.university.modules.auth.dto.AuditLogResponseDTO toAuditLogResponseDTO(com.edu.university.modules.auth.entity.AuditLog auditLog) {
+        if (auditLog == null) {
+            return null;
+        }
+
+        return com.edu.university.modules.auth.dto.AuditLogResponseDTO.builder()
+                .id(auditLog.getId())
+                .userId(auditLog.getUserId())
+                .action(auditLog.getAction())
+                .entityName(auditLog.getEntityName())
+                .entityId(auditLog.getEntityId())
+                .endpoint(auditLog.getEndpoint())
+                .httpMethod(auditLog.getHttpMethod())
+                .status(auditLog.getStatus())
+                .ipAddress(auditLog.getIpAddress())
+                .userAgent(auditLog.getUserAgent())
+                .requestPayload(auditLog.getRequestPayload())
+                .responsePayload(auditLog.getResponsePayload())
+                .errorMessage(auditLog.getErrorMessage())
+                .executionTimeMs(auditLog.getExecutionTimeMs())
+                .createdAt(auditLog.getCreatedAt())
+                .build();
+    }
 }

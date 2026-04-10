@@ -17,5 +17,7 @@ public class StudentClassResponseDTO {
     private String majorName;      // Bổ sung khi query (Join)
     private String academicYear;
     private Boolean isActive;
+    private UUID advisorId;
+    private String advisorName;
     private LocalDateTime createdAt;
 }

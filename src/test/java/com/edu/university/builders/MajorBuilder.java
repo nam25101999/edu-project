@@ -4,7 +4,7 @@ import com.edu.university.modules.curriculum.entity.Major;
 import com.edu.university.modules.hr.entity.Faculty;
 
 public class MajorBuilder {
-    private String code = "MAJ_TEST";
+    private String majorCode = "MAJ_TEST";
     private String name = "Test Major";
     private String description = "Test Description";
     private Faculty faculty;
@@ -13,8 +13,8 @@ public class MajorBuilder {
         return new MajorBuilder();
     }
 
-    public MajorBuilder withCode(String code) {
-        this.code = code;
+    public MajorBuilder withCode(String majorCode) {
+        this.majorCode = majorCode;
         return this;
     }
 
@@ -30,7 +30,7 @@ public class MajorBuilder {
 
     public Major build() {
         return Major.builder()
-                .code(code)
+                .majorCode(majorCode)
                 .name(name)
                 .description(description)
                 .faculty(faculty)

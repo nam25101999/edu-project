@@ -35,7 +35,7 @@ public class Schedule {
     private CourseSection courseSection;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lecturer_id")
+    @JoinColumn(name = "employee_id")
     private Users lecturer;
 
     @ManyToOne(fetch = FetchType.LAZY)

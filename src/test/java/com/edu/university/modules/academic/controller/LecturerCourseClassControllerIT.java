@@ -75,7 +75,7 @@ public class LecturerCourseClassControllerIT extends BaseIntegrationTest {
         testLecturer = userRepository.save(testLecturer);
 
         Course testCourse = Course.builder()
-                .code("CS101")
+                .courseCode("CS101")
                 .name("Computer Science 101")
                 .credits(new BigDecimal("3.0"))
                 .courseType("REQUIRED")
@@ -86,7 +86,6 @@ public class LecturerCourseClassControllerIT extends BaseIntegrationTest {
         Semester testSemester = Semester.builder()
                 .semesterCode("HK1_2023")
                 .semesterName("Học kỳ 1 năm 2023-2024")
-                .academicYear("2023-2024")
                 .startDate(LocalDate.of(2023, 9, 1))
                 .endDate(LocalDate.of(2024, 1, 31))
                 .isActive(true)

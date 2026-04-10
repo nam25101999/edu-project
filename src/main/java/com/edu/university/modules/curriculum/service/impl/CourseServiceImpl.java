@@ -29,7 +29,7 @@ public class CourseServiceImpl implements CourseService {
     @Override
     @Transactional
     public CourseResponseDTO create(CourseRequestDTO requestDTO) {
-        if (courseRepository.existsByCode(requestDTO.getCode())) {
+        if (courseRepository.existsByCourseCode(requestDTO.getCourseCode())) {
             throw new BusinessException(ErrorCode.COURSE_ALREADY_EXISTS);
         }
         
@@ -48,15 +48,15 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CourseResponseDTO> getAll(Pageable pageable) {
-        return courseRepository.findAll(pageable)
+    public Page<CourseResponseDTO> getAll(String search, Pageable pageable) {
+        return courseRepository.findPageWithDepartment(normalizeSearch(search), pageable)
                 .map(courseMapper::toResponseDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public CourseResponseDTO getById(UUID id) {
-        Course course = courseRepository.findById(id)
+        Course course = courseRepository.findDetailById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
         return courseMapper.toResponseDTO(course);
     }
@@ -87,5 +87,12 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
         course.softDelete("system");
         courseRepository.save(course);
+    }
+
+    private String normalizeSearch(String search) {
+        if (search == null || search.isBlank()) {
+            return null;
+        }
+        return search.trim();
     }
 }

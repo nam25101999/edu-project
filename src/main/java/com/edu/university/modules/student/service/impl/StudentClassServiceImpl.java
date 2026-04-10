@@ -1,6 +1,6 @@
 package com.edu.university.modules.student.service.impl;
 
-import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.AppException;
 import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.academic.entity.AcademicYear;
 import com.edu.university.modules.academic.repository.AcademicYearRepository;
@@ -30,29 +30,36 @@ public class StudentClassServiceImpl implements StudentClassService {
     private final DepartmentRepository departmentRepository;
     private final MajorRepository majorRepository;
     private final AcademicYearRepository academicYearRepository;
+    private final com.edu.university.modules.hr.repository.EmployeeRepository employeeRepository;
     private final StudentClassMapper studentClassMapper;
 
     @Override
     @Transactional
     public StudentClassResponseDTO createClass(StudentClassRequestDTO requestDTO) {
-        if(studentClassRepository.existsByClassCode(requestDTO.getClassCode())) {
-            throw new BusinessException(ErrorCode.ALREADY_EXISTS, "Mã lớp đã tồn tại");
+        if (studentClassRepository.existsByClassCode(requestDTO.getClassCode())) {
+            throw new AppException(ErrorCode.ALREADY_EXISTS, "Mã lớp đã tồn tại");
         }
-        
+
         StudentClass studentClass = studentClassMapper.toEntity(requestDTO);
-        
+
         Department department = departmentRepository.findById(requestDTO.getDepartmentId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy khoa"));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy khoa"));
         Major major = majorRepository.findById(requestDTO.getMajorId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy ngành"));
-        AcademicYear academicYear = academicYearRepository.findByAcademicYear(requestDTO.getAcademicYear())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy niên khóa"));
-                
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy ngành"));
+        AcademicYear academicYear = academicYearRepository.findByAcademicCode(requestDTO.getAcademicYear())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy niên khóa"));
+
         studentClass.setDepartment(department);
         studentClass.setMajor(major);
         studentClass.setAcademicYear(academicYear);
-        studentClass.setActive(true);
-        
+
+        if (requestDTO.getAdvisorId() != null) {
+            studentClass.setAdvisor(employeeRepository.findById(requestDTO.getAdvisorId())
+                    .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy cố vấn học tập")));
+        }
+
+        studentClass.setIsActive(true);
+
         return studentClassMapper.toResponseDTO(studentClassRepository.save(studentClass));
     }
 
@@ -68,28 +75,35 @@ public class StudentClassServiceImpl implements StudentClassService {
     public StudentClassResponseDTO getClassById(UUID id) {
         return studentClassRepository.findById(id)
                 .map(studentClassMapper::toResponseDTO)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học"));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học"));
     }
 
     @Override
     @Transactional
     public StudentClassResponseDTO updateClass(UUID id, StudentClassRequestDTO requestDTO) {
         StudentClass studentClass = studentClassRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học"));
-        
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học"));
+
         studentClassMapper.updateEntityFromDTO(requestDTO, studentClass);
-        
+
         Department department = departmentRepository.findById(requestDTO.getDepartmentId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy khoa"));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy khoa"));
         Major major = majorRepository.findById(requestDTO.getMajorId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy ngành"));
-        AcademicYear academicYear = academicYearRepository.findByAcademicYear(requestDTO.getAcademicYear())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy niên khóa"));
-                
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy ngành"));
+        AcademicYear academicYear = academicYearRepository.findByAcademicCode(requestDTO.getAcademicYear())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy niên khóa"));
+
         studentClass.setDepartment(department);
         studentClass.setMajor(major);
         studentClass.setAcademicYear(academicYear);
-        
+
+        if (requestDTO.getAdvisorId() != null) {
+            studentClass.setAdvisor(employeeRepository.findById(requestDTO.getAdvisorId())
+                    .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy cố vấn học tập")));
+        } else {
+            studentClass.setAdvisor(null);
+        }
+
         return studentClassMapper.toResponseDTO(studentClassRepository.save(studentClass));
     }
 
@@ -97,14 +111,15 @@ public class StudentClassServiceImpl implements StudentClassService {
     @Transactional
     public void deleteClass(UUID id) {
         StudentClass studentClass = studentClassRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học"));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học"));
         studentClass.softDelete("system");
         studentClassRepository.save(studentClass);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<StudentClassResponseDTO> getClassesByDepartmentAndMajor(UUID departmentId, UUID majorId, Pageable pageable) {
+    public Page<StudentClassResponseDTO> getClassesByDepartmentAndMajor(UUID departmentId, UUID majorId,
+            Pageable pageable) {
         Page<StudentClass> classes;
         if (departmentId != null && majorId != null) {
             classes = studentClassRepository.findByDepartmentIdAndMajorId(departmentId, majorId, pageable);

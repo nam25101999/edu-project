@@ -2,33 +2,34 @@ package com.edu.university.modules.student.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
 public class StudentRequestDTO {
-    @NotBlank(message = "Mã sinh viên không được để trống")
+    @NotBlank(message = "Ma sinh vien khong duoc de trong")
     private String studentCode;
 
     private UUID userId;
 
-    private UUID departmentId; // Khoa
-    private UUID majorId;      // Ngành
-    private UUID programId;    // Chương trình học
+    private UUID departmentId;
+    private UUID majorId;
+    private UUID programId;
 
-    @NotBlank(message = "Họ đệm không được để trống")
+    @NotBlank(message = "Ho dem khong duoc de trong")
     private String firstName;
 
-    @NotBlank(message = "Tên không được để trống")
+    @NotBlank(message = "Ten khong duoc de trong")
     private String lastName;
 
-    @Email(message = "Email không đúng định dạng")
+    @NotBlank(message = "Email khong duoc de trong")
+    @Email(message = "Email khong dung dinh dang")
     private String email;
 
     private String phone;
     private LocalDate dateOfBirth;
-    private Integer gender; // 0: Nữ, 1: Nam, 2: Khác
+    private Integer gender;
     private String address;
 }

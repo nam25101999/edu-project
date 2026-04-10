@@ -1,5 +1,7 @@
 package com.edu.university.modules.examination.service.impl;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.auth.entity.Users;
 import com.edu.university.modules.auth.repository.UserRepository;
 import com.edu.university.modules.examination.dto.request.ExamResultRequestDTO;
@@ -14,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -33,20 +34,18 @@ public class ExamResultServiceImpl implements ExamResultService {
                 .orElse(new ExamResult());
         
         examResultMapper.updateEntityFromDTO(requestDTO, result);
+        result.setLocked(requestDTO.isLocked());
         
         if (result.getId() == null) {
             ExamRegistration registration = examRegistrationRepository.findById(requestDTO.getRegistrationId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đăng ký thi"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy đăng ký thi"));
             result.setExamRegistration(registration);
             result.setActive(true);
-            result.setCreatedAt(LocalDateTime.now());
-        } else {
-            result.setUpdatedAt(LocalDateTime.now());
         }
         
         if (requestDTO.getGradedById() != null) {
             Users grader = userRepository.findById(requestDTO.getGradedById())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người chấm điểm"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
             result.setGradedBy(grader);
         }
         
@@ -54,9 +53,10 @@ public class ExamResultServiceImpl implements ExamResultService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ExamResultResponseDTO getByRegistrationId(UUID registrationId) {
         ExamResult result = examResultRepository.findByExamRegistrationId(registrationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy kết quả thi"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy kết quả thi"));
         return examResultMapper.toResponseDTO(result);
     }
 
@@ -64,7 +64,7 @@ public class ExamResultServiceImpl implements ExamResultService {
     @Transactional
     public void delete(UUID id) {
         ExamResult result = examResultRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy kết quả thi"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy kết quả thi"));
         result.softDelete("system");
         examResultRepository.save(result);
     }

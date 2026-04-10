@@ -31,7 +31,7 @@ public class RegistrationPeriodServiceImpl implements RegistrationPeriodService 
     public RegistrationPeriodResponseDTO create(RegistrationPeriodRequestDTO requestDTO) {
         RegistrationPeriod registrationPeriod = registrationPeriodMapper.toEntity(requestDTO);
         Semester semester = semesterRepository.findById(requestDTO.getSemesterId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy học kỳ"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SEMESTER_NOT_FOUND));
         registrationPeriod.setSemester(semester);
         registrationPeriod.setActive(true);
         return registrationPeriodMapper.toResponseDTO(registrationPeriodRepository.save(registrationPeriod));
@@ -48,7 +48,7 @@ public class RegistrationPeriodServiceImpl implements RegistrationPeriodService 
     @Transactional(readOnly = true)
     public RegistrationPeriodResponseDTO getById(UUID id) {
         RegistrationPeriod registrationPeriod = registrationPeriodRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy đợt đăng ký"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGISTRATION_PERIOD_NOT_FOUND));
         return registrationPeriodMapper.toResponseDTO(registrationPeriod);
     }
 
@@ -56,10 +56,10 @@ public class RegistrationPeriodServiceImpl implements RegistrationPeriodService 
     @Transactional
     public RegistrationPeriodResponseDTO update(UUID id, RegistrationPeriodRequestDTO requestDTO) {
         RegistrationPeriod registrationPeriod = registrationPeriodRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy đợt đăng ký"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGISTRATION_PERIOD_NOT_FOUND));
         registrationPeriodMapper.updateEntityFromDTO(requestDTO, registrationPeriod);
         Semester semester = semesterRepository.findById(requestDTO.getSemesterId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy học kỳ"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SEMESTER_NOT_FOUND));
         registrationPeriod.setSemester(semester);
         return registrationPeriodMapper.toResponseDTO(registrationPeriodRepository.save(registrationPeriod));
     }
@@ -68,7 +68,7 @@ public class RegistrationPeriodServiceImpl implements RegistrationPeriodService 
     @Transactional
     public void delete(UUID id) {
         RegistrationPeriod registrationPeriod = registrationPeriodRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy đợt đăng ký"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGISTRATION_PERIOD_NOT_FOUND));
         registrationPeriod.softDelete("system");
         registrationPeriodRepository.save(registrationPeriod);
     }

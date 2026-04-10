@@ -50,8 +50,8 @@ public class TimeSlotControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.slotCode").value("S2"))
-                .andExpect(jsonPath("$.slotName").value("Tiết 4-6"));
+                .andExpect(jsonPath("$.data.slotCode").value("S2"))
+                .andExpect(jsonPath("$.data.slotName").value("Tiết 4-6"));
     }
 
     @Test
@@ -67,7 +67,7 @@ public class TimeSlotControllerIT extends BaseIntegrationTest {
     void getTimeSlotById_Success() throws Exception {
         mockMvc.perform(get("/api/time-slots/{id}", timeSlot.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.slotCode").value("S1"));
+                .andExpect(jsonPath("$.data.slotCode").value("S1"));
     }
 
     @Test
@@ -83,7 +83,7 @@ public class TimeSlotControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.slotCode").value("S1_UPDATED"));
+                .andExpect(jsonPath("$.data.slotCode").value("S1_UPDATED"));
     }
 
     @Test

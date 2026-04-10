@@ -1,12 +1,12 @@
 package com.edu.university.modules.hr.controller;
 
+import com.edu.university.common.dto.PageResponse;
 import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.hr.dto.request.PositionRequestDTO;
 import com.edu.university.modules.hr.dto.response.PositionResponseDTO;
 import com.edu.university.modules.hr.service.PositionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -31,8 +31,8 @@ public class PositionController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<Page<PositionResponseDTO>>> getAllPositions(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(positionService.getAllPositions(pageable)));
+    public ResponseEntity<BaseResponse<PageResponse<PositionResponseDTO>>> getAllPositions(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.okPage(positionService.getAllPositions(pageable)));
     }
 
     @GetMapping("/{id}")

@@ -1,5 +1,7 @@
 package com.edu.university.modules.schedule.controller;
 
+import com.edu.university.common.dto.PageResponse;
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.schedule.dto.request.TimeSlotRequestDTO;
 import com.edu.university.modules.schedule.dto.response.TimeSlotResponseDTO;
 import com.edu.university.modules.schedule.service.TimeSlotService;
@@ -22,8 +24,9 @@ public class TimeSlotController {
     private final TimeSlotService timeSlotService;
 
     @PostMapping
-    public ResponseEntity<TimeSlotResponseDTO> create(@Valid @RequestBody TimeSlotRequestDTO requestDTO) {
-        return new ResponseEntity<>(timeSlotService.create(requestDTO), HttpStatus.CREATED);
+    public ResponseEntity<BaseResponse<TimeSlotResponseDTO>> create(@Valid @RequestBody TimeSlotRequestDTO requestDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(BaseResponse.created(timeSlotService.create(requestDTO)));
     }
 
     @GetMapping
@@ -32,13 +35,13 @@ public class TimeSlotController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TimeSlotResponseDTO> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(timeSlotService.getById(id));
+    public ResponseEntity<BaseResponse<TimeSlotResponseDTO>> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(BaseResponse.ok(timeSlotService.getById(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TimeSlotResponseDTO> update(@PathVariable UUID id, @Valid @RequestBody TimeSlotRequestDTO requestDTO) {
-        return ResponseEntity.ok(timeSlotService.update(id, requestDTO));
+    public ResponseEntity<BaseResponse<TimeSlotResponseDTO>> update(@PathVariable UUID id, @Valid @RequestBody TimeSlotRequestDTO requestDTO) {
+        return ResponseEntity.ok(BaseResponse.ok(timeSlotService.update(id, requestDTO)));
     }
 
     @DeleteMapping("/{id}")

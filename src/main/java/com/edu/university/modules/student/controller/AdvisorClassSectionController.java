@@ -1,12 +1,12 @@
 package com.edu.university.modules.student.controller;
 
+import com.edu.university.common.dto.PageResponse;
 import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.student.dto.request.AdvisorClassSectionRequestDTO;
 import com.edu.university.modules.student.dto.response.AdvisorClassSectionResponseDTO;
 import com.edu.university.modules.student.service.AdvisorClassSectionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -32,22 +32,22 @@ public class AdvisorClassSectionController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<Page<AdvisorClassSectionResponseDTO>>> getAll(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(advisorService.getAll(pageable)));
+    public ResponseEntity<BaseResponse<PageResponse<AdvisorClassSectionResponseDTO>>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.okPage(advisorService.getAll(pageable)));
     }
 
     @GetMapping("/advisor/{advisorId}")
-    public ResponseEntity<BaseResponse<Page<AdvisorClassSectionResponseDTO>>> getByAdvisorId(
+    public ResponseEntity<BaseResponse<PageResponse<AdvisorClassSectionResponseDTO>>> getByAdvisorId(
             @PathVariable UUID advisorId,
             @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(advisorService.getByAdvisorId(advisorId, pageable)));
+        return ResponseEntity.ok(BaseResponse.okPage(advisorService.getByAdvisorId(advisorId, pageable)));
     }
 
     @GetMapping("/class/{studentClassesId}")
-    public ResponseEntity<BaseResponse<Page<AdvisorClassSectionResponseDTO>>> getByClassId(
+    public ResponseEntity<BaseResponse<PageResponse<AdvisorClassSectionResponseDTO>>> getByClassId(
             @PathVariable UUID studentClassesId,
             @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(advisorService.getByClassId(studentClassesId, pageable)));
+        return ResponseEntity.ok(BaseResponse.okPage(advisorService.getByClassId(studentClassesId, pageable)));
     }
 
     @PutMapping("/{id}")

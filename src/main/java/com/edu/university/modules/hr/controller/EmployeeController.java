@@ -1,5 +1,6 @@
 package com.edu.university.modules.hr.controller;
 
+import com.edu.university.common.dto.PageResponse;
 import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.hr.dto.request.EmployeeRequestDTO;
 import com.edu.university.modules.hr.dto.request.EmployeeStatusChangeRequestDTO;
@@ -7,7 +8,6 @@ import com.edu.university.modules.hr.dto.response.EmployeeResponseDTO;
 import com.edu.university.modules.hr.service.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -32,8 +32,8 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<Page<EmployeeResponseDTO>>> getAllEmployees(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(employeeService.getAllEmployees(pageable)));
+    public ResponseEntity<BaseResponse<PageResponse<EmployeeResponseDTO>>> getAllEmployees(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.okPage(employeeService.getAllEmployees(pageable)));
     }
 
     @GetMapping("/{id}")

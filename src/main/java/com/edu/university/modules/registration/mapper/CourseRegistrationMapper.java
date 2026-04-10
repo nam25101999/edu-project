@@ -20,7 +20,7 @@ public interface CourseRegistrationMapper {
     @Mapping(target = "studentCode", source = "student.studentCode")
     @Mapping(target = "courseSectionId", source = "courseSection.id")
     @Mapping(target = "classCode", source = "courseSection.classCode")
-    @Mapping(target = "courseCode", source = "courseSection.course.code")
+    @Mapping(target = "courseCode", source = "courseSection.course.courseCode")
     @Mapping(target = "courseName", source = "courseSection.course.name")
     @Mapping(target = "registrationPeriodId", source = "registrationPeriod.id")
     @Mapping(target = "registrationPeriodName", source = "registrationPeriod.name")

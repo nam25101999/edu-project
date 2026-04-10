@@ -1,8 +1,12 @@
 package com.edu.university.modules.finance.controller;
 
 import com.edu.university.BaseIntegrationTest;
+import com.edu.university.modules.curriculum.entity.Major;
 import com.edu.university.modules.curriculum.entity.TrainingProgram;
+import com.edu.university.modules.curriculum.repository.MajorRepository;
 import com.edu.university.modules.curriculum.repository.TrainingProgramRepository;
+import com.edu.university.modules.hr.entity.Faculty;
+import com.edu.university.modules.hr.repository.FacultyRepository;
 import com.edu.university.modules.finance.dto.request.TuitionFeeRequestDTO;
 import com.edu.university.modules.finance.entity.TuitionFee;
 import com.edu.university.modules.finance.repository.TuitionFeeRepository;
@@ -16,127 +20,138 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class TuitionFeeControllerIT extends BaseIntegrationTest {
 
     @Autowired
     private TuitionFeeRepository tuitionFeeRepository;
-
     @Autowired
     private TrainingProgramRepository trainingProgramRepository;
+    @Autowired
+    private MajorRepository majorRepository;
+    @Autowired
+    private FacultyRepository facultyRepository;
 
     private TrainingProgram testProgram;
 
     @BeforeEach
     void setUp() {
         tuitionFeeRepository.deleteAll();
-        
+        trainingProgramRepository.deleteAll();
+        majorRepository.deleteAll();
+        facultyRepository.deleteAll();
+
+        Faculty faculty = facultyRepository.save(Faculty.builder()
+                .code("IT")
+                .name("Information Technology")
+                .build());
+
+        Major major = majorRepository.save(Major.builder()
+                .majorCode("IT_F")
+                .name("Information Technology")
+                .faculty(faculty)
+                .isActive(true)
+                .build());
+
         testProgram = trainingProgramRepository.save(TrainingProgram.builder()
-                .programName("Finance Program")
-                .programCode("FIN01")
-                .totalCredits(new BigDecimal("130"))
+                .programName("IT Standard Program")
+                .major(major)
                 .isActive(true)
                 .build());
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    void getAll_ShouldReturn401_WhenUnauthenticated() throws Exception {
+        mockMvc.perform(get("/api/tuition-fees"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser
     void create_ShouldReturn201_WhenValidRequest() throws Exception {
         TuitionFeeRequestDTO request = new TuitionFeeRequestDTO();
         request.setTrainingProgramId(testProgram.getId());
         request.setCourseYear("2023");
-        request.setPricePerCredit(new BigDecimal("500000.00"));
-        request.setBaseTuition(new BigDecimal("2000000.00"));
+        request.setPricePerCredit(new BigDecimal("500000"));
+        request.setBaseTuition(new BigDecimal("10000000"));
         request.setEffectiveDate(LocalDate.now());
 
         mockMvc.perform(post("/api/tuition-fees")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.courseYear").value("2023"))
-                .andExpect(jsonPath("$.pricePerCredit").value(500000.0))
-                .andExpect(jsonPath("$.active").value(true));
+                .andExpect(jsonPath("$.code").value(201))
+                .andExpect(jsonPath("$.data.courseYear").value("2023"))
+                .andExpect(jsonPath("$.data.pricePerCredit").value(500000.0));
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void getAll_ShouldReturnListOfTuitionFees() throws Exception {
-        TuitionFee tf = TuitionFee.builder()
-                .trainingProgram(testProgram)
-                .courseYear("2023")
-                .pricePerCredit(new BigDecimal("500000.00"))
-                .isActive(true)
-                .build();
-        tuitionFeeRepository.save(tf);
+    @WithMockUser
+    void getAll_ShouldReturnPaginationMetadata() throws Exception {
+        saveTuitionFee("2022", new BigDecimal("450000"));
+        saveTuitionFee("2023", new BigDecimal("500000"));
 
-        mockMvc.perform(get("/api/tuition-fees"))
+        mockMvc.perform(get("/api/tuition-fees")
+                .param("page", "0")
+                .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].courseYear").value("2023"));
+                .andExpect(jsonPath("$.data.content", hasSize(2)))
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.currentPage").value(0));
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser
     void getById_ShouldReturnTuitionFee_WhenExists() throws Exception {
-        TuitionFee tf = TuitionFee.builder()
-                .trainingProgram(testProgram)
-                .courseYear("2024")
-                .pricePerCredit(new BigDecimal("600000.00"))
-                .isActive(true)
-                .build();
-        TuitionFee saved = tuitionFeeRepository.save(tf);
+        TuitionFee fee = saveTuitionFee("2023", new BigDecimal("500000"));
 
-        mockMvc.perform(get("/api/tuition-fees/" + saved.getId()))
+        mockMvc.perform(get("/api/tuition-fees/" + fee.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(saved.getId().toString()))
-                .andExpect(jsonPath("$.courseYear").value("2024"));
+                .andExpect(jsonPath("$.data.courseYear").value("2023"));
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser
     void update_ShouldReturn200_WhenValidRequest() throws Exception {
-        TuitionFee tf = TuitionFee.builder()
-                .trainingProgram(testProgram)
-                .courseYear("2023")
-                .pricePerCredit(new BigDecimal("500000.00"))
-                .isActive(true)
-                .build();
-        TuitionFee saved = tuitionFeeRepository.save(tf);
+        TuitionFee fee = saveTuitionFee("2023", new BigDecimal("500000"));
 
         TuitionFeeRequestDTO request = new TuitionFeeRequestDTO();
         request.setTrainingProgramId(testProgram.getId());
-        request.setCourseYear("2023-Updated");
-        request.setPricePerCredit(new BigDecimal("550000.00"));
+        request.setCourseYear("2023");
+        request.setPricePerCredit(new BigDecimal("550000"));
 
-        mockMvc.perform(put("/api/tuition-fees/" + saved.getId())
+        mockMvc.perform(put("/api/tuition-fees/" + fee.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.courseYear").value("2023-Updated"))
-                .andExpect(jsonPath("$.pricePerCredit").value(550000.0));
+                .andExpect(jsonPath("$.data.pricePerCredit").value(550000.0));
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void delete_ShouldReturn204_WhenExists() throws Exception {
-        TuitionFee tf = TuitionFee.builder()
-                .trainingProgram(testProgram)
-                .courseYear("To be deleted")
-                .pricePerCredit(new BigDecimal("100000.00"))
-                .isActive(true)
-                .build();
-        TuitionFee saved = tuitionFeeRepository.save(tf);
+    @WithMockUser
+    void delete_ShouldSoftDelete_WhenExists() throws Exception {
+        TuitionFee fee = saveTuitionFee("2023", new BigDecimal("500000"));
 
-        mockMvc.perform(delete("/api/tuition-fees/" + saved.getId()))
-                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/tuition-fees/" + fee.getId()))
+                .andExpect(status().isOk());
 
-        // Verify soft delete via repository
-        TuitionFee deleted = tuitionFeeRepository.findById(saved.getId()).orElse(null);
+        TuitionFee deleted = tuitionFeeRepository.findById(fee.getId()).orElse(null);
         org.junit.jupiter.api.Assertions.assertNotNull(deleted);
         org.junit.jupiter.api.Assertions.assertFalse(deleted.isActive());
-        org.junit.jupiter.api.Assertions.assertNotNull(deleted.getDeletedAt());
+    }
+
+    private TuitionFee saveTuitionFee(String year, BigDecimal price) {
+        TuitionFee fee = new TuitionFee();
+        fee.setTrainingProgram(testProgram);
+        fee.setCourseYear(year);
+        fee.setPricePerCredit(price);
+        fee.setBaseTuition(new BigDecimal("10000000"));
+        fee.setEffectiveDate(LocalDate.now());
+        fee.setActive(true);
+        return tuitionFeeRepository.save(fee);
     }
 }

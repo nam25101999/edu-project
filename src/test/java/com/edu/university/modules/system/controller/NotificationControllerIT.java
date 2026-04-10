@@ -50,9 +50,10 @@ public class NotificationControllerIT extends BaseIntegrationTest {
         mockMvc.perform(post("/api/notifications")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.title").value("System Update"))
-                .andExpect(jsonPath("$.targetRoleName").value("ROLE_ADMIN"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(201))
+                .andExpect(jsonPath("$.data.title").value("System Update"))
+                .andExpect(jsonPath("$.data.targetRoleName").value("ROLE_ADMIN"));
         
         assertEquals(1, notificationRepository.count());
     }
@@ -69,8 +70,8 @@ public class NotificationControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/notifications"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].title").value("N1"));
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].title").value("N1"));
     }
 
     @Test
@@ -84,7 +85,8 @@ public class NotificationControllerIT extends BaseIntegrationTest {
         Notification saved = notificationRepository.save(n);
 
         mockMvc.perform(delete("/api/notifications/" + saved.getId()))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
 
         // Verify soft delete (BaseIntegrationTest has EntityManager to clear cache)
         entityManager.flush();

@@ -113,11 +113,11 @@ class StudentServiceTest {
         // Arrange
         Pageable pageable = PageRequest.of(0, 10);
         Page<Student> page = new PageImpl<>(Collections.singletonList(student));
-        when(studentRepository.findAll(pageable)).thenReturn(page);
+        when(studentRepository.searchStudents(null, null, pageable)).thenReturn(page);
         when(studentMapper.toResponseDTO(any())).thenReturn(responseDTO);
 
         // Act
-        Page<StudentResponseDTO> result = studentService.getAllStudents(pageable);
+        Page<StudentResponseDTO> result = studentService.getAllStudents(null, null, pageable);
 
         // Assert
         assertEquals(1, result.getTotalElements());

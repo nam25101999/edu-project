@@ -31,7 +31,7 @@ public class GradeComponentServiceImpl implements GradeComponentService {
     public GradeComponentResponseDTO create(GradeComponentRequestDTO requestDTO) {
         GradeComponent component = gradeComponentMapper.toEntity(requestDTO);
         CourseSection section = courseSectionRepository.findById(requestDTO.getCourseSectionId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học phần"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLASS_SECTION_NOT_FOUND));
         component.setCourseSection(section);
         component.setActive(true);
         return gradeComponentMapper.toResponseDTO(gradeComponentRepository.save(component));
@@ -48,10 +48,10 @@ public class GradeComponentServiceImpl implements GradeComponentService {
     @Transactional
     public GradeComponentResponseDTO update(UUID id, GradeComponentRequestDTO requestDTO) {
         GradeComponent component = gradeComponentRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy thành phần điểm"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy thành phần điểm"));
         gradeComponentMapper.updateEntityFromDTO(requestDTO, component);
         CourseSection section = courseSectionRepository.findById(requestDTO.getCourseSectionId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học phần"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLASS_SECTION_NOT_FOUND));
         component.setCourseSection(section);
         return gradeComponentMapper.toResponseDTO(gradeComponentRepository.save(component));
     }
@@ -60,7 +60,7 @@ public class GradeComponentServiceImpl implements GradeComponentService {
     @Transactional
     public void delete(UUID id) {
         GradeComponent component = gradeComponentRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy thành phần điểm"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy thành phần điểm"));
         component.softDelete("system");
         gradeComponentRepository.save(component);
     }

@@ -37,14 +37,14 @@ public class EquivalentCourseControllerIT extends BaseIntegrationTest {
         
         courseA = courseRepository.save(Course.builder()
                 .name("Math A")
-                .code("MATH01")
+                .courseCode("MATH01")
                 .credits(new BigDecimal("3"))
                 .isActive(true)
                 .build());
                 
         courseB = courseRepository.save(Course.builder()
                 .name("Math B")
-                .code("MATH02")
+                .courseCode("MATH02")
                 .credits(new BigDecimal("3"))
                 .isActive(true)
                 .build());

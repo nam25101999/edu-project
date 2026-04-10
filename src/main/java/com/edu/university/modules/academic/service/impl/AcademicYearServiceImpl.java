@@ -1,6 +1,6 @@
 package com.edu.university.modules.academic.service.impl;
 
-import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.AppException;
 import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.academic.dto.request.AcademicYearRequestDTO;
 import com.edu.university.modules.academic.dto.response.AcademicYearResponseDTO;
@@ -15,10 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import java.time.LocalDate;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,24 +25,29 @@ public class AcademicYearServiceImpl implements AcademicYearService {
 
     private final AcademicYearRepository academicYearRepository;
     private final AcademicYearMapper academicYearMapper;
+    private final AcademicCalendarStructureService academicCalendarStructureService;
+    private final com.edu.university.modules.academic.repository.SemesterRepository semesterRepository;
 
     @Override
     @Transactional
     public AcademicYearResponseDTO create(AcademicYearRequestDTO requestDTO) {
         log.info("Creating academic year with code: {}", requestDTO.getAcademicCode());
         if (academicYearRepository.existsByAcademicCode(requestDTO.getAcademicCode())) {
-            throw new BusinessException(ErrorCode.ACADEMIC_YEAR_CODE_EXISTS);
+            throw new AppException(ErrorCode.ACADEMIC_YEAR_CODE_EXISTS);
         }
         AcademicYear academicYear = academicYearMapper.toEntity(requestDTO);
-        academicYear.setActive(true);
+        academicYear.setIsActive(true);
         return academicYearMapper.toResponseDTO(academicYearRepository.save(academicYear));
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public Page<AcademicYearResponseDTO> getAll(Pageable pageable) {
         log.info("Getting all academic years with pagination: {}", pageable);
-        return academicYearRepository.findAll(pageable)
+        academicCalendarStructureService.ensureStandardStructure();
+        return academicYearRepository.findByStartDateGreaterThanEqual(
+                LocalDate.of(AcademicCalendarStructureService.ACADEMIC_START_YEAR, 1, 1),
+                pageable)
                 .map(academicYearMapper::toResponseDTO);
     }
 
@@ -53,7 +56,7 @@ public class AcademicYearServiceImpl implements AcademicYearService {
     public AcademicYearResponseDTO getById(UUID id) {
         log.info("Getting academic year by id: {}", id);
         AcademicYear academicYear = academicYearRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACADEMIC_YEAR_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.ACADEMIC_YEAR_NOT_FOUND));
         return academicYearMapper.toResponseDTO(academicYear);
     }
 
@@ -62,8 +65,8 @@ public class AcademicYearServiceImpl implements AcademicYearService {
     public AcademicYearResponseDTO update(UUID id, AcademicYearRequestDTO requestDTO) {
         log.info("Updating academic year with id: {}", id);
         AcademicYear academicYear = academicYearRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACADEMIC_YEAR_NOT_FOUND));
-        
+                .orElseThrow(() -> new AppException(ErrorCode.ACADEMIC_YEAR_NOT_FOUND));
+
         academicYearMapper.updateEntityFromDTO(requestDTO, academicYear);
         return academicYearMapper.toResponseDTO(academicYearRepository.save(academicYear));
     }
@@ -73,7 +76,7 @@ public class AcademicYearServiceImpl implements AcademicYearService {
     public void delete(UUID id) {
         log.info("Deleting academic year with id: {}", id);
         AcademicYear academicYear = academicYearRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACADEMIC_YEAR_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.ACADEMIC_YEAR_NOT_FOUND));
         academicYear.softDelete("system");
         academicYearRepository.save(academicYear);
     }

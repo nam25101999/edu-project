@@ -1,5 +1,6 @@
 package com.edu.university.modules.grading.controller;
 
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.grading.dto.request.StudentSummaryRequestDTO;
 import com.edu.university.modules.grading.dto.response.StudentSummaryResponseDTO;
 import com.edu.university.modules.grading.service.StudentSummaryService;
@@ -18,18 +19,18 @@ public class StudentSummaryController {
     private final StudentSummaryService studentSummaryService;
 
     @PostMapping
-    public ResponseEntity<StudentSummaryResponseDTO> upsert(@Valid @RequestBody StudentSummaryRequestDTO requestDTO) {
-        return ResponseEntity.ok(studentSummaryService.upsert(requestDTO));
+    public ResponseEntity<BaseResponse<StudentSummaryResponseDTO>> upsert(@Valid @RequestBody StudentSummaryRequestDTO requestDTO) {
+        return ResponseEntity.ok(BaseResponse.ok("Cập nhật tổng kết điểm thành công", studentSummaryService.upsert(requestDTO)));
     }
 
     @GetMapping("/registration/{registrationId}")
-    public ResponseEntity<StudentSummaryResponseDTO> getByRegistrationId(@PathVariable UUID registrationId) {
-        return ResponseEntity.ok(studentSummaryService.getByRegistrationId(registrationId));
+    public ResponseEntity<BaseResponse<StudentSummaryResponseDTO>> getByRegistrationId(@PathVariable UUID registrationId) {
+        return ResponseEntity.ok(BaseResponse.ok(studentSummaryService.getByRegistrationId(registrationId)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<Void>> delete(@PathVariable UUID id) {
         studentSummaryService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.ok("Xóa tổng kết điểm thành công", null));
     }
 }

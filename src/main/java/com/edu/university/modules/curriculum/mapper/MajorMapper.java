@@ -11,12 +11,16 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MajorMapper {
     @Mapping(target = "faculty", ignore = true)
+    @Mapping(target = "department", ignore = true)
     Major toEntity(MajorRequestDTO requestDTO);
 
     @Mapping(target = "facultyId", source = "faculty.id")
     @Mapping(target = "facultyName", source = "faculty.name")
+    @Mapping(target = "departmentId", source = "department.id")
+    @Mapping(target = "departmentName", source = "department.name")
     MajorResponseDTO toResponseDTO(Major major);
 
     @Mapping(target = "faculty", ignore = true)
+    @Mapping(target = "department", ignore = true)
     void updateEntityFromDTO(MajorRequestDTO requestDTO, @MappingTarget Major major);
 }

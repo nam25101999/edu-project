@@ -1,14 +1,17 @@
 package com.edu.university.modules.elearning.controller;
 
-import com.edu.university.common.response.BaseResponse;
+import com.edu.university.common.response.ApiResponse;
 import com.edu.university.modules.elearning.dto.request.AssignmentRequest;
-import com.edu.university.modules.elearning.entity.Assignment;
+import com.edu.university.modules.elearning.dto.response.AssignmentResponseDTO;
 import com.edu.university.modules.elearning.service.AssignmentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -19,8 +22,8 @@ public class AssignmentController {
     private final AssignmentService assignmentService;
 
     @PostMapping
-    public ResponseEntity<BaseResponse<Assignment>> createAssignment(@RequestBody AssignmentRequest request) {
-        Assignment assignment = assignmentService.createAssignment(
+    public ResponseEntity<ApiResponse<AssignmentResponseDTO>> createAssignment(@RequestBody AssignmentRequest request) {
+        AssignmentResponseDTO assignment = assignmentService.createAssignment(
                 request.getCourseSectionId(),
                 request.getTitle(),
                 request.getDescription(),
@@ -28,12 +31,14 @@ public class AssignmentController {
                 request.getMaxScore(),
                 request.getAttachmentUrl()
         );
-        return ResponseEntity.ok(BaseResponse.ok("Tạo bài tập thành công", assignment));
+        return ResponseEntity.ok(ApiResponse.success("Táº¡o bÃ i táº­p thÃ nh cÃ´ng", assignment));
     }
 
     @GetMapping("/course-section/{id}")
-    public ResponseEntity<BaseResponse<List<Assignment>>> getAssignmentsByCourseSection(@PathVariable UUID id) {
-        List<Assignment> assignments = assignmentService.getAssignmentsByCourseSection(id);
-        return ResponseEntity.ok(BaseResponse.ok(assignments));
+    public ResponseEntity<ApiResponse<List<AssignmentResponseDTO>>> getAssignmentsByCourseSection(
+            @PathVariable UUID id,
+            Pageable pageable) {
+        List<AssignmentResponseDTO> list = assignmentService.getAssignmentsByCourseSection(id, pageable).getContent();
+        return ResponseEntity.ok(ApiResponse.success(list));
     }
 }

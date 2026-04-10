@@ -26,6 +26,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,17 +50,17 @@ class CourseServiceTest {
     void setUp() {
         course = new Course();
         course.setId(UUID.randomUUID());
-        course.setCode("CS101");
+        course.setCourseCode("CS101");
         course.setName("Introduction to Computer Science");
 
         requestDTO = new CourseRequestDTO();
-        requestDTO.setCode("CS101");
+        requestDTO.setCourseCode("CS101");
         requestDTO.setName("Introduction to Computer Science");
         requestDTO.setDepartmentId(UUID.randomUUID());
 
         responseDTO = CourseResponseDTO.builder()
                 .id(course.getId())
-                .code("CS101")
+                .courseCode("CS101")
                 .name("Introduction to Computer Science")
                 .build();
     }
@@ -67,7 +68,7 @@ class CourseServiceTest {
     @Test
     void create_Success() {
         // Arrange
-        when(courseRepository.existsByCode(any())).thenReturn(false);
+        when(courseRepository.existsByCourseCode(any())).thenReturn(false);
         when(departmentRepository.findById(any())).thenReturn(Optional.of(new Department()));
         when(courseMapper.toEntity(any())).thenReturn(course);
         when(courseRepository.save(any())).thenReturn(course);
@@ -78,14 +79,14 @@ class CourseServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals("CS101", result.getCode());
+        assertEquals("CS101", result.getCourseCode());
         verify(courseRepository).save(any());
     }
 
     @Test
     void create_DuplicateCode() {
         // Arrange
-        when(courseRepository.existsByCode(any())).thenReturn(true);
+        when(courseRepository.existsByCourseCode(any())).thenReturn(true);
 
         // Act & Assert
         BusinessException ex = assertThrows(BusinessException.class, () -> courseService.create(requestDTO));
@@ -95,7 +96,7 @@ class CourseServiceTest {
     @Test
     void create_DepartmentNotFound() {
         // Arrange
-        when(courseRepository.existsByCode(any())).thenReturn(false);
+        when(courseRepository.existsByCourseCode(any())).thenReturn(false);
         when(departmentRepository.findById(any())).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -108,15 +109,15 @@ class CourseServiceTest {
         // Arrange
         Pageable pageable = PageRequest.of(0, 10);
         Page<Course> page = new PageImpl<>(Collections.singletonList(course));
-        when(courseRepository.findAll(pageable)).thenReturn(page);
+        when(courseRepository.findPageWithDepartment(any(), eq(pageable))).thenReturn(page);
         when(courseMapper.toResponseDTO(any())).thenReturn(responseDTO);
 
         // Act
-        Page<CourseResponseDTO> result = courseService.getAll(pageable);
+        Page<CourseResponseDTO> result = courseService.getAll(null, pageable);
 
         // Assert
         assertEquals(1, result.getTotalElements());
-        verify(courseRepository).findAll(pageable);
+        verify(courseRepository).findPageWithDepartment(any(), eq(pageable));
     }
 
     @Test

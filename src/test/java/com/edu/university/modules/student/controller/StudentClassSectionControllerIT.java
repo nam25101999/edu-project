@@ -83,7 +83,7 @@ public class StudentClassSectionControllerIT extends BaseIntegrationTest {
 
         // Create Major
         Major major = Major.builder()
-                .code("CS01")
+                .majorCode("CS01")
                 .name("Computer Science Major")
                 .faculty(faculty)
                 .isActive(true)
@@ -93,6 +93,7 @@ public class StudentClassSectionControllerIT extends BaseIntegrationTest {
         // Create AcademicYear
         AcademicYear ay = AcademicYear.builder()
                 .academicCode("K20")
+                .academicName("Khóa 2020")
                 .academicYear("2020-2024")
                 .isActive(true)
                 .build();

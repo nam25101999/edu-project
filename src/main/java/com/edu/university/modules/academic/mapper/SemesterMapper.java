@@ -9,7 +9,11 @@ import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface SemesterMapper {
+    @org.mapstruct.Mapping(target = "academicYear", ignore = true)
     Semester toEntity(SemesterRequestDTO requestDTO);
+    @org.mapstruct.Mapping(source = "academicYear.academicYear", target = "academicYear")
     SemesterResponseDTO toResponseDTO(Semester semester);
+
+    @org.mapstruct.Mapping(target = "academicYear", ignore = true)
     void updateEntityFromDTO(SemesterRequestDTO requestDTO, @MappingTarget Semester semester);
 }

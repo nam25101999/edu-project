@@ -1,5 +1,7 @@
 package com.edu.university.modules.finance.service.impl;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.auth.entity.Users;
 import com.edu.university.modules.auth.repository.UserRepository;
 import com.edu.university.modules.finance.dto.request.PaymentRequestDTO;
@@ -11,13 +13,13 @@ import com.edu.university.modules.finance.repository.PaymentRepository;
 import com.edu.university.modules.finance.repository.StudentTuitionRepository;
 import com.edu.university.modules.finance.service.PaymentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,11 +36,11 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = paymentMapper.toEntity(requestDTO);
         
         StudentTuition tuition = studentTuitionRepository.findById(requestDTO.getStudentTuitionId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy học phí sinh viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.TUITION_FEE_NOT_FOUND));
         
         if (requestDTO.getCashierId() != null) {
             Users cashier = userRepository.findById(requestDTO.getCashierId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người thu tiền"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
             payment.setCashier(cashier);
         }
         
@@ -50,17 +52,16 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public List<PaymentResponseDTO> getByStudentTuitionId(UUID studentTuitionId) {
-        return paymentRepository.findByStudentTuitionId(studentTuitionId).stream()
-                .map(paymentMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public Page<PaymentResponseDTO> getByStudentTuitionId(UUID studentTuitionId, Pageable pageable) {
+        return paymentRepository.findByStudentTuitionId(studentTuitionId, pageable)
+                .map(paymentMapper::toResponseDTO);
     }
 
     @Override
     @Transactional
     public void delete(UUID id) {
         Payment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khoản thanh toán"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy khoản thanh toán"));
         payment.softDelete("system");
         paymentRepository.save(payment);
     }

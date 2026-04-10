@@ -37,7 +37,7 @@ public class CourseBuilder {
 
     public Course build() {
         return Course.builder()
-                .code(code)
+                .courseCode(code)
                 .name(name)
                 .courseNameEn(courseNameEn)
                 .credits(credits)

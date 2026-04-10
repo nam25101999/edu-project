@@ -1,5 +1,7 @@
 package com.edu.university.modules.schedule.controller;
 
+import com.edu.university.common.dto.PageResponse;
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.schedule.dto.request.ScheduleRequestDTO;
 import com.edu.university.modules.schedule.dto.response.ScheduleResponseDTO;
 import com.edu.university.modules.schedule.service.ScheduleService;
@@ -22,8 +24,9 @@ public class ScheduleController {
     private final ScheduleService scheduleService;
 
     @PostMapping
-    public ResponseEntity<ScheduleResponseDTO> create(@Valid @RequestBody ScheduleRequestDTO requestDTO) {
-        return new ResponseEntity<>(scheduleService.create(requestDTO), HttpStatus.CREATED);
+    public ResponseEntity<BaseResponse<ScheduleResponseDTO>> create(@Valid @RequestBody ScheduleRequestDTO requestDTO) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(BaseResponse.created(scheduleService.create(requestDTO)));
     }
 
     @GetMapping
@@ -32,13 +35,13 @@ public class ScheduleController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ScheduleResponseDTO> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(scheduleService.getById(id));
+    public ResponseEntity<BaseResponse<ScheduleResponseDTO>> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(BaseResponse.ok(scheduleService.getById(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ScheduleResponseDTO> update(@PathVariable UUID id, @Valid @RequestBody ScheduleRequestDTO requestDTO) {
-        return ResponseEntity.ok(scheduleService.update(id, requestDTO));
+    public ResponseEntity<BaseResponse<ScheduleResponseDTO>> update(@PathVariable UUID id, @Valid @RequestBody ScheduleRequestDTO requestDTO) {
+        return ResponseEntity.ok(BaseResponse.ok(scheduleService.update(id, requestDTO)));
     }
 
     @DeleteMapping("/{id}")

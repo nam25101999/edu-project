@@ -48,7 +48,7 @@ public class MajorControllerIT extends BaseIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void create_ShouldReturn201_WhenValid() throws Exception {
         MajorRequestDTO request = new MajorRequestDTO();
-        request.setCode("CS_MAJOR");
+        request.setMajorCode("CS_MAJOR");
         request.setName("Computer Science");
         request.setFacultyId(testFaculty.getId());
 
@@ -56,17 +56,17 @@ public class MajorControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.code").value("CS_MAJOR"))
+                .andExpect(jsonPath("$.data.majorCode").value("CS_MAJOR"))
                 .andExpect(jsonPath("$.data.facultyName").value("Faculty of IT"));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void create_ShouldReturn409_WhenCodeExists() throws Exception {
-        majorRepository.save(Major.builder().code("CS_MAJOR").name("Old").faculty(testFaculty).isActive(true).build());
+        majorRepository.save(Major.builder().majorCode("CS_MAJOR").name("Old").faculty(testFaculty).isActive(true).build());
 
         MajorRequestDTO request = new MajorRequestDTO();
-        request.setCode("CS_MAJOR");
+        request.setMajorCode("CS_MAJOR");
         request.setName("New");
         request.setFacultyId(testFaculty.getId());
 
@@ -79,7 +79,7 @@ public class MajorControllerIT extends BaseIntegrationTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void getAll_ShouldReturnList() throws Exception {
-        majorRepository.save(Major.builder().code("M1").name("Major 1").faculty(testFaculty).isActive(true).build());
+        majorRepository.save(Major.builder().majorCode("M1").name("Major 1").faculty(testFaculty).isActive(true).build());
         
         mockMvc.perform(get("/api/majors"))
                 .andExpect(status().isOk())
@@ -89,20 +89,20 @@ public class MajorControllerIT extends BaseIntegrationTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void getById_ShouldReturnMajor() throws Exception {
-        Major m = majorRepository.save(Major.builder().code("M2").name("Major 2").faculty(testFaculty).isActive(true).build());
+        Major m = majorRepository.save(Major.builder().majorCode("M2").name("Major 2").faculty(testFaculty).isActive(true).build());
 
         mockMvc.perform(get("/api/majors/" + m.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.code").value("M2"));
+                .andExpect(jsonPath("$.data.majorCode").value("M2"));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void update_ShouldReturnUpdated() throws Exception {
-        Major m = majorRepository.save(Major.builder().code("M3").name("Major 3").faculty(testFaculty).isActive(true).build());
+        Major m = majorRepository.save(Major.builder().majorCode("M3").name("Major 3").faculty(testFaculty).isActive(true).build());
 
         MajorRequestDTO request = new MajorRequestDTO();
-        request.setCode("M3");
+        request.setMajorCode("M3");
         request.setName("Updated Major");
         request.setFacultyId(testFaculty.getId());
 
@@ -116,7 +116,7 @@ public class MajorControllerIT extends BaseIntegrationTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void delete_ShouldReturn204_AndSoftDelete() throws Exception {
-        Major m = majorRepository.save(Major.builder().code("M4").name("Major 4").faculty(testFaculty).isActive(true).build());
+        Major m = majorRepository.save(Major.builder().majorCode("M4").name("Major 4").faculty(testFaculty).isActive(true).build());
 
         mockMvc.perform(delete("/api/majors/" + m.getId()))
                 .andExpect(status().isOk());

@@ -4,16 +4,18 @@ import com.edu.university.common.exception.BusinessException;
 import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.academic.entity.Semester;
 import com.edu.university.modules.academic.repository.SemesterRepository;
+import com.edu.university.modules.finance.dto.response.ScholarshipResponseDTO;
 import com.edu.university.modules.finance.entity.Scholarship;
 import com.edu.university.modules.finance.repository.ScholarshipRepository;
 import com.edu.university.modules.student.entity.Student;
 import com.edu.university.modules.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -25,11 +27,11 @@ public class ScholarshipService {
     private final SemesterRepository semesterRepository;
 
     @Transactional
-    public Scholarship grantScholarship(UUID studentId, UUID semesterId, String name, BigDecimal amount) {
+    public ScholarshipResponseDTO grantScholarship(UUID studentId, UUID semesterId, String name, BigDecimal amount) {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
         Semester semester = semesterRepository.findById(semesterId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy học kỳ"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SEMESTER_NOT_FOUND));
 
         Scholarship scholarship = Scholarship.builder()
                 .student(student)
@@ -39,10 +41,24 @@ public class ScholarshipService {
                 .status("GRANTED")
                 .build();
 
-        return scholarshipRepository.save(scholarship);
+        Scholarship saved = scholarshipRepository.save(scholarship);
+        return mapToResponseDTO(saved);
     }
 
-    public List<Scholarship> getStudentScholarships(UUID studentId) {
-        return scholarshipRepository.findByStudentId(studentId);
+    public Page<ScholarshipResponseDTO> getStudentScholarships(UUID studentId, Pageable pageable) {
+        return scholarshipRepository.findByStudentId(studentId, pageable).map(this::mapToResponseDTO);
+    }
+
+    private ScholarshipResponseDTO mapToResponseDTO(Scholarship scholarship) {
+        return ScholarshipResponseDTO.builder()
+                .id(scholarship.getId())
+                .studentId(scholarship.getStudent().getId())
+                .studentName(scholarship.getStudent().getFullName())
+                .semesterId(scholarship.getSemester().getId())
+                .semesterName(scholarship.getSemester().getSemesterName())
+                .name(scholarship.getName())
+                .amount(scholarship.getAmount())
+                .status(scholarship.getStatus())
+                .build();
     }
 }

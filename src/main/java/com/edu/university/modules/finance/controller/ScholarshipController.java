@@ -1,14 +1,16 @@
 package com.edu.university.modules.finance.controller;
 
-import com.edu.university.common.response.ApiResponse;
-import com.edu.university.modules.finance.entity.Scholarship;
+import com.edu.university.common.dto.PageResponse;
+import com.edu.university.common.response.BaseResponse;
+import com.edu.university.modules.finance.dto.response.ScholarshipResponseDTO;
 import com.edu.university.modules.finance.service.ScholarshipService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -19,19 +21,20 @@ public class ScholarshipController {
     private final ScholarshipService scholarshipService;
 
     @PostMapping("/grant")
-    public ResponseEntity<ApiResponse<Scholarship>> grantScholarship(
+    public ResponseEntity<BaseResponse<ScholarshipResponseDTO>> grantScholarship(
             @RequestParam UUID studentId,
             @RequestParam UUID semesterId,
             @RequestParam String name,
             @RequestParam BigDecimal amount
     ) {
-        Scholarship scholarship = scholarshipService.grantScholarship(studentId, semesterId, name, amount);
-        return ResponseEntity.ok(ApiResponse.success("Cấp học bổng thành công", scholarship));
+        return ResponseEntity.ok(BaseResponse.ok("Cấp học bổng thành công", 
+                scholarshipService.grantScholarship(studentId, semesterId, name, amount)));
     }
 
     @GetMapping("/student/{studentId}")
-    public ResponseEntity<ApiResponse<List<Scholarship>>> getStudentScholarships(@PathVariable UUID studentId) {
-        List<Scholarship> scholarships = scholarshipService.getStudentScholarships(studentId);
-        return ResponseEntity.ok(ApiResponse.success(scholarships));
+    public ResponseEntity<BaseResponse<PageResponse<ScholarshipResponseDTO>>> getStudentScholarships(
+            @PathVariable UUID studentId,
+            @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.okPage(scholarshipService.getStudentScholarships(studentId, pageable)));
     }
 }

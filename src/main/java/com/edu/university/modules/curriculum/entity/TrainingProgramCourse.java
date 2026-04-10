@@ -14,7 +14,16 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "training_program_courses")
+@Table(
+        name = "training_program_courses",
+        indexes = {
+                @Index(name = "idx_tpc_training_program_id", columnList = "training_program_id"),
+                @Index(name = "idx_tpc_course_id", columnList = "course_id"),
+                @Index(name = "idx_tpc_semester_code", columnList = "semester_code"),
+                @Index(name = "idx_tpc_prerequisite_course_id", columnList = "prerequisite_course_id"),
+                @Index(name = "idx_tpc_is_active", columnList = "is_active")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

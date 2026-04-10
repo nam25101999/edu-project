@@ -4,7 +4,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -104,7 +107,12 @@ public class AuthDtos {
         public record UserInfo(
                 UUID id,
                 String username,
-                java.util.List<String> roles
+                String email,
+                java.util.List<String> roles,
+                boolean isActive,
+                boolean emailVerified,
+                String lastLoginAt,
+                StudentProfileDTO studentProfile
         ) {}
     }
 
@@ -118,18 +126,58 @@ public class AuthDtos {
         }
     }
 
-    // ================= DTOs DÃ€NH RIÃŠNG CHO CRUD USERS =================
+    public record MeResponse(
+            UUID id,
+            String username,
+            String email,
+            Set<String> roles,
+            boolean isActive,
+            boolean emailVerified,
+            LocalDateTime lastLoginAt,
+            StudentProfileDTO studentProfile
+    ) {}
+
+    public record StudentProfileDTO(
+            String studentCode,
+            String fullName,
+            String phone,
+            String gender,
+            LocalDate dateOfBirth,
+            String address,
+            String majorName,
+            String departmentName,
+            String personalIdentificationNumber,
+            LocalDate dateOfIssue,
+            String cardPlace,
+            String currentAddress
+    ) {}
+
+    // ================= DTOs DÀNH RIÊNG CHO CẬP NHẬT PROFILE =================
+
+    public record ProfileUpdateRequest(
+            String fullName,
+            String phone,
+            String gender,
+            LocalDate dateOfBirth,
+            String address,
+            String personalIdentificationNumber,
+            LocalDate dateOfIssue,
+            String cardPlace,
+            String currentAddress
+    ) {}
+
+    // ================= DTOs DÀNH RIÊNG CHO CRUD USERS =================
 
     public record UserCreateRequest(
-            @NotBlank(message = "TÃªn Ä‘Äƒng nháº­p khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng") String username,
-            @NotBlank(message = "Email khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng") @Email(message = "Email khÃ´ng há»£p lá»‡") String email,
-            @NotBlank(message = "Máº­t kháº©u khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng") String password,
+            @NotBlank(message = "Tên đăng nhập không được để trống") String username,
+            @NotBlank(message = "Email không được để trống") @Email(message = "Email không hợp lệ") String email,
+            @NotBlank(message = "Mật khẩu không được để trống") String password,
             List<String> roles,
             boolean isActive
     ) {}
 
     public record UserUpdateRequest(
-            @Email(message = "Email khÃ´ng há»£p lá»‡") String email,
+            @Email(message = "Email không hợp lệ") String email,
             Boolean isActive,
             List<String> roles
     ) {}

@@ -37,8 +37,8 @@ public class Department {
     @Column(length = 255)
     private String description;
 
-    @Column(name = "established_year")
-    private LocalDate establishedYear;
+    @Column(name = "established_date")
+    private LocalDate establishedDate;
 
     // --- Auditing & System fields ---
     @CreatedDate

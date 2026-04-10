@@ -13,13 +13,13 @@ import com.edu.university.modules.graduation.service.GraduationResultService;
 import com.edu.university.modules.student.entity.Student;
 import com.edu.university.modules.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -56,10 +56,9 @@ public class GraduationResultServiceImpl implements GraduationResultService {
     }
 
     @Override
-    public List<GraduationResultResponseDTO> getByStudentId(UUID studentId) {
-        return graduationResultRepository.findByStudentId(studentId).stream()
-                .map(graduationResultMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public Page<GraduationResultResponseDTO> getByStudentId(UUID studentId, Pageable pageable) {
+        return graduationResultRepository.findByStudentId(studentId, pageable)
+                .map(graduationResultMapper::toResponseDTO);
     }
 
     @Override

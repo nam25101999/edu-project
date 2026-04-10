@@ -11,7 +11,7 @@ public class CourseRequestDTO {
     private UUID departmentId;
 
     @NotBlank(message = "Mã môn học không được để trống")
-    private String code;
+    private String courseCode;
 
     @NotBlank(message = "Tên môn học không được để trống")
     private String name;

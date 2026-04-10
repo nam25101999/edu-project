@@ -1,5 +1,6 @@
 package com.edu.university.modules.curriculum.entity;
 
+import com.edu.university.modules.hr.entity.Department;
 import com.edu.university.modules.hr.entity.Faculty;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,7 +15,16 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "majors")
+@Table(
+        name = "majors",
+        indexes = {
+                @Index(name = "idx_majors_major_code", columnList = "major_code"),
+                @Index(name = "idx_majors_name", columnList = "name"),
+                @Index(name = "idx_majors_department_id", columnList = "department_id"),
+                @Index(name = "idx_majors_faculty_id", columnList = "faculty_id"),
+                @Index(name = "idx_majors_is_active", columnList = "is_active")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,11 +39,15 @@ public class Major {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "faculty_id", nullable = false)
+    @JoinColumn(name = "faculty_id")
     private Faculty faculty;
 
-    @Column(name = "major_code", nullable = false, length = 20)
-    private String code;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
+
+    @Column(name = "code", nullable = false, length = 20)
+    private String majorCode;
 
     @Column(name = "name", nullable = false, length = 255)
     private String name;

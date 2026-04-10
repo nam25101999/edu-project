@@ -1,12 +1,12 @@
 package com.edu.university.modules.hr.controller;
 
+import com.edu.university.common.dto.PageResponse;
 import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.hr.dto.request.DepartmentRequestDTO;
 import com.edu.university.modules.hr.dto.response.DepartmentResponseDTO;
 import com.edu.university.modules.hr.service.DepartmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -31,8 +31,8 @@ public class DepartmentController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<Page<DepartmentResponseDTO>>> getAllDepartments(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(departmentService.getAllDepartments(pageable)));
+    public ResponseEntity<BaseResponse<PageResponse<DepartmentResponseDTO>>> getAllDepartments(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.okPage(departmentService.getAllDepartments(pageable)));
     }
 
     @GetMapping("/{id}")

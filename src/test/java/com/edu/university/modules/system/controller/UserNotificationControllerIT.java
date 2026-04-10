@@ -61,9 +61,10 @@ public class UserNotificationControllerIT extends BaseIntegrationTest {
         mockMvc.perform(post("/api/user-notifications")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.userId").value(testUser.getId().toString()))
-                .andExpect(jsonPath("$.notificationTitle").value("System Alert"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(201))
+                .andExpect(jsonPath("$.data.userId").value(testUser.getId().toString()))
+                .andExpect(jsonPath("$.data.notificationTitle").value("System Alert"));
     }
 
     @Test
@@ -79,8 +80,8 @@ public class UserNotificationControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/user-notifications/user/" + testUser.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].read").value(false));
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].read").value(false));
     }
 
     @Test
@@ -95,7 +96,8 @@ public class UserNotificationControllerIT extends BaseIntegrationTest {
         UserNotification saved = userNotificationRepository.save(un);
 
         mockMvc.perform(patch("/api/user-notifications/" + saved.getId() + "/read"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
 
         entityManager.flush();
         entityManager.clear();

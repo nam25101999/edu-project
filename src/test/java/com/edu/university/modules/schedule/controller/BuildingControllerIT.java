@@ -45,8 +45,8 @@ public class BuildingControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.buildingCode").value("B2"))
-                .andExpect(jsonPath("$.buildingName").value("Tòa nhà C2"));
+                .andExpect(jsonPath("$.data.buildingCode").value("B2"))
+                .andExpect(jsonPath("$.data.buildingName").value("Tòa nhà C2"));
     }
  
     @Test
@@ -54,7 +54,7 @@ public class BuildingControllerIT extends BaseIntegrationTest {
     void getAllBuildings_Success() throws Exception {
         mockMvc.perform(get("/api/buildings"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)));
+                .andExpect(jsonPath("$.data", hasSize(1)));
     }
  
     @Test
@@ -62,7 +62,7 @@ public class BuildingControllerIT extends BaseIntegrationTest {
     void getBuildingById_Success() throws Exception {
         mockMvc.perform(get("/api/buildings/{id}", building.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.buildingCode").value("B1"));
+                .andExpect(jsonPath("$.data.buildingCode").value("B1"));
     }
  
     @Test
@@ -76,14 +76,14 @@ public class BuildingControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.buildingCode").value("B1_UPDATED"));
+                .andExpect(jsonPath("$.data.buildingCode").value("B1_UPDATED"));
     }
  
     @Test
     @WithMockUser(roles = "ADMIN")
     void deleteBuilding_Success() throws Exception {
         mockMvc.perform(delete("/api/buildings/{id}", building.getId()))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
  
         entityManager.flush();
         entityManager.clear();

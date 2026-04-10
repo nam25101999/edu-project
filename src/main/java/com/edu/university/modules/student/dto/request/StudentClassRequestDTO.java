@@ -21,4 +21,6 @@ public class StudentClassRequestDTO {
 
     @NotBlank(message = "Niên khóa không được để trống")
     private String academicYear; // VD: 2020-2024
+
+    private UUID advisorId;
 }

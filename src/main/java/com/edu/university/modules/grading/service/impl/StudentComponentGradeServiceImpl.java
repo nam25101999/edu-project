@@ -1,5 +1,7 @@
 package com.edu.university.modules.grading.service.impl;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.auth.entity.Users;
 import com.edu.university.modules.auth.repository.UserRepository;
 import com.edu.university.modules.grading.dto.request.StudentComponentGradeRequestDTO;
@@ -16,10 +18,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,30 +36,25 @@ public class StudentComponentGradeServiceImpl implements StudentComponentGradeSe
     @Override
     @Transactional
     public StudentComponentGradeResponseDTO upsert(StudentComponentGradeRequestDTO requestDTO) {
-        StudentComponentGrade grade = studentComponentGradeRepository.findAll().stream()
-                .filter(g -> g.getCourseRegistration().getId().equals(requestDTO.getRegistrationId()) 
-                        && g.getGradeComponent().getId().equals(requestDTO.getComponentId()))
-                .findFirst()
+        StudentComponentGrade grade = studentComponentGradeRepository
+                .findByCourseRegistrationIdAndGradeComponentId(requestDTO.getRegistrationId(), requestDTO.getComponentId())
                 .orElse(new StudentComponentGrade());
         
         studentComponentGradeMapper.updateEntityFromDTO(requestDTO, grade);
         
         if (grade.getId() == null) {
             CourseRegistration registration = courseRegistrationRepository.findById(requestDTO.getRegistrationId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đăng ký học phần"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.ENROLLMENT_NOT_FOUND));
             GradeComponent component = gradeComponentRepository.findById(requestDTO.getComponentId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy thành phần điểm"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy thành phần điểm"));
             grade.setCourseRegistration(registration);
             grade.setGradeComponent(component);
             grade.setActive(true);
-            grade.setCreatedAt(LocalDateTime.now());
-        } else {
-            grade.setUpdatedAt(LocalDateTime.now());
         }
         
         if (requestDTO.getGradedById() != null) {
             Users grader = userRepository.findById(requestDTO.getGradedById())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người nhập điểm"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
             grade.setGradedBy(grader);
         }
         
@@ -65,17 +62,17 @@ public class StudentComponentGradeServiceImpl implements StudentComponentGradeSe
     }
 
     @Override
-    public List<StudentComponentGradeResponseDTO> getByRegistrationId(UUID registrationId) {
-        return studentComponentGradeRepository.findByCourseRegistrationId(registrationId).stream()
-                .map(studentComponentGradeMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Page<StudentComponentGradeResponseDTO> getByRegistrationId(UUID registrationId, Pageable pageable) {
+        return studentComponentGradeRepository.findByCourseRegistrationId(registrationId, pageable)
+                .map(studentComponentGradeMapper::toResponseDTO);
     }
 
     @Override
     @Transactional
     public void delete(UUID id) {
         StudentComponentGrade grade = studentComponentGradeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy điểm thành phần"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy điểm thành phần"));
         grade.softDelete("system");
         studentComponentGradeRepository.save(grade);
     }

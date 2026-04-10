@@ -58,20 +58,26 @@ public class SecurityConfig {
                             response.setContentType("application/json;charset=UTF-8");
                             response.setStatus(401);
                             response.getWriter().write("{\"code\":401,\"message\":\"Unauthorized\",\"data\":null}");
-                        })
-                )
+                        }))
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/auth/**",
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
+                                "/api/auth/verify-email",
+                                "/api/auth/resend-otp",
+                                "/api/auth/refresh-token",
+                                "/api/auth/verify-reset-otp",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/favicon.ico",
-                                "/error"
-                        ).permitAll()
+                                "/error",
+                                "/swagger-json")
+                        .permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                );
+                        .anyRequest().authenticated());
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);

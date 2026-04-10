@@ -38,8 +38,8 @@ public class SystemSettingControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.key").value("site_title"))
-                .andExpect(jsonPath("$.value").value("My University"));
+                .andExpect(jsonPath("$.data.key").value("site_title"))
+                .andExpect(jsonPath("$.data.value").value("My University"));
     }
 
     @Test
@@ -60,7 +60,7 @@ public class SystemSettingControllerIT extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.value").value("New Title"));
+                .andExpect(jsonPath("$.data.value").value("New Title"));
     }
 
     @Test
@@ -73,7 +73,7 @@ public class SystemSettingControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/settings"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.data.content.length()").value(2));
     }
 
     @Test
@@ -84,7 +84,7 @@ public class SystemSettingControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/settings/test_key"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.value").value("test_val"));
+                .andExpect(jsonPath("$.data.value").value("test_val"));
     }
 
     @Test

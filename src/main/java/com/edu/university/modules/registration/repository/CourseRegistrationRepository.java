@@ -16,6 +16,7 @@ public interface CourseRegistrationRepository extends JpaRepository<CourseRegist
     
     Page<CourseRegistration> findByCourseSectionId(UUID courseSectionId, Pageable pageable);
     List<CourseRegistration> findByCourseSectionId(UUID courseSectionId);
+    List<CourseRegistration> findByCourseSectionIdAndStatus(UUID courseSectionId, Integer status);
     
     Page<CourseRegistration> findByRegistrationPeriodId(UUID registrationPeriodId, Pageable pageable);
     List<CourseRegistration> findByRegistrationPeriodId(UUID registrationPeriodId);

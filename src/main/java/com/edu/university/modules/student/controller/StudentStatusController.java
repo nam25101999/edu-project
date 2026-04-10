@@ -1,12 +1,12 @@
 package com.edu.university.modules.student.controller;
 
+import com.edu.university.common.dto.PageResponse;
 import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.student.dto.request.StudentStatusRequestDTO;
 import com.edu.university.modules.student.dto.response.StudentStatusResponseDTO;
 import com.edu.university.modules.student.service.StudentStatusService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -32,15 +32,15 @@ public class StudentStatusController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<Page<StudentStatusResponseDTO>>> getAll(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(statusService.getAll(pageable)));
+    public ResponseEntity<BaseResponse<PageResponse<StudentStatusResponseDTO>>> getAll(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.okPage(statusService.getAll(pageable)));
     }
 
     @GetMapping("/student/{studentId}")
-    public ResponseEntity<BaseResponse<Page<StudentStatusResponseDTO>>> getByStudentId(
+    public ResponseEntity<BaseResponse<PageResponse<StudentStatusResponseDTO>>> getByStudentId(
             @PathVariable UUID studentId,
             @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(statusService.getByStudentId(studentId, pageable)));
+        return ResponseEntity.ok(BaseResponse.okPage(statusService.getByStudentId(studentId, pageable)));
     }
 
     @PutMapping("/{id}")

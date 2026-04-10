@@ -1,12 +1,12 @@
 package com.edu.university.modules.curriculum.controller;
 
+import com.edu.university.common.dto.PageResponse;
 import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.curriculum.dto.request.CourseRequestDTO;
 import com.edu.university.modules.curriculum.dto.response.CourseResponseDTO;
 import com.edu.university.modules.curriculum.service.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -31,8 +31,11 @@ public class CourseController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<Page<CourseResponseDTO>>> getAll(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(courseService.getAll(pageable)));
+    public ResponseEntity<BaseResponse<PageResponse<CourseResponseDTO>>> getAll(
+            @RequestParam(required = false) String search,
+            @PageableDefault Pageable pageable
+    ) {
+        return ResponseEntity.ok(BaseResponse.okPage(courseService.getAll(search, pageable)));
     }
 
     @GetMapping("/{id}")

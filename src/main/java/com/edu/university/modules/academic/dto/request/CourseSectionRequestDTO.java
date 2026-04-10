@@ -19,6 +19,8 @@ public class CourseSectionRequestDTO {
     @NotNull(message = "ID học kỳ không được để trống")
     private UUID semesterId;
 
+    private UUID majorId;
+
     @NotBlank(message = "Năm học không được để trống")
     private String academicYear;
 
@@ -32,4 +34,5 @@ public class CourseSectionRequestDTO {
     private LocalDateTime registrationStart;
     private LocalDateTime registrationEnd;
     private String note;
+    private Boolean isSystem;
 }

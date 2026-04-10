@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface CourseSectionRepository extends JpaRepository<CourseSection, UUID> {
     Optional<CourseSection> findByClassCode(String classCode);
     boolean existsByClassCode(String classCode);
+    org.springframework.data.domain.Page<CourseSection> findByCourse_DepartmentId(java.util.UUID departmentId, org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<CourseSection> findByMajorId(java.util.UUID majorId, org.springframework.data.domain.Pageable pageable);
 }

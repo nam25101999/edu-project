@@ -50,8 +50,8 @@ public class SystemLogControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/logs"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].action").value("LOGIN"));
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].action").value("LOGIN"));
     }
 
     @Test
@@ -69,7 +69,7 @@ public class SystemLogControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/logs/user/" + testUser.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].action").value("UPDATE"));
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.content[0].action").value("UPDATE"));
     }
 }

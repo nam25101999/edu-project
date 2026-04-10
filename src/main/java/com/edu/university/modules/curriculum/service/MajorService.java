@@ -10,8 +10,9 @@ import java.util.UUID;
 
 public interface MajorService {
     MajorResponseDTO create(MajorRequestDTO requestDTO);
-    Page<MajorResponseDTO> getAll(Pageable pageable);
+    Page<MajorResponseDTO> getAll(String search, Pageable pageable);
     MajorResponseDTO getById(UUID id);
     MajorResponseDTO update(UUID id, MajorRequestDTO requestDTO);
     void delete(UUID id);
+    java.util.List<MajorResponseDTO> getByDepartment(UUID departmentId);
 }

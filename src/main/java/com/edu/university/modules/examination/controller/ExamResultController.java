@@ -1,5 +1,6 @@
 package com.edu.university.modules.examination.controller;
 
+import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.examination.dto.request.ExamResultRequestDTO;
 import com.edu.university.modules.examination.dto.response.ExamResultResponseDTO;
 import com.edu.university.modules.examination.service.ExamResultService;
@@ -18,18 +19,18 @@ public class ExamResultController {
     private final ExamResultService examResultService;
 
     @PostMapping
-    public ResponseEntity<ExamResultResponseDTO> upsert(@Valid @RequestBody ExamResultRequestDTO requestDTO) {
-        return ResponseEntity.ok(examResultService.upsert(requestDTO));
+    public ResponseEntity<BaseResponse<ExamResultResponseDTO>> upsert(@Valid @RequestBody ExamResultRequestDTO requestDTO) {
+        return ResponseEntity.ok(BaseResponse.ok(examResultService.upsert(requestDTO)));
     }
 
     @GetMapping("/registration/{registrationId}")
-    public ResponseEntity<ExamResultResponseDTO> getByRegistrationId(@PathVariable UUID registrationId) {
-        return ResponseEntity.ok(examResultService.getByRegistrationId(registrationId));
+    public ResponseEntity<BaseResponse<ExamResultResponseDTO>> getByRegistrationId(@PathVariable UUID registrationId) {
+        return ResponseEntity.ok(BaseResponse.ok(examResultService.getByRegistrationId(registrationId)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ResponseEntity<BaseResponse<Void>> delete(@PathVariable UUID id) {
         examResultService.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(BaseResponse.ok());
     }
 }

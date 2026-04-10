@@ -26,15 +26,24 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         // ✅ convert Set<Role> -> List<GrantedAuthority>
         List<GrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> (GrantedAuthority) new SimpleGrantedAuthority(role.getName()))
+                .map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role.getName()))
                 .toList();
+
+        // ✅ convert Set<Role> -> Set<String> (For MeResponse)
+        java.util.Set<String> roles = user.getRoles().stream()
+                .map(com.edu.university.modules.auth.entity.Role::getName)
+                .collect(java.util.stream.Collectors.toSet());
 
         return UserDetailsImpl.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .password(user.getPassword())
+                .email(user.getEmail())
+                .emailVerified(user.isEmailVerified())
                 .authorities(authorities)
-                .isActive(user.isActive()) // Truyền thêm trạng thái active vào UserDetails
+                .roles(roles)
+                .isActive(user.isActive())
+                .lastLoginAt(user.getLastLoginAt())
                 .build();
     }
 }

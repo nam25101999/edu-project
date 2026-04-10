@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface CourseService {
     CourseResponseDTO create(CourseRequestDTO requestDTO);
-    Page<CourseResponseDTO> getAll(Pageable pageable);
+    Page<CourseResponseDTO> getAll(String search, Pageable pageable);
     CourseResponseDTO getById(UUID id);
     CourseResponseDTO update(UUID id, CourseRequestDTO requestDTO);
     void delete(UUID id);

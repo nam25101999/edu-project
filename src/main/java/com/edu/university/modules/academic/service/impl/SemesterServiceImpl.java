@@ -4,8 +4,10 @@ import com.edu.university.common.exception.BusinessException;
 import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.academic.dto.request.SemesterRequestDTO;
 import com.edu.university.modules.academic.dto.response.SemesterResponseDTO;
+import com.edu.university.modules.academic.entity.AcademicYear;
 import com.edu.university.modules.academic.entity.Semester;
 import com.edu.university.modules.academic.mapper.SemesterMapper;
+import com.edu.university.modules.academic.repository.AcademicYearRepository;
 import com.edu.university.modules.academic.repository.SemesterRepository;
 import com.edu.university.modules.academic.service.SemesterService;
 import lombok.RequiredArgsConstructor;
@@ -15,10 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import java.time.LocalDate;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +26,9 @@ import java.util.stream.Collectors;
 public class SemesterServiceImpl implements SemesterService {
 
     private final SemesterRepository semesterRepository;
+    private final AcademicYearRepository academicYearRepository;
     private final SemesterMapper semesterMapper;
+    private final AcademicCalendarStructureService academicCalendarStructureService;
 
     @Override
     @Transactional
@@ -36,16 +38,27 @@ public class SemesterServiceImpl implements SemesterService {
             throw new BusinessException(ErrorCode.SEMESTER_CODE_EXISTS);
         }
         Semester semester = semesterMapper.toEntity(requestDTO);
-        semester.setActive(true);
+        semester.setAcademicYear(resolveAcademicYear(requestDTO.getAcademicYear()));
+        semester.setIsActive(true);
         return semesterMapper.toResponseDTO(semesterRepository.save(semester));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Page<SemesterResponseDTO> getAll(Pageable pageable) {
-        log.info("Getting all semesters with pagination: {}", pageable);
-        return semesterRepository.findAll(pageable)
-                .map(semesterMapper::toResponseDTO);
+    @Transactional
+    public Page<SemesterResponseDTO> getAll(String academicYear, Pageable pageable) {
+        log.info("Getting all semesters with academicYear: {} and pagination: {}", academicYear, pageable);
+        academicCalendarStructureService.ensureStandardStructure();
+        
+        Page<Semester> semesters;
+        if (academicYear != null && !academicYear.isEmpty()) {
+            semesters = semesterRepository.findByAcademicYear_AcademicYear(academicYear, pageable);
+        } else {
+            semesters = semesterRepository.findByAcademicYear_StartDateGreaterThanEqual(
+                    LocalDate.of(AcademicCalendarStructureService.ACADEMIC_START_YEAR, 1, 1),
+                    pageable);
+        }
+        
+        return semesters.map(semesterMapper::toResponseDTO);
     }
 
     @Override
@@ -63,8 +76,9 @@ public class SemesterServiceImpl implements SemesterService {
         log.info("Updating semester with id: {}", id);
         Semester semester = semesterRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SEMESTER_NOT_FOUND));
-        
+
         semesterMapper.updateEntityFromDTO(requestDTO, semester);
+        semester.setAcademicYear(resolveAcademicYear(requestDTO.getAcademicYear()));
         return semesterMapper.toResponseDTO(semesterRepository.save(semester));
     }
 
@@ -76,5 +90,10 @@ public class SemesterServiceImpl implements SemesterService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.SEMESTER_NOT_FOUND));
         semester.softDelete("system");
         semesterRepository.save(semester);
+    }
+
+    private AcademicYear resolveAcademicYear(String academicYearValue) {
+        return academicYearRepository.findByAcademicYear(academicYearValue)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Khong tim thay nam hoc"));
     }
 }

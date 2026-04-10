@@ -1,5 +1,7 @@
 package com.edu.university.modules.finance.service.impl;
 
+import com.edu.university.common.exception.BusinessException;
+import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.academic.entity.Semester;
 import com.edu.university.modules.academic.repository.SemesterRepository;
 import com.edu.university.modules.finance.dto.request.StudentTuitionRequestDTO;
@@ -13,13 +15,13 @@ import com.edu.university.modules.finance.service.StudentTuitionService;
 import com.edu.university.modules.student.entity.Student;
 import com.edu.university.modules.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,13 +39,13 @@ public class StudentTuitionServiceImpl implements StudentTuitionService {
         StudentTuition tuition = studentTuitionMapper.toEntity(requestDTO);
         
         Student student = studentRepository.findById(requestDTO.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sinh viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
         Semester semester = semesterRepository.findById(requestDTO.getSemesterId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy học kỳ"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SEMESTER_NOT_FOUND));
         
         if (requestDTO.getTuitionFeeId() != null) {
             TuitionFee fee = tuitionFeeRepository.findById(requestDTO.getTuitionFeeId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy định mức học phí"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.TUITION_FEE_NOT_FOUND));
             tuition.setTuitionFee(fee);
         }
         
@@ -56,34 +58,32 @@ public class StudentTuitionServiceImpl implements StudentTuitionService {
     }
 
     @Override
-    public List<StudentTuitionResponseDTO> getByStudentId(UUID studentId) {
-        return studentTuitionRepository.findByStudentId(studentId).stream()
-                .map(studentTuitionMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public Page<StudentTuitionResponseDTO> getByStudentId(UUID studentId, Pageable pageable) {
+        return studentTuitionRepository.findByStudentId(studentId, pageable)
+                .map(studentTuitionMapper::toResponseDTO);
     }
 
     @Override
-    public List<StudentTuitionResponseDTO> getBySemesterId(UUID semesterId) {
-        return studentTuitionRepository.findBySemesterId(semesterId).stream()
-                .map(studentTuitionMapper::toResponseDTO)
-                .collect(Collectors.toList());
+    public Page<StudentTuitionResponseDTO> getBySemesterId(UUID semesterId, Pageable pageable) {
+        return studentTuitionRepository.findBySemesterId(semesterId, pageable)
+                .map(studentTuitionMapper::toResponseDTO);
     }
 
     @Override
     @Transactional
     public StudentTuitionResponseDTO update(UUID id, StudentTuitionRequestDTO requestDTO) {
         StudentTuition tuition = studentTuitionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy học phí sinh viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.TUITION_RECORD_NOT_FOUND));
         studentTuitionMapper.updateEntityFromDTO(requestDTO, tuition);
         
         Student student = studentRepository.findById(requestDTO.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sinh viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
         Semester semester = semesterRepository.findById(requestDTO.getSemesterId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy học kỳ"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SEMESTER_NOT_FOUND));
         
         if (requestDTO.getTuitionFeeId() != null) {
             TuitionFee fee = tuitionFeeRepository.findById(requestDTO.getTuitionFeeId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy định mức học phí"));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.TUITION_FEE_NOT_FOUND));
             tuition.setTuitionFee(fee);
         }
         
@@ -98,7 +98,7 @@ public class StudentTuitionServiceImpl implements StudentTuitionService {
     @Transactional
     public void delete(UUID id) {
         StudentTuition tuition = studentTuitionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy học phí sinh viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.TUITION_RECORD_NOT_FOUND));
         tuition.softDelete("system");
         studentTuitionRepository.save(tuition);
     }

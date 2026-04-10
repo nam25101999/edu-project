@@ -14,7 +14,7 @@ public class CourseResponseDTO {
     private UUID id;
     private UUID departmentId;
     private String departmentName;
-    private String code;
+    private String courseCode;
     private String name;
     private String courseNameEn;
     private BigDecimal credits;

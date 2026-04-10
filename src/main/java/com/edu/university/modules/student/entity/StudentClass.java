@@ -1,5 +1,6 @@
 package com.edu.university.modules.student.entity;
 
+import com.edu.university.common.entity.BaseEntity;
 import com.edu.university.modules.academic.entity.AcademicYear;
 import com.edu.university.modules.curriculum.entity.Major;
 import com.edu.university.modules.curriculum.entity.TrainingProgram;
@@ -7,14 +8,9 @@ import com.edu.university.modules.hr.entity.Department;
 import com.edu.university.modules.hr.entity.Employee;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLRestriction;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -23,24 +19,23 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@EntityListeners(AuditingEntityListener.class)
+@SuperBuilder
 @SQLRestriction("deleted_at IS NULL")
-public class StudentClass {
+public class StudentClass extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "class_code", length = 20)
+    @Column(name = "code", length = 20)
     private String classCode;
 
-    @Column(name = "class_name", length = 100)
+    @Column(name = "name", length = 100)
     private String className;
 
     // Foreign Keys to Group III & IV
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "academic_years_id")
+    @JoinColumn(name = "academic_year_id")
     private AcademicYear academicYear;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -52,44 +47,12 @@ public class StudentClass {
     private Major major;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "program_id")
+    @JoinColumn(name = "training_program_id")
     private TrainingProgram trainingProgram;
 
     // FK to employees (Giảng viên/CVHT)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "advisor_id")
+    @JoinColumn(name = "employee_id")
     private Employee advisor;
 
-    // --- Auditing & System fields ---
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @CreatedBy
-    @Column(name = "created_by", updatable = false)
-    private String createdBy;
-
-    @LastModifiedBy
-    @Column(name = "updated_by")
-    private String updatedBy;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "deleted_by")
-    private String deletedBy;
-
-    @Builder.Default
-    @Column(name = "is_active", nullable = false)
-    private boolean isActive = true;
-
-    public void softDelete(String deletedByActionUser) {
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = deletedByActionUser;
-        this.isActive = false;
-    }
 }

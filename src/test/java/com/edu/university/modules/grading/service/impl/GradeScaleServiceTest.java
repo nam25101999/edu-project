@@ -122,7 +122,7 @@ class GradeScaleServiceTest {
 
         // Act & Assert
         BusinessException ex = assertThrows(BusinessException.class, () -> gradeScaleService.getById(scaleId));
-        assertEquals(ErrorCode.NOT_FOUND, ex.getErrorCode());
+        assertEquals(ErrorCode.DATA_NOT_FOUND, ex.getErrorCode());
     }
 
     @Test

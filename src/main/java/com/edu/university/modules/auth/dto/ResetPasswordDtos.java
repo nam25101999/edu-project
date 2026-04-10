@@ -8,31 +8,45 @@ import jakarta.validation.constraints.Size;
 public class ResetPasswordDtos {
 
     public record ForgotPasswordRequest(
-            @NotBlank(message = "Email khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng")
-            @Email(message = "Email khÃ´ng há»£p lá»‡")
+            @NotBlank(message = "Email không được để trống")
+            @Email(message = "Email không hợp lệ")
             String email
     ) {
-        // Canonical Constructor Ä‘á»ƒ tá»± Ä‘á»™ng trim email khi nháº­n request
         public ForgotPasswordRequest {
             email = email != null ? email.trim().toLowerCase() : null;
         }
     }
 
     public record ResetPasswordRequest(
-            @NotBlank(message = "Email khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng")
-            @Email(message = "Email khÃ´ng há»£p lá»‡")
+            @NotBlank(message = "Email không được để trống")
+            @Email(message = "Email không hợp lệ")
             String email,
 
-            @NotBlank(message = "MÃ£ OTP khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng")
-            @Size(min = 6, max = 6, message = "MÃ£ OTP pháº£i Ä‘Ãºng 6 kÃ½ sá»‘")
-            @Pattern(regexp = "^[0-9]*$", message = "MÃ£ OTP chá»‰ Ä‘Æ°á»£c chá»©a chá»¯ sá»‘")
+            @NotBlank(message = "Mã OTP không được để trống")
+            @Size(min = 6, max = 6, message = "Mã OTP phải đúng 6 ký số")
+            @Pattern(regexp = "^[0-9]*$", message = "Mã OTP chỉ được chứa chữ số")
             String otp,
 
-            @NotBlank(message = "Máº­t kháº©u má»›i khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng")
-            @Size(min = 8, message = "Máº­t kháº©u má»›i pháº£i cÃ³ Ã­t nháº¥t 8 kÃ½ tá»±")
+            @NotBlank(message = "Mật khẩu mới không được để trống")
+            @Size(min = 8, message = "Mật khẩu mới phải có ít nhất 8 ký tự")
             String newPassword
     ) {
         public ResetPasswordRequest {
+            email = email != null ? email.trim().toLowerCase() : null;
+        }
+    }
+
+    public record VerifyResetOtpRequest(
+            @NotBlank(message = "Email không được để trống")
+            @Email(message = "Email không hợp lệ")
+            String email,
+
+            @NotBlank(message = "Mã OTP không được để trống")
+            @Size(min = 6, max = 6, message = "Mã OTP phải đúng 6 ký số")
+            @Pattern(regexp = "^[0-9]*$", message = "Mã OTP chỉ được chứa chữ số")
+            String otp
+    ) {
+        public VerifyResetOtpRequest {
             email = email != null ? email.trim().toLowerCase() : null;
         }
     }

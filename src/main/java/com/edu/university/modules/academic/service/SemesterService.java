@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface SemesterService {
     SemesterResponseDTO create(SemesterRequestDTO requestDTO);
-    Page<SemesterResponseDTO> getAll(Pageable pageable);
+    Page<SemesterResponseDTO> getAll(String academicYear, Pageable pageable);
     SemesterResponseDTO getById(UUID id);
     SemesterResponseDTO update(UUID id, SemesterRequestDTO requestDTO);
     void delete(UUID id);

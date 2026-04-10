@@ -10,6 +10,10 @@ spring:
           auth: true
           starttls:
             enable: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
   application:
     name: backend
@@ -18,15 +22,33 @@ spring:
     url: jdbc:sqlserver://den1.mssql8.gear.host:1433;databaseName=education11;encrypt=true;trustServerCertificate=true
     username: education11
     password: Cw86~BTxrx!Y
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      validation-timeout: 5000
+      keepalive-time: 30000
+      leak-detection-threshold: 2000
 
   jpa:
+    database-platform: org.hibernate.dialect.SQLServerDialect
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.SQLServerDialect
     open-in-view: false
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.web: DEBUG
+    com.edu.university: DEBUG
 
 springdoc:
   api-docs:

@@ -1,5 +1,6 @@
 package com.edu.university.modules.curriculum.service.impl;
 
+import com.edu.university.common.dto.PageResponse;
 import com.edu.university.common.exception.BusinessException;
 import com.edu.university.common.exception.ErrorCode;
 import com.edu.university.modules.curriculum.dto.request.TrainingProgramRequestDTO;
@@ -58,15 +59,24 @@ public class TrainingProgramServiceImpl implements TrainingProgramService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TrainingProgramResponseDTO> getAll(Pageable pageable) {
-        return trainingProgramRepository.findAll(pageable)
-                .map(trainingProgramMapper::toResponseDTO);
+    public PageResponse<TrainingProgramResponseDTO> getAll(String search, Pageable pageable) {
+        Page<TrainingProgram> page = trainingProgramRepository.findPageWithRelations(normalizeSearch(search), pageable);
+        return PageResponse.of(page.map(trainingProgramMapper::toResponseDTO));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<TrainingProgramResponseDTO> getByMajor(UUID majorId) {
+        return trainingProgramRepository.findByMajorId(majorId)
+                .stream()
+                .map(trainingProgramMapper::toResponseDTO)
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public TrainingProgramResponseDTO getById(UUID id) {
-        TrainingProgram tp = trainingProgramRepository.findById(id)
+        TrainingProgram tp = trainingProgramRepository.findDetailById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TRAINING_PROGRAM_NOT_FOUND));
         return trainingProgramMapper.toResponseDTO(tp);
     }
@@ -101,5 +111,12 @@ public class TrainingProgramServiceImpl implements TrainingProgramService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.TRAINING_PROGRAM_NOT_FOUND));
         tp.softDelete("system");
         trainingProgramRepository.save(tp);
+    }
+
+    private String normalizeSearch(String search) {
+        if (search == null || search.isBlank()) {
+            return null;
+        }
+        return search.trim();
     }
 }

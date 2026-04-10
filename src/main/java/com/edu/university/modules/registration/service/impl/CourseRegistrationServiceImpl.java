@@ -56,11 +56,11 @@ public class CourseRegistrationServiceImpl implements CourseRegistrationService 
         CourseRegistration registration = courseRegistrationMapper.toEntity(requestDTO);
         
         Student student = studentRepository.findById(requestDTO.getStudentId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy sinh viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
         CourseSection courseSection = courseSectionRepository.findById(requestDTO.getCourseSectionId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học phần"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLASS_SECTION_NOT_FOUND));
         RegistrationPeriod period = registrationPeriodRepository.findById(requestDTO.getRegistrationPeriodId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy đợt đăng ký"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGISTRATION_PERIOD_NOT_FOUND));
         
         registration.setStudent(student);
         registration.setCourseSection(courseSection);
@@ -97,11 +97,11 @@ public class CourseRegistrationServiceImpl implements CourseRegistrationService 
         courseRegistrationMapper.updateEntityFromDTO(requestDTO, registration);
         
         Student student = studentRepository.findById(requestDTO.getStudentId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy sinh viên"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDENT_NOT_FOUND));
         CourseSection courseSection = courseSectionRepository.findById(requestDTO.getCourseSectionId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học phần"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLASS_SECTION_NOT_FOUND));
         RegistrationPeriod period = registrationPeriodRepository.findById(requestDTO.getRegistrationPeriodId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy đợt đăng ký"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGISTRATION_PERIOD_NOT_FOUND));
         
         registration.setStudent(student);
         registration.setCourseSection(courseSection);
@@ -123,38 +123,37 @@ public class CourseRegistrationServiceImpl implements CourseRegistrationService 
     @Transactional(readOnly = true)
     public EligibilityCheckResponse checkEligibility(EligibilityCheckRequest request) {
         RegistrationPeriod period = registrationPeriodRepository.findById(request.getRegistrationPeriodId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy đợt đăng ký"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGISTRATION_PERIOD_NOT_FOUND));
 
         List<CourseRegistration> currentRegistrations = courseRegistrationRepository.findByRegistrationPeriodId(request.getRegistrationPeriodId())
                 .stream()
                 .filter(reg -> reg.getStudent().getId().equals(request.getStudentId()))
                 .collect(Collectors.toList());
 
+        // Optimization: Fetch all summaries for this student once
+        List<com.edu.university.modules.grading.entity.StudentSummary> studentSummaries = 
+                studentSummaryRepository.findByCourseRegistrationStudentId(request.getStudentId());
+
         List<EligibilityCheckResponse.Violation> violations = new ArrayList<>();
         int totalCredits = currentRegistrations.stream()
-                .mapToInt(reg -> (int) reg.getCourseSection().getCourse().getCredits().doubleValue())
+                .mapToInt(reg -> reg.getCourseSection().getCourse().getCredits().intValue())
                 .sum();
 
         for (UUID sectionId : request.getCourseSectionIds()) {
             CourseSection section = courseSectionRepository.findById(sectionId)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy lớp học phần " + sectionId));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.CLASS_SECTION_NOT_FOUND));
 
-            int sectionCredits = (int) section.getCourse().getCredits().doubleValue();
-            
             if (currentRegistrations.stream().anyMatch(reg -> reg.getCourseSection().getId().equals(sectionId))) {
                 continue;
             }
 
-            List<CoursePrerequisite> prerequisites = coursePrerequisiteRepository.findAll()
-                    .stream()
-                    .filter(p -> p.getCourse().getId().equals(section.getCourse().getId()))
-                    .collect(Collectors.toList());
+            // Optimization: Use targeted query for prerequisites
+            List<CoursePrerequisite> prerequisites = coursePrerequisiteRepository.findByCourseId(section.getCourse().getId());
 
             for (CoursePrerequisite prereq : prerequisites) {
-                boolean hasPassed = studentSummaryRepository.findAll().stream()
-                        .filter(s -> s.getCourseRegistration().getStudent().getId().equals(request.getStudentId()))
+                boolean hasPassed = studentSummaries.stream()
                         .filter(s -> s.getCourseRegistration().getCourseSection().getCourse().getId().equals(prereq.getPrerequisiteCourse().getId()))
-                        .anyMatch(s -> "PASS".equalsIgnoreCase(s.getResult()) || s.getGpaValue() != null && s.getGpaValue().doubleValue() >= 2.0);
+                        .anyMatch(s -> "PASS".equalsIgnoreCase(s.getResult()) || (s.getGpaValue() != null && s.getGpaValue().doubleValue() >= 2.0));
 
                 if (!hasPassed) {
                     violations.add(EligibilityCheckResponse.Violation.builder()
@@ -165,9 +164,9 @@ public class CourseRegistrationServiceImpl implements CourseRegistrationService 
                 }
             }
 
-            List<Schedule> newSchedules = scheduleRepository.findByCourseSectionId(sectionId);
+            List<Schedule> newSchedules = scheduleRepository.findAllByCourseSectionId(sectionId);
             for (CourseRegistration existingReg : currentRegistrations) {
-                List<Schedule> existingSchedules = scheduleRepository.findByCourseSectionId(existingReg.getCourseSection().getId());
+                List<Schedule> existingSchedules = scheduleRepository.findAllByCourseSectionId(existingReg.getCourseSection().getId());
                 for (Schedule ns : newSchedules) {
                     for (Schedule es : existingSchedules) {
                         if (ns.getDayOfWeek().equals(es.getDayOfWeek())) {
@@ -183,7 +182,7 @@ public class CourseRegistrationServiceImpl implements CourseRegistrationService 
                     }
                 }
             }
-            totalCredits += sectionCredits;
+            totalCredits += section.getCourse().getCredits().intValue();
         }
 
         if (totalCredits > period.getMaxCredits()) {

@@ -24,6 +24,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -91,15 +92,15 @@ class SemesterServiceTest {
         // Arrange
         Pageable pageable = PageRequest.of(0, 10);
         Page<Semester> page = new PageImpl<>(Collections.singletonList(semester));
-        when(semesterRepository.findAll(pageable)).thenReturn(page);
+        when(semesterRepository.findByAcademicYear_StartDateGreaterThanEqual(any(), eq(pageable))).thenReturn(page);
         when(semesterMapper.toResponseDTO(any())).thenReturn(responseDTO);
 
         // Act
-        Page<SemesterResponseDTO> result = semesterService.getAll(pageable);
+        Page<SemesterResponseDTO> result = semesterService.getAll(null, pageable);
 
         // Assert
         assertEquals(1, result.getTotalElements());
-        verify(semesterRepository).findAll(pageable);
+        verify(semesterRepository).findByAcademicYear_StartDateGreaterThanEqual(any(), eq(pageable));
     }
 
     @Test

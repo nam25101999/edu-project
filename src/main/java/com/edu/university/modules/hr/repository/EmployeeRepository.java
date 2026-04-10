@@ -19,4 +19,18 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     boolean existsByUser_Email(String email);
 
     boolean existsByUserId(UUID userId);
+    
+    Optional<Employee> findByUserId(UUID userId);
+    
+    java.util.List<Employee> findByDepartmentId(UUID departmentId);
+
+    java.util.Optional<Employee> findByDepartmentIdAndPositionCode(UUID departmentId, String positionCode);
+
+    java.util.List<Employee> findByDepartmentIdAndPositionCodeIn(UUID departmentId, java.util.Collection<String> positionCodes);
+    
+    @org.springframework.data.jpa.repository.Query("SELECT e FROM Employee e " +
+            "JOIN e.user u " +
+            "JOIN u.roles r " +
+            "WHERE r.name = :roleName AND e.department IS NULL")
+    org.springframework.data.domain.Page<Employee> findAvailableLecturers(@org.springframework.data.repository.query.Param("roleName") String roleName, org.springframework.data.domain.Pageable pageable);
 }

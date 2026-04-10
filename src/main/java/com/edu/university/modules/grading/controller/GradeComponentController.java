@@ -1,12 +1,12 @@
 package com.edu.university.modules.grading.controller;
 
+import com.edu.university.common.dto.PageResponse;
 import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.grading.dto.request.GradeComponentRequestDTO;
 import com.edu.university.modules.grading.dto.response.GradeComponentResponseDTO;
 import com.edu.university.modules.grading.service.GradeComponentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -24,17 +24,15 @@ public class GradeComponentController {
 
     @PostMapping
     public ResponseEntity<BaseResponse<GradeComponentResponseDTO>> create(@Valid @RequestBody GradeComponentRequestDTO requestDTO) {
-        return new ResponseEntity<>(
-                BaseResponse.created("Tạo thành phần điểm thành công", gradeComponentService.create(requestDTO)),
-                HttpStatus.CREATED
-        );
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(BaseResponse.created("Tạo thành phần điểm thành công", gradeComponentService.create(requestDTO)));
     }
 
     @GetMapping("/course-section/{courseSectionId}")
-    public ResponseEntity<BaseResponse<Page<GradeComponentResponseDTO>>> getByCourseSectionId(
+    public ResponseEntity<BaseResponse<PageResponse<GradeComponentResponseDTO>>> getByCourseSectionId(
             @PathVariable UUID courseSectionId,
             @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok(gradeComponentService.getByCourseSectionId(courseSectionId, pageable)));
+        return ResponseEntity.ok(BaseResponse.okPage(gradeComponentService.getByCourseSectionId(courseSectionId, pageable)));
     }
 
     @PutMapping("/{id}")

@@ -1,12 +1,12 @@
 package com.edu.university.modules.academic.controller;
 
+import com.edu.university.common.dto.PageResponse;
 import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.academic.dto.request.CourseSectionRequestDTO;
 import com.edu.university.modules.academic.dto.response.CourseSectionResponseDTO;
 import com.edu.university.modules.academic.service.CourseSectionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -31,8 +32,12 @@ public class CourseSectionController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<Page<CourseSectionResponseDTO>>> getAll(@PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok("Lấy danh sách lớp học phần thành công", courseSectionService.getAll(pageable)));
+    public ResponseEntity<BaseResponse<PageResponse<CourseSectionResponseDTO>>> getAll(
+            @RequestParam(required = false) UUID departmentId,
+            @RequestParam(required = false) UUID majorId,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        return ResponseEntity.ok(BaseResponse.ok(courseSectionService.getAll(departmentId, majorId, pageable)));
     }
 
     @GetMapping("/{id}")

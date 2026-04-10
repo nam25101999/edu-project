@@ -78,7 +78,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Transactional
     public ScheduleResponseDTO update(UUID id, ScheduleRequestDTO requestDTO) {
         Schedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Không tìm thấy lịch học"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND, "Không tìm thấy lịch học"));
         scheduleMapper.updateEntityFromDTO(requestDTO, schedule);
         
         if (requestDTO.getCourseSectionId() != null) {

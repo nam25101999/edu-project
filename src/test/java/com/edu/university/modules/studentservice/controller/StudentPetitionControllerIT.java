@@ -71,7 +71,7 @@ public class StudentPetitionControllerIT extends BaseIntegrationTest {
         mockMvc.perform(get("/api/petitions/student/{studentId}", student.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray());
+                .andExpect(jsonPath("$.data.content").isArray());
     }
 
     @Test

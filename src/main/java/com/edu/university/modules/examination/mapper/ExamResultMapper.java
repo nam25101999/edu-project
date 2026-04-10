@@ -19,6 +19,7 @@ public interface ExamResultMapper {
     @Mapping(target = "studentCode", source = "examRegistration.student.studentCode")
     @Mapping(target = "gradedById", source = "gradedBy.id")
     @Mapping(target = "gradedByUsername", source = "gradedBy.username")
+    @Mapping(target = "isLocked", source = "locked")
     ExamResultResponseDTO toResponseDTO(ExamResult examResult);
 
     @Mapping(target = "examRegistration", ignore = true)

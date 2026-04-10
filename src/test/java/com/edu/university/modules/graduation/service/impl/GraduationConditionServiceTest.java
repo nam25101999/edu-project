@@ -91,13 +91,16 @@ class GraduationConditionServiceTest {
     @Test
     void getAll_Success() {
         // Arrange
-        when(graduationConditionRepository.findAll()).thenReturn(Collections.singletonList(condition));
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        org.springframework.data.domain.Page<GraduationCondition> page = new org.springframework.data.domain.PageImpl<>(Collections.singletonList(condition));
+        
+        when(graduationConditionRepository.findAll(pageable)).thenReturn(page);
         when(graduationConditionMapper.toResponseDTO(any())).thenReturn(responseDTO);
 
         // Act
-        List<GraduationConditionResponseDTO> results = graduationConditionService.getAll();
+        org.springframework.data.domain.Page<GraduationConditionResponseDTO> results = graduationConditionService.getAll(pageable);
 
         // Assert
-        assertEquals(1, results.size());
+        assertEquals(1, results.getTotalElements());
     }
 }

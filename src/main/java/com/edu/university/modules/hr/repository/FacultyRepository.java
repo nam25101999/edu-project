@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface FacultyRepository extends JpaRepository<Faculty, UUID> {
     Optional<Faculty> findByCode(String code);
+    Optional<Faculty> findFirstByCode(String code);
 }

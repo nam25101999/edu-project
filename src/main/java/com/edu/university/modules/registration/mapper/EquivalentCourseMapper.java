@@ -16,10 +16,10 @@ public interface EquivalentCourseMapper {
 
     @Mapping(target = "originalCourseId", source = "originalCourse.id")
     @Mapping(target = "originalCourseName", source = "originalCourse.name")
-    @Mapping(target = "originalCourseCode", source = "originalCourse.code")
+    @Mapping(target = "originalCourseCode", source = "originalCourse.courseCode")
     @Mapping(target = "equivalentCourseId", source = "equivalentCourse.id")
     @Mapping(target = "equivalentCourseName", source = "equivalentCourse.name")
-    @Mapping(target = "equivalentCourseCode", source = "equivalentCourse.code")
+    @Mapping(target = "equivalentCourseCode", source = "equivalentCourse.courseCode")
     EquivalentCourseResponseDTO toResponseDTO(EquivalentCourse equivalentCourse);
 
     @Mapping(target = "originalCourse", ignore = true)

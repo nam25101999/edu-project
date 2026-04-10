@@ -27,23 +27,23 @@ public class Room {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "room_code", length = 20)
+    @Column(name = "code", length = 20)
     private String roomCode;
 
-    @Column(name = "room_name", length = 100)
+    @Column(name = "name", length = 100)
     private String roomName;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "building_id")
     private Building building;
 
-    @Column(name = "floor")
+    @Column(name = "floor_floor_number")
     private Integer floor;
 
     @Column(name = "capacity")
     private Integer capacity;
 
-    @Column(name = "room_type", length = 50)
+    @Column(name = "type", length = 50)
     private String roomType;
 
     @Column(length = 50)

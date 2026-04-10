@@ -2,12 +2,13 @@ package com.edu.university.modules.grading.service;
 
 import com.edu.university.modules.grading.dto.request.StudentComponentGradeRequestDTO;
 import com.edu.university.modules.grading.dto.response.StudentComponentGradeResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface StudentComponentGradeService {
     StudentComponentGradeResponseDTO upsert(StudentComponentGradeRequestDTO requestDTO);
-    List<StudentComponentGradeResponseDTO> getByRegistrationId(UUID registrationId);
+    Page<StudentComponentGradeResponseDTO> getByRegistrationId(UUID registrationId, Pageable pageable);
     void delete(UUID id);
 }

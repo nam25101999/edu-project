@@ -24,12 +24,13 @@ public class MajorServiceImpl implements MajorService {
 
     private final MajorRepository majorRepository;
     private final FacultyRepository facultyRepository;
+    private final com.edu.university.modules.hr.repository.DepartmentRepository departmentRepository;
     private final MajorMapper majorMapper;
 
     @Override
     @Transactional
     public MajorResponseDTO create(MajorRequestDTO requestDTO) {
-        if (majorRepository.existsByCode(requestDTO.getCode())) {
+        if (majorRepository.existsByMajorCode(requestDTO.getMajorCode())) {
             throw new BusinessException(ErrorCode.MAJOR_CODE_EXISTS);
         }
 
@@ -39,8 +40,23 @@ public class MajorServiceImpl implements MajorService {
                     .orElseThrow(() -> new BusinessException(ErrorCode.FACULTY_NOT_FOUND));
         }
 
+        com.edu.university.modules.hr.entity.Department department = null;
+        if (requestDTO.getDepartmentId() != null) {
+            department = departmentRepository.findById(requestDTO.getDepartmentId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+            
+            // Auto-resolve faculty if missing but department exists
+            if (faculty == null) {
+                final String deptCode = department.getCode();
+                faculty = facultyRepository.findFirstByCode(deptCode)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.FACULTY_NOT_FOUND, 
+                            "Không tìm thấy thông tin Khoa tương ứng với mã Phòng ban: " + deptCode));
+            }
+        }
+
         Major major = majorMapper.toEntity(requestDTO);
         major.setFaculty(faculty);
+        major.setDepartment(department);
         major.setActive(true);
 
         return majorMapper.toResponseDTO(majorRepository.save(major));
@@ -48,15 +64,15 @@ public class MajorServiceImpl implements MajorService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MajorResponseDTO> getAll(Pageable pageable) {
-        return majorRepository.findAll(pageable)
+    public Page<MajorResponseDTO> getAll(String search, Pageable pageable) {
+        return majorRepository.findPageWithRelations(normalizeSearch(search), pageable)
                 .map(majorMapper::toResponseDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public MajorResponseDTO getById(UUID id) {
-        Major major = majorRepository.findById(id)
+        Major major = majorRepository.findDetailById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MAJOR_NOT_FOUND));
         return majorMapper.toResponseDTO(major);
     }
@@ -77,6 +93,14 @@ public class MajorServiceImpl implements MajorService {
             major.setFaculty(null);
         }
 
+        if (requestDTO.getDepartmentId() != null) {
+            com.edu.university.modules.hr.entity.Department department = departmentRepository.findById(requestDTO.getDepartmentId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+            major.setDepartment(department);
+        } else {
+            major.setDepartment(null);
+        }
+
         return majorMapper.toResponseDTO(majorRepository.save(major));
     }
 
@@ -87,5 +111,20 @@ public class MajorServiceImpl implements MajorService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MAJOR_NOT_FOUND));
         major.softDelete("system");
         majorRepository.save(major);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<MajorResponseDTO> getByDepartment(UUID departmentId) {
+        return majorRepository.findByDepartmentId(departmentId).stream()
+                .map(majorMapper::toResponseDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    private String normalizeSearch(String search) {
+        if (search == null || search.isBlank()) {
+            return null;
+        }
+        return search.trim();
     }
 }

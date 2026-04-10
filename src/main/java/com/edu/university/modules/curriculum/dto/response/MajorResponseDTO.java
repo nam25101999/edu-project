@@ -13,7 +13,9 @@ public class MajorResponseDTO {
     private UUID id;
     private UUID facultyId;
     private String facultyName;
-    private String code;
+    private UUID departmentId;
+    private String departmentName;
+    private String majorCode;
     private String name;
     private String description;
     private String effectiveDate;

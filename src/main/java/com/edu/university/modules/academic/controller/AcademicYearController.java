@@ -1,12 +1,12 @@
 package com.edu.university.modules.academic.controller;
 
+import com.edu.university.common.dto.PageResponse;
 import com.edu.university.common.response.BaseResponse;
 import com.edu.university.modules.academic.dto.request.AcademicYearRequestDTO;
 import com.edu.university.modules.academic.dto.response.AcademicYearResponseDTO;
 import com.edu.university.modules.academic.service.AcademicYearService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -31,8 +31,8 @@ public class AcademicYearController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<Page<AcademicYearResponseDTO>>> getAll(@PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.ok("Lấy danh sách năm học thành công", academicYearService.getAll(pageable)));
+    public ResponseEntity<BaseResponse<PageResponse<AcademicYearResponseDTO>>> getAll(@PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(BaseResponse.okPage("Lấy danh sách năm học thành công", academicYearService.getAll(pageable)));
     }
 
     @GetMapping("/{id}")
