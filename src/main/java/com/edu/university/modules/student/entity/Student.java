@@ -97,7 +97,7 @@ public class Student {
     private String status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_classes_id")
+    @JoinColumn(name = "student_classes_id", nullable = false)
     private StudentClass studentClass;
 
     @Column(name = "admission_year")

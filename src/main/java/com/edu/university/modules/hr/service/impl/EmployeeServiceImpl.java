@@ -44,8 +44,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (requestDTO.getDepartmentId() != null) {
             employee.setDepartment(departmentRepository.findById(requestDTO.getDepartmentId()).orElse(null));
         }
-        if (requestDTO.getPositionId() != null) {
-            employee.setPosition(positionRepository.findById(requestDTO.getPositionId()).orElse(null));
+        if (requestDTO.getPositionIds() != null && !requestDTO.getPositionIds().isEmpty()) {
+            employee.setPositions(new java.util.HashSet<>(positionRepository.findAllById(requestDTO.getPositionIds())));
         }
 
         employee.setActive(true);
@@ -88,8 +88,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (requestDTO.getDepartmentId() != null) {
             employee.setDepartment(departmentRepository.findById(requestDTO.getDepartmentId()).orElse(null));
         }
-        if (requestDTO.getPositionId() != null) {
-            employee.setPosition(positionRepository.findById(requestDTO.getPositionId()).orElse(null));
+        if (requestDTO.getPositionIds() != null && !requestDTO.getPositionIds().isEmpty()) {
+            employee.setPositions(new java.util.HashSet<>(positionRepository.findAllById(requestDTO.getPositionIds())));
         }
 
         return employeeMapper.toResponseDTO(employeeRepository.save(employee));

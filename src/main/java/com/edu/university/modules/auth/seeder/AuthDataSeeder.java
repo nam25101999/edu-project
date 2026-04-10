@@ -48,11 +48,17 @@ public class AuthDataSeeder implements ModuleSeeder {
     }
 
     private void seedPermissions() {
-        if (permissionRepository.count() > 0) return;
+        if (permissionRepository.count() >= 15) return;
 
         List<Permission> permissions = List.of(
                 createPerm("STUDENT", "CREATE"), createPerm("STUDENT", "VIEW"),
                 createPerm("STUDENT", "UPDATE"), createPerm("STUDENT", "DELETE"),
+                createPerm("STUDENT", "IMPORT"), createPerm("STUDENT", "EXPORT"),
+                createPerm("ACADEMIC", "VIEW"), createPerm("ACADEMIC", "MANAGE"),
+                createPerm("CURRICULUM", "VIEW"), createPerm("CURRICULUM", "MANAGE"),
+                createPerm("HR", "VIEW"), createPerm("HR", "MANAGE"),
+                createPerm("FINANCE", "VIEW"), createPerm("FINANCE", "MANAGE"),
+                createPerm("REGISTRATION", "VIEW"), createPerm("REGISTRATION", "PROCESS"),
                 createPerm("GRADE", "VIEW"), createPerm("GRADE", "UPDATE"),
                 createPerm("SYSTEM", "MANAGE"));
         permissionRepository.saveAll(permissions);
@@ -64,17 +70,27 @@ public class AuthDataSeeder implements ModuleSeeder {
     }
 
     private void seedRoles() {
-        if (roleRepository.count() > 0) return;
+        if (roleRepository.count() >= 3) return;
 
         List<Permission> all = permissionRepository.findAll();
-        Role admin = Role.builder().name("ADMIN").description("Toàn quyền hệ thống")
+        Role admin = Role.builder().name("ADMIN").description("Quản trị hệ thống (Toàn quyền)")
                 .permissions(new HashSet<>(all)).build();
-        Role lecturer = Role.builder().name("LECTURER").description("Giảng viên")
-                .permissions(new HashSet<>()).build();
-        Role student = Role.builder().name("STUDENT").description("Sinh viên")
-                .permissions(new HashSet<>()).build();
+        
+        // Consolidated Staff Role (Lecturer + Former Dean/Registrar/Accountant)
+        Role lecturer = Role.builder().name("LECTURER").description("Nhân sự/Giảng viên (Quyền nghiệp vụ)")
+                .permissions(new HashSet<>(filterPerms(all, "STUDENT", "ACADEMIC", "CURRICULUM", "HR", "FINANCE", "REGISTRATION", "GRADE"))).build();
+        
+        Role student = Role.builder().name("STUDENT").description("Sinh viên (Truy cập hạn chế)")
+                .permissions(new HashSet<>(filterPerms(all, "STUDENT_VIEW", "GRADE_VIEW", "ACADEMIC_VIEW"))).build();
 
         roleRepository.saveAll(List.of(admin, lecturer, student));
+    }
+
+    private List<Permission> filterPerms(List<Permission> all, String... resources) {
+        Set<String> resourceSet = Set.of(resources);
+        return all.stream()
+                .filter(p -> resourceSet.stream().anyMatch(r -> p.getName().contains(r)))
+                .toList();
     }
 
     private void seedAdmin(Role adminRole) {
@@ -82,6 +98,7 @@ public class AuthDataSeeder implements ModuleSeeder {
         Users admin = Users.builder()
                 .username("admin")
                 .password(passwordEncoder.encode("123456"))
+                .fullName("System Administrator")
                 .email("admin@university.edu.vn")
                 .roles(Set.of(adminRole))
                 .isActive(true)
@@ -95,6 +112,7 @@ public class AuthDataSeeder implements ModuleSeeder {
         Users admin2 = Users.builder()
                 .username("nguyennam")
                 .password(passwordEncoder.encode("123456"))
+                .fullName("Nguyễn Nam")
                 .email("nguyennam25101999@gmail.com")
                 .roles(Set.of(adminRole))
                 .isActive(true)
@@ -109,6 +127,7 @@ public class AuthDataSeeder implements ModuleSeeder {
         Users student = Users.builder()
                 .username("student01")
                 .password(passwordEncoder.encode("123456"))
+                .fullName("Student One")
                 .email("student01@university.edu.vn")
                 .roles(Set.of(studentRole))
                 .isActive(true)
@@ -119,6 +138,7 @@ public class AuthDataSeeder implements ModuleSeeder {
         Users student2 = Users.builder()
                 .username("student02")
                 .password(passwordEncoder.encode("123456"))
+                .fullName("Student Two")
                 .email("student02@university.edu.vn")
                 .roles(Set.of(studentRole))
                 .isActive(true)
@@ -133,6 +153,7 @@ public class AuthDataSeeder implements ModuleSeeder {
         Users lecturer1 = Users.builder()
                 .username("lecturer01")
                 .password(passwordEncoder.encode("123456"))
+                .fullName("Lecturer One")
                 .email("lecturer01@university.edu.vn")
                 .roles(Set.of(lecturerRole))
                 .isActive(true)
@@ -143,6 +164,7 @@ public class AuthDataSeeder implements ModuleSeeder {
         Users lecturer2 = Users.builder()
                 .username("lecturer02")
                 .password(passwordEncoder.encode("123456"))
+                .fullName("Lecturer Two")
                 .email("lecturer02@university.edu.vn")
                 .roles(Set.of(lecturerRole))
                 .isActive(true)

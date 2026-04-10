@@ -13,10 +13,12 @@ public class StudentRequestDTO {
     private String studentCode;
 
     private UUID userId;
+    private UUID studentClassId;
 
     private UUID departmentId;
     private UUID majorId;
     private UUID programId;
+    private String classCode;
 
     @NotBlank(message = "Ho dem khong duoc de trong")
     private String firstName;

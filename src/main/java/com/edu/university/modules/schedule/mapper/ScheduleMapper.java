@@ -16,6 +16,7 @@ public interface ScheduleMapper {
     Schedule toEntity(ScheduleRequestDTO requestDTO);
 
     @Mapping(target = "courseSectionId", source = "courseSection.id")
+    @Mapping(target = "courseName", source = "courseSection.course.name")
     @Mapping(target = "classCode", source = "courseSection.classCode")
     @Mapping(target = "lecturerId", source = "lecturer.id")
     @Mapping(target = "lecturerUsername", source = "lecturer.username")

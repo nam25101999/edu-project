@@ -27,8 +27,8 @@ public class DashboardService {
         long majorCount = majorRepository.count();
         
         // Count Lecturers specifically if the role exists (e.g., ROLE_LECTURER or LECTURER)
-        // Check for ROLE_LECTURER first, fallback to 0 if not found
-        long lecturerCount = roleRepository.findByName("ROLE_LECTURER")
+        // Check for LECTURER first, fallback to 0 if not found
+        long lecturerCount = roleRepository.findByName("LECTURER")
                 .map(userRepository::countByRolesContaining)
                 .orElse(0L);
 

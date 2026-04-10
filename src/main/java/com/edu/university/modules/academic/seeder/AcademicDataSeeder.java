@@ -71,17 +71,20 @@ public class AcademicDataSeeder implements ModuleSeeder {
         if (courses.isEmpty() || semesters.isEmpty()) return new ArrayList<>();
 
         List<CourseSection> sections = new ArrayList<>();
-        // Generate 10 classes from the first 10 courses
-        int count = Math.min(10, courses.size());
-        for (int i = 0; i < count; i++) {
-            Course course = courses.get(i);
+        // Generate 50 classes from the available courses
+        for (int i = 0; i < 50 && i < courses.size() * 2; i++) {
+            Course course = courses.get(i % courses.size());
+            String sectionCode = "SEC_" + String.format("%03d", i + 1) + "_" + course.getCourseCode();
             sections.add(CourseSection.builder()
-                    .sectionCode("L" + String.format("%02d", i + 1) + "_" + course.getCourseCode())
-                    .classCode("L" + String.format("%02d", i + 1) + "_" + course.getCourseCode())
+                    .sectionCode(sectionCode)
+                    .classCode(sectionCode)
                     .course(course)
-                    .semester(semesters.get(0))
+                    .semester(semesters.get(i % Math.min(6, semesters.size()))) // Spread across semesters
                     .classType(i % 3 == 0 ? "Practice" : "Theory")
                     .status("OPEN")
+                    .capacity(40)
+                    .maxStudents(50)
+                    .minStudents(10)
                     .isActive(true)
                     .build());
         }
@@ -108,20 +111,34 @@ public class AcademicDataSeeder implements ModuleSeeder {
     }
 
     private void seedSchedules(List<CourseSection> sections) {
-        if (sections.isEmpty() || buildingRepository.count() > 0) return;
+        if (sections.isEmpty() || buildingRepository.count() >= 3) return;
 
-        Building b1 = buildingRepository.save(Building.builder().buildingCode("A2").buildingName("Tòa nhà A2").build());
-        List<Room> rooms = new ArrayList<>();
-        for (int i = 1; i <= 10; i++) {
-            rooms.add(Room.builder().roomCode("A2-" + (500 + i)).roomName("Phòng " + (500 + i)).building(b1).build());
+        String[] buildings = {"A1", "A2", "B1", "C1"};
+        List<Room> allRooms = new ArrayList<>();
+        
+        for (String bCode : buildings) {
+            Building b = buildingRepository.save(Building.builder()
+                    .buildingCode(bCode)
+                    .buildingName("Tòa nhà " + bCode)
+                    .build());
+            
+            for (int i = 1; i <= 10; i++) {
+                allRooms.add(Room.builder()
+                        .roomCode(bCode + "-" + (100 * (i % 5 + 1) + i))
+                        .roomName("Phòng " + (100 * (i % 5 + 1) + i))
+                        .building(b)
+                        .capacity(i % 2 == 0 ? 40 : 80)
+                        .isActive(true)
+                        .build());
+            }
         }
-        roomRepository.saveAll(rooms);
+        roomRepository.saveAll(allRooms);
 
         List<Schedule> schedules = new ArrayList<>();
         for (int i = 0; i < sections.size(); i++) {
             schedules.add(Schedule.builder()
                     .courseSection(sections.get(i))
-                    .room(rooms.get(i % rooms.size()))
+                    .room(allRooms.get(i % allRooms.size()))
                     .dayOfWeek((i % 6) + 2) // Từ thứ 2 đến thứ 7
                     .startPeriod(i % 2 == 0 ? 1 : 7)
                     .endPeriod(i % 2 == 0 ? 4 : 10)

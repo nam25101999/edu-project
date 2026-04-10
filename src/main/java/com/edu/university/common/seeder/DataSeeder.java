@@ -22,7 +22,6 @@ public class DataSeeder implements CommandLineRunner {
     private final List<ModuleSeeder> seeders;
 
     @Override
-    @Transactional
     public void run(String... args) {
         log.info("===== START MODULAR SEED DATA =====");
 

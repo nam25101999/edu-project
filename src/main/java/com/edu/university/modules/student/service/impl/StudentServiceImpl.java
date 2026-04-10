@@ -27,8 +27,10 @@ import com.edu.university.modules.student.dto.response.StudentImportResultDTO;
 import com.edu.university.modules.student.dto.response.StudentResponseDTO;
 import com.edu.university.modules.student.dto.response.StudentStatsResponseDTO;
 import com.edu.university.modules.student.entity.Student;
+import com.edu.university.modules.student.entity.StudentClass;
 import com.edu.university.modules.student.entity.StudentClassSection;
 import com.edu.university.modules.student.mapper.StudentMapper;
+import com.edu.university.modules.student.repository.StudentClassRepository;
 import com.edu.university.modules.student.repository.StudentClassSectionRepository;
 import com.edu.university.modules.student.repository.StudentRepository;
 import com.edu.university.modules.student.service.StudentService;
@@ -46,25 +48,24 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.*;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StudentServiceImpl implements StudentService {
 
-    private static final List<String> IMPORT_HEADERS = List.of(
+    private static final List<String> IMPORT_HEADERS = new ArrayList<>(Arrays.asList(
             "studentCode", "firstName", "lastName", "email", "phone",
-            "departmentId", "majorId", "programId", "dateOfBirth", "gender", "address");
+            "departmentId", "majorId", "programId", "classCode", "dateOfBirth", "gender", "address"));
 
     private final StudentRepository studentRepository;
     private final StudentMapper studentMapper;
@@ -77,10 +78,14 @@ public class StudentServiceImpl implements StudentService {
     private final MajorRepository majorRepository;
     private final TrainingProgramRepository trainingProgramRepository;
     private final StudentClassSectionRepository studentClassSectionRepository;
+    private final StudentClassRepository studentClassRepository;
 
     @Override
     @Transactional
     public StudentResponseDTO createStudent(StudentRequestDTO requestDTO) {
+        String code = generateNextStudentCode();
+        requestDTO.setStudentCode(code);
+        
         validateStudentCodeForCreate(requestDTO.getStudentCode());
 
         UUID finalUserId = requestDTO.getUserId();
@@ -97,6 +102,7 @@ public class StudentServiceImpl implements StudentService {
         student.setDepartment(resolveDepartment(requestDTO.getDepartmentId()));
         student.setMajor(resolveMajor(requestDTO.getMajorId()));
         student.setTrainingProgram(resolveTrainingProgram(requestDTO.getProgramId()));
+        student.setStudentClass(resolveOrCreateStudentClass(requestDTO));
         student.setActive(true);
 
         return studentMapper.toResponseDTO(studentRepository.save(student));
@@ -104,8 +110,15 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<StudentResponseDTO> getAllStudents(String search, Boolean isActive, Pageable pageable) {
-        return studentRepository.searchStudents(search, isActive, pageable)
+    public Page<StudentResponseDTO> getAllStudents(String search, Boolean isActive, 
+                                                   UUID departmentId, UUID majorId, 
+                                                   UUID studentClassId, UUID courseSectionId,
+                                                   Pageable pageable) {
+        if (courseSectionId != null) {
+            return getStudentsByCourseSection(courseSectionId, search, isActive, pageable);
+        }
+        
+        return studentRepository.searchStudents(search, isActive, departmentId, majorId, studentClassId, pageable)
                 .map(studentMapper::toResponseDTO);
     }
 
@@ -137,10 +150,13 @@ public class StudentServiceImpl implements StudentService {
         studentMapper.updateEntityFromDTO(requestDTO, student);
         student.setDepartment(resolveDepartment(requestDTO.getDepartmentId()));
         student.setMajor(resolveMajor(requestDTO.getMajorId()));
+        student.setStudentClass(resolveOrCreateStudentClass(requestDTO));
         student.setTrainingProgram(resolveTrainingProgram(requestDTO.getProgramId()));
 
         if (student.getUser() != null) {
             syncUserData(student.getUser(), requestDTO.getStudentCode(), requestDTO.getEmail(), student.isActive());
+        } else {
+            student.setUser(createStudentUser(requestDTO));
         }
 
         return studentMapper.toResponseDTO(studentRepository.save(student));
@@ -183,7 +199,7 @@ public class StudentServiceImpl implements StudentService {
         statusRequestDTO.setIsActive(requestDTO.getIsActive());
         return requestDTO.getStudentIds().stream()
                 .map(id -> changeStatus(id, statusRequestDTO))
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     @Override
@@ -234,9 +250,17 @@ public class StudentServiceImpl implements StudentService {
                 try {
                     List<String> values = parseCsvLine(line);
                     StudentRequestDTO requestDTO = buildImportRequest(values, headerIndex);
-                    createStudent(requestDTO);
+                    
+                    Optional<Student> existingStudent = studentRepository.findByStudentCode(requestDTO.getStudentCode());
+                    if (existingStudent.isPresent()) {
+                        updateStudent(existingStudent.get().getId(), requestDTO);
+                    } else {
+                        createStudent(requestDTO);
+                    }
+                    
                     createdCount++;
                 } catch (Exception ex) {
+                    log.error("Import failure row {}: {}", rowNumber, ex.getMessage());
                     errors.add("Dong " + rowNumber + ": " + ex.getMessage());
                 }
             }
@@ -254,34 +278,109 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     @Transactional(readOnly = true)
-    public byte[] exportStudents(String search, Boolean isActive, Pageable pageable) {
-        Page<Student> page = studentRepository.searchStudents(search, isActive, pageable);
+    public byte[] exportStudents(String search, Boolean isActive, 
+                                 UUID departmentId, UUID majorId, 
+                                 UUID studentClassId, UUID courseSectionId,
+                                 List<UUID> studentIds,
+                                 List<String> columns,
+                                 Pageable pageable) {
+        Page<Student> page;
+        if (studentIds != null && !studentIds.isEmpty()) {
+            List<Student> students = new ArrayList<>(studentRepository.findAllById(studentIds));
+            page = new PageImpl<>(students, pageable, students.size());
+        } else if (courseSectionId != null) {
+            List<Student> students = courseRegistrationRepository.findByCourseSectionIdAndStatus(courseSectionId, 1)
+                    .stream()
+                    .map(CourseRegistration::getStudent)
+                    .filter(student -> student != null && matchesSearch(student, search) && matchesStatus(student, isActive))
+                    .distinct()
+                    .collect(Collectors.toCollection(ArrayList::new));
+            page = new PageImpl<>(students, pageable, students.size());
+        } else {
+            page = studentRepository.searchStudents(search, isActive, departmentId, majorId, studentClassId, pageable);
+        }
+
+        Map<String, String> headerMap = new LinkedHashMap<>();
+        headerMap.put("studentCode", "Ma sinh vien");
+        headerMap.put("fullName", "Ho va ten");
+        headerMap.put("firstName", "Ho dem");
+        headerMap.put("lastName", "Ten");
+        headerMap.put("email", "Email");
+        headerMap.put("phone", "So dien thoai");
+        headerMap.put("gender", "Gioi tinh");
+        headerMap.put("dateOfBirth", "Ngay sinh");
+        headerMap.put("departmentName", "Khoa");
+        headerMap.put("majorName", "Nganh");
+        headerMap.put("programName", "Chuong trinh");
+        headerMap.put("address", "Dia chi");
+        headerMap.put("isActive", "Trang thai");
+        headerMap.put("createdAt", "Ngay tao");
+
+        List<String> selectedColumns = (columns == null || columns.isEmpty()) 
+                ? new ArrayList<>(headerMap.keySet()) 
+                : new ArrayList<>(columns);
+
         StringBuilder csv = new StringBuilder();
-        csv.append(String.join(",", IMPORT_HEADERS)).append("\n");
+        csv.append(selectedColumns.stream()
+                .map(col -> headerMap.getOrDefault(col, col))
+                .collect(Collectors.joining(",")))
+                .append("\n");
 
         for (Student student : page.getContent()) {
-            csv.append(csvValue(student.getStudentCode())).append(',')
-                    .append(csvValue(student.getFirstName())).append(',')
-                    .append(csvValue(student.getLastName())).append(',')
-                    .append(csvValue(student.getEmail())).append(',')
-                    .append(csvValue("")).append(',')
-                    .append(csvValue(
-                            student.getDepartment() != null ? student.getDepartment().getId().toString() : null))
-                    .append(',')
-                    .append(csvValue(student.getMajor() != null ? student.getMajor().getId().toString() : null))
-                    .append(',')
-                    .append(csvValue(
-                            student.getTrainingProgram() != null ? student.getTrainingProgram().getId().toString()
-                                    : null))
-                    .append(',')
-                    .append(csvValue(student.getDateOfBirth() != null ? student.getDateOfBirth().toString() : null))
-                    .append(',')
-                    .append(csvValue(student.getGender())).append(',')
-                    .append(csvValue(student.getAddress()))
-                    .append('\n');
+            List<String> row = new ArrayList<>();
+            for (String col : selectedColumns) {
+                row.add(csvValue(getStudentFieldValue(student, col)));
+            }
+            csv.append(String.join(",", row)).append("\n");
         }
 
         return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] getImportTemplate(UUID departmentId, UUID majorId, UUID programId, String classCode) {
+        StringBuilder csv = new StringBuilder();
+        csv.append(String.join(",", IMPORT_HEADERS)).append("\n");
+        
+        // Add a sample row with selected IDs if present
+        String dept = departmentId != null ? departmentId.toString() : "uuid-khoa";
+        String major = majorId != null ? majorId.toString() : "uuid-nganh";
+        String program = programId != null ? programId.toString() : "uuid-ctdt";
+        String classVal = classCode != null ? classCode : "Lớp_A";
+
+        csv.append("000001,Nguyen,An,an.nguyen@example.com,0901234567,")
+           .append(dept).append(",")
+           .append(major).append(",")
+           .append(program).append(",")
+           .append(classVal).append(",")
+           .append("2000-01-01,1,Hà Nội\n");
+           
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String getStudentFieldValue(Student student, String field) {
+        if (student == null) return "";
+        return switch (field) {
+            case "studentCode" -> student.getStudentCode();
+            case "fullName" -> student.getFullName();
+            case "firstName" -> student.getFirstName();
+            case "lastName" -> student.getLastName();
+            case "email" -> student.getEmail();
+            case "phone" -> student.getPhone();
+            case "gender" -> {
+                String g = student.getGender();
+                yield "1".equals(g) || "Nam".equalsIgnoreCase(g) ? "Nam" : "0".equals(g) || "Nu".equalsIgnoreCase(g) ? "Nu" : "Khac";
+            }
+            case "dateOfBirth" -> student.getDateOfBirth() != null ? student.getDateOfBirth().toString() : "";
+            case "departmentName" -> student.getDepartment() != null ? student.getDepartment().getName() : "";
+            case "majorName" -> student.getMajor() != null ? student.getMajor().getName() : "";
+            case "programName" -> student.getTrainingProgram() != null ? student.getTrainingProgram().getProgramName() : "";
+            case "address" -> student.getAddress();
+            case "isActive" -> student.isActive() ? "Dang hoat dong" : "Ngung hoat dong";
+            case "createdAt" -> student.getCreatedAt() != null ? student.getCreatedAt().toString() : "";
+            default -> "";
+        };
     }
 
     @Override
@@ -293,7 +392,7 @@ public class StudentServiceImpl implements StudentService {
                 .map(StudentClassSection::getStudent)
                 .filter(student -> student != null)
                 .distinct()
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
 
         return toStudentPage(students, search, isActive, pageable);
     }
@@ -307,7 +406,7 @@ public class StudentServiceImpl implements StudentService {
                 .map(CourseRegistration::getStudent)
                 .filter(student -> student != null)
                 .distinct()
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
 
         return toStudentPage(students, search, isActive, pageable);
     }
@@ -342,7 +441,7 @@ public class StudentServiceImpl implements StudentService {
         List<UUID> sectionIds = registrations.stream()
                 .filter(reg -> reg.getStatus() != null && reg.getStatus() == 1)
                 .map(reg -> reg.getCourseSection().getId())
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
 
         List<StudentScheduleResponseDTO> allSchedules = sectionIds.stream()
                 .flatMap(id -> scheduleRepository.findAllByCourseSectionId(id).stream())
@@ -353,10 +452,10 @@ public class StudentServiceImpl implements StudentService {
         int end = Math.min((start + pageable.getPageSize()), allSchedules.size());
 
         if (start > allSchedules.size()) {
-            return new PageImpl<>(List.of(), pageable, allSchedules.size());
+            return new PageImpl<>(new ArrayList<>(), pageable, allSchedules.size());
         }
 
-        return new PageImpl<>(allSchedules.subList(start, end), pageable, allSchedules.size());
+        return new PageImpl<>(new ArrayList<>(allSchedules.subList(start, end)), pageable, allSchedules.size());
     }
 
     private Users createStudentUser(StudentRequestDTO requestDTO) {
@@ -375,12 +474,28 @@ public class StudentServiceImpl implements StudentService {
                 .username(requestDTO.getStudentCode())
                 .password(passwordEncoder.encode("123456"))
                 .email(requestDTO.getEmail())
-                .roles(Set.of(studentRole))
+                .roles(new HashSet<>(Collections.singletonList(studentRole)))
                 .isActive(true)
                 .emailVerified(true)
                 .build();
 
         return userRepository.save(newUser);
+    }
+
+    private String generateNextStudentCode() {
+        return studentRepository.findFirstByOrderByStudentCodeDesc()
+                .map(latestStudent -> {
+                    String latest = latestStudent.getStudentCode();
+                    try {
+                        String numericPart = latest.replaceAll("\\D", "");
+                        if (numericPart.isEmpty()) return "000001";
+                        long nextNum = Long.parseLong(numericPart) + 1;
+                        return String.format("%06d", nextNum);
+                    } catch (NumberFormatException e) {
+                        return "000001";
+                    }
+                })
+                .orElse("000001");
     }
 
     private void validateStudentCodeForCreate(String studentCode) {
@@ -421,6 +536,48 @@ public class StudentServiceImpl implements StudentService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Khong tim thay chuong trinh dao tao"));
     }
 
+    private StudentClass resolveStudentClass(UUID studentClassId) {
+        if (studentClassId == null) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Lop hanh chinh la bat buoc");
+        }
+
+        return studentClassRepository.findById(studentClassId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Khong tim thay lop hanh chinh"));
+    }
+
+    private StudentClass resolveOrCreateStudentClass(StudentRequestDTO request) {
+        if (request.getStudentClassId() != null) {
+            return studentClassRepository.findById(request.getStudentClassId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Khong tim thay lop hanh chinh"));
+        }
+        
+        String code = request.getClassCode();
+        if (code == null || code.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Ma lop hanh chinh khong duoc de trong");
+        }
+
+        return studentClassRepository.findByClassCode(code)
+                .orElseGet(() -> {
+                    StudentClass newClass = StudentClass.builder()
+                            .classCode(code)
+                            .className(code)
+                            .department(resolveDepartment(request.getDepartmentId()))
+                            .major(resolveMajor(request.getMajorId()))
+                            .trainingProgram(resolveTrainingProgram(request.getProgramId()))
+                            .build();
+                    return studentClassRepository.save(newClass);
+                });
+    }
+
+    private StudentClass resolveStudentClassFromCode(String classCode) {
+        if (classCode == null || classCode.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "Ma lop hanh chinh khong duoc de trong");
+        }
+
+        return studentClassRepository.findByClassCode(classCode)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Khong tim thay lop hanh chinh voi ma: " + classCode));
+    }
+
     private void syncUserData(Users user, String username, String email, boolean isActive) {
         ensureEmailNotUsed(email, user.getId());
         user.setUsername(username);
@@ -451,34 +608,59 @@ public class StudentServiceImpl implements StudentService {
 
     private void validateImportHeaders(List<String> headers) {
         List<String> normalizedHeaders = headers.stream()
-                .map(String::trim)
-                .toList();
-        if (!normalizedHeaders.containsAll(IMPORT_HEADERS)) {
+                .map(this::normalizeHeaderName)
+                .collect(Collectors.toCollection(ArrayList::new));
+        
+        List<String> missingHeaders = IMPORT_HEADERS.stream()
+                .filter(h -> !normalizedHeaders.contains(h))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        if (!missingHeaders.isEmpty()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST,
-                    "Header CSV khong hop le. Can co cac cot: " + String.join(", ", IMPORT_HEADERS));
+                    "Header CSV thieu hoac khong hop le: " + String.join(", ", missingHeaders));
         }
+    }
+
+    private String normalizeHeaderName(String header) {
+        if (header == null) return "";
+        String h = header.trim();
+        // Fully case-insensitive mapping for all import headers
+        if (h.equalsIgnoreCase("studentCode") || h.equalsIgnoreCase("studentCo")) return "studentCode";
+        if (h.equalsIgnoreCase("firstName")) return "firstName";
+        if (h.equalsIgnoreCase("lastName")) return "lastName";
+        if (h.equalsIgnoreCase("email")) return "email";
+        if (h.equalsIgnoreCase("phone")) return "phone";
+        if (h.equalsIgnoreCase("departmentId") || h.equalsIgnoreCase("departmen")) return "departmentId";
+        if (h.equalsIgnoreCase("majorId") || h.equalsIgnoreCase("major")) return "majorId";
+        if (h.equalsIgnoreCase("programId") || h.equalsIgnoreCase("program")) return "programId";
+        if (h.equalsIgnoreCase("classCode")) return "classCode";
+        if (h.equalsIgnoreCase("dateOfBirth") || h.equalsIgnoreCase("dateOfBirt")) return "dateOfBirth";
+        if (h.equalsIgnoreCase("gender")) return "gender";
+        if (h.equalsIgnoreCase("address")) return "address";
+        return h;
     }
 
     private Map<String, Integer> buildHeaderIndex(List<String> headers) {
         Map<String, Integer> headerIndex = new LinkedHashMap<>();
         for (int i = 0; i < headers.size(); i++) {
-            headerIndex.put(headers.get(i).trim(), i);
+            headerIndex.put(normalizeHeaderName(headers.get(i)), i);
         }
         return headerIndex;
     }
 
     private StudentRequestDTO buildImportRequest(List<String> values, Map<String, Integer> headerIndex) {
         StudentRequestDTO requestDTO = new StudentRequestDTO();
-        requestDTO.setStudentCode(getCsvValue(values, headerIndex, "studentCode"));
+        requestDTO.setStudentCode(normalizeStudentCode(getCsvValue(values, headerIndex, "studentCode")));
         requestDTO.setFirstName(getCsvValue(values, headerIndex, "firstName"));
         requestDTO.setLastName(getCsvValue(values, headerIndex, "lastName"));
         requestDTO.setEmail(getCsvValue(values, headerIndex, "email"));
-        requestDTO.setPhone(getCsvValue(values, headerIndex, "phone"));
+        requestDTO.setPhone(normalizePhone(getCsvValue(values, headerIndex, "phone")));
         requestDTO.setAddress(getCsvValue(values, headerIndex, "address"));
 
         String departmentId = getCsvValue(values, headerIndex, "departmentId");
         String majorId = getCsvValue(values, headerIndex, "majorId");
         String programId = getCsvValue(values, headerIndex, "programId");
+        String classCode = getCsvValue(values, headerIndex, "classCode");
         String dateOfBirth = getCsvValue(values, headerIndex, "dateOfBirth");
         String gender = getCsvValue(values, headerIndex, "gender");
 
@@ -491,14 +673,73 @@ public class StudentServiceImpl implements StudentService {
         if (programId != null && !programId.isBlank()) {
             requestDTO.setProgramId(UUID.fromString(programId));
         }
+        if (classCode != null && !classCode.isBlank()) {
+            requestDTO.setClassCode(classCode);
+            studentClassRepository.findByClassCode(classCode)
+                    .ifPresent(sClass -> requestDTO.setStudentClassId(sClass.getId()));
+        }
         if (dateOfBirth != null && !dateOfBirth.isBlank()) {
-            requestDTO.setDateOfBirth(LocalDate.parse(dateOfBirth));
+            requestDTO.setDateOfBirth(parseFlexibleDate(dateOfBirth));
         }
         if (gender != null && !gender.isBlank()) {
-            requestDTO.setGender(Integer.parseInt(gender));
+            try {
+                requestDTO.setGender(Integer.parseInt(gender));
+            } catch (NumberFormatException e) {
+                requestDTO.setGender("Nam".equalsIgnoreCase(gender) ? 1 : 0);
+            }
         }
 
         return requestDTO;
+    }
+
+    private LocalDate parseFlexibleDate(String dateStr) {
+        if (dateStr == null || dateStr.isBlank()) return null;
+        
+        List<String> patterns = Arrays.asList(
+            "yyyy-MM-dd", "d/M/yyyy", "dd/MM/yyyy", "M/d/yyyy", "MM/dd/yyyy"
+        );
+        
+        for (String pattern : patterns) {
+            try {
+                return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern(pattern));
+            } catch (DateTimeParseException ignored) {}
+        }
+        
+        log.warn("Could not parse date: {}", dateStr);
+        return null;
+    }
+
+    private String normalizePhone(String phoneStr) {
+        if (phoneStr == null || phoneStr.isBlank()) return "";
+        
+        // Handle Excel scientific notation e.g. 9.01E+08
+        if (phoneStr.toUpperCase().contains("E")) {
+            try {
+                BigDecimal bd = new BigDecimal(phoneStr);
+                phoneStr = bd.toPlainString();
+            } catch (Exception ignored) {}
+        }
+        
+        // Remove non-numeric
+        String numeric = phoneStr.replaceAll("\\D", "");
+        if (numeric.isEmpty()) return "";
+        
+        // Add leading 0 if needed (assuming 10-digit VN numbers)
+        if (numeric.length() == 9) return "0" + numeric;
+        return numeric;
+    }
+
+    private String normalizeStudentCode(String code) {
+        if (code == null || code.isBlank()) return "";
+        String trimmed = code.trim();
+        if (trimmed.matches("\\d+")) {
+            try {
+                return String.format("%06d", Long.parseLong(trimmed));
+            } catch (NumberFormatException e) {
+                return trimmed;
+            }
+        }
+        return trimmed;
     }
 
     private String getCsvValue(List<String> values, Map<String, Integer> headerIndex, String key) {
@@ -533,7 +774,7 @@ public class StudentServiceImpl implements StudentService {
         }
 
         values.add(current.toString());
-        return values.stream().map(this::stripCsvQuotes).toList();
+        return values.stream().map(this::stripCsvQuotes).collect(Collectors.toCollection(ArrayList::new));
     }
 
     private String stripCsvQuotes(String value) {
@@ -578,18 +819,18 @@ public class StudentServiceImpl implements StudentService {
                 .filter(student -> matchesSearch(student, search))
                 .filter(student -> matchesStatus(student, isActive))
                 .sorted(buildStudentComparator(pageable))
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
 
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), filteredStudents.size());
 
         if (start >= filteredStudents.size()) {
-            return new PageImpl<>(List.of(), pageable, filteredStudents.size());
+            return new PageImpl<>(new ArrayList<>(), pageable, filteredStudents.size());
         }
 
         List<StudentResponseDTO> content = filteredStudents.subList(start, end).stream()
                 .map(studentMapper::toResponseDTO)
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
 
         return new PageImpl<>(content, pageable, filteredStudents.size());
     }

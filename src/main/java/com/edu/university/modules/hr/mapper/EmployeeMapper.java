@@ -8,21 +8,20 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", uses = {PositionMapper.class}, unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface EmployeeMapper {
 
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "department", ignore = true)
-    @Mapping(target = "position", ignore = true)
+    @Mapping(target = "positions", ignore = true)
     Employee toEntity(EmployeeRequestDTO requestDTO);
 
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "departmentId", source = "department.id")
-    @Mapping(target = "positionId", source = "position.id")
     EmployeeResponseDTO toResponseDTO(Employee employee);
 
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "department", ignore = true)
-    @Mapping(target = "position", ignore = true)
+    @Mapping(target = "positions", ignore = true)
     void updateEntityFromDTO(EmployeeRequestDTO requestDTO, @MappingTarget Employee employee);
 }

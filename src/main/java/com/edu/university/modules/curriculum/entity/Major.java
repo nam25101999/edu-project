@@ -18,7 +18,7 @@ import java.util.UUID;
 @Table(
         name = "majors",
         indexes = {
-                @Index(name = "idx_majors_major_code", columnList = "major_code"),
+                @Index(name = "idx_majors_major_code", columnList = "code"),
                 @Index(name = "idx_majors_name", columnList = "name"),
                 @Index(name = "idx_majors_department_id", columnList = "department_id"),
                 @Index(name = "idx_majors_faculty_id", columnList = "faculty_id"),
@@ -46,7 +46,7 @@ public class Major {
     @JoinColumn(name = "department_id")
     private Department department;
 
-    @Column(name = "code", nullable = false, length = 20)
+    @Column(name = "code", length = 20)
     private String majorCode;
 
     @Column(name = "name", nullable = false, length = 255)
@@ -55,7 +55,6 @@ public class Major {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
-    // Theo thiết kế của bạn, trường này đang là VARCHAR(20), nên dùng String
     @Column(name = "effective_date", length = 20)
     private String effectiveDate;
 

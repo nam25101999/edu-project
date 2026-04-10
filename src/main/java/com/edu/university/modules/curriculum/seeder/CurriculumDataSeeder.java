@@ -90,25 +90,59 @@ public class CurriculumDataSeeder implements ModuleSeeder {
     }
 
     private void seedCourses(List<Department> depts) {
-        if (courseRepository.count() > 0) return;
+        if (courseRepository.count() >= 50) return;
 
-        List<Course> courses = List.of(
-                Course.builder().courseCode("JAVA01").name("Lập trình Java Cơ bản").credits(BigDecimal.valueOf(3)).department(depts.get(0)).isActive(true).build(),
-                Course.builder().courseCode("DB01").name("Cơ sở dữ liệu").credits(BigDecimal.valueOf(3)).department(depts.get(0)).isActive(true).build(),
-                Course.builder().courseCode("DSA01").name("Cấu trúc dữ liệu và Giải thuật").credits(BigDecimal.valueOf(3)).department(depts.get(0)).isActive(true).build(),
-                Course.builder().courseCode("WEB01").name("Lập trình Web Frontend").credits(BigDecimal.valueOf(3)).department(depts.get(0)).isActive(true).build(),
-                Course.builder().courseCode("MKT01").name("Marketing căn bản").credits(BigDecimal.valueOf(2)).department(depts.get(1)).isActive(true).build(),
-                Course.builder().courseCode("ECO01").name("Kinh tế vĩ mô").credits(BigDecimal.valueOf(3)).department(depts.get(1)).isActive(true).build(),
-                Course.builder().courseCode("ENG01").name("Tiếng Anh giao tiếp 1").credits(BigDecimal.valueOf(3)).department(depts.get(2)).isActive(true).build(),
-                Course.builder().courseCode("ENG02").name("Tiếng Anh giao tiếp 2").credits(BigDecimal.valueOf(3)).department(depts.get(2)).isActive(true).build(),
-                Course.builder().courseCode("MATH01").name("Toán cao cấp A1").credits(BigDecimal.valueOf(3)).department(depts.get(4)).isActive(true).build(),
-                Course.builder().courseCode("MATH02").name("Toán cao cấp A2").credits(BigDecimal.valueOf(3)).department(depts.get(4)).isActive(true).build(),
-                Course.builder().courseCode("PHY01").name("Vật lý đại cương 1").credits(BigDecimal.valueOf(3)).department(depts.get(4)).isActive(true).build(),
-                Course.builder().courseCode("NET01").name("Mạng máy tính").credits(BigDecimal.valueOf(3)).department(depts.get(0)).isActive(true).build(),
-                Course.builder().courseCode("OS01").name("Hệ điều hành").credits(BigDecimal.valueOf(3)).department(depts.get(0)).isActive(true).build(),
-                Course.builder().courseCode("AI01").name("Trí tuệ nhân tạo").credits(BigDecimal.valueOf(3)).department(depts.get(0)).isActive(true).build(),
-                Course.builder().courseCode("CIR01").name("Mạch điện tử").credits(BigDecimal.valueOf(3)).department(depts.get(3)).isActive(true).build(),
-                Course.builder().courseCode("ENG_TOEIC").name("Luyện thi TOEIC-550").credits(BigDecimal.valueOf(4)).department(depts.get(2)).isActive(true).build());
+        List<Course> courses = new ArrayList<>();
+        String[][] commonCourses = {
+            {"MATH", "Toán cao cấp", "3"}, {"PHY", "Vật lý đại cương", "3"}, 
+            {"ENG", "Tiếng Anh chuyên ngành", "3"}, {"POL", "Triết học Mác-Lênin", "2"},
+            {"SOFT", "Kỹ năng mềm", "2"}, {"LAW", "Pháp luật đại cương", "2"}
+        };
+        
+        // Add general courses for most departments
+        for (int i = 0; i < 5; i++) {
+            for (String[] data : commonCourses) {
+                courses.add(Course.builder()
+                        .courseCode(data[0] + (i + 1))
+                        .name(data[1] + " " + (i + 1))
+                        .credits(new BigDecimal(data[2]))
+                        .department(depts.get(i % depts.size()))
+                        .isActive(true).build());
+            }
+        }
+
+        // Specific Computing courses
+        String[] computingCourses = {"Java Programming", "Database Systems", "Web Development", "Data Structures", "Algorithms", "Networking", "Operating Systems", "Cloud Computing", "AI", "Cybersecurity"};
+        for (int i = 0; i < computingCourses.length; i++) {
+            courses.add(Course.builder()
+                    .courseCode("IT_" + (i + 1))
+                    .name(computingCourses[i])
+                    .credits(BigDecimal.valueOf(3))
+                    .department(depts.get(0))
+                    .isActive(true).build());
+        }
+
+        // Specific Economy courses
+        String[] economyCourses = {"Microeconomics", "Macroeconomics", "Accounting", "Marketing", "Finance", "Investment", "Audit", "Logistics"};
+        for (int i = 0; i < economyCourses.length; i++) {
+            courses.add(Course.builder()
+                    .courseCode("EC_" + (i + 1))
+                    .name(economyCourses[i])
+                    .credits(BigDecimal.valueOf(3))
+                    .department(depts.get(1))
+                    .isActive(true).build());
+        }
+
+        // Add more until 60
+        for (int i = 0; i < 15; i++) {
+             courses.add(Course.builder()
+                    .courseCode("SPEC_" + (i + 1))
+                    .name("Học phần chuyên sâu " + (i + 1))
+                    .credits(BigDecimal.valueOf(4))
+                    .department(depts.get(i % depts.size()))
+                    .isActive(true).build());
+        }
+
         courseRepository.saveAll(courses);
     }
 

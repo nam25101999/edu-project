@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -19,8 +19,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@SQLDelete(sql = "UPDATE course_sections SET is_active = false, deleted_at = NOW() WHERE id = ?")
-@Where(clause = "is_active = true")
+@SQLDelete(sql = "UPDATE course_sections SET is_active = 0, deleted_at = GETDATE() WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 public class CourseSection extends BaseEntity {
 
     @Id

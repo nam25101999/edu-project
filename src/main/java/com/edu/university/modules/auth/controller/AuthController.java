@@ -228,6 +228,15 @@ public class AuthController {
         );
     }
 
+    @GetMapping("/users/staff")
+    @LogAction(action = "READ_STAFF", entityName = "USER")
+    public ResponseEntity<BaseResponse<PageResponse<UserResponseDTO>>> getStaffUsers(
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(
+                BaseResponse.okPage(authService.getStaffUsers(pageable))
+        );
+    }
+
     @GetMapping("/users/{id}")
     @LogAction(action = "READ", entityName = "USER")
     public ResponseEntity<BaseResponse<UserResponseDTO>> getUserById(@PathVariable UUID id) {

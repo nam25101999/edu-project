@@ -20,6 +20,8 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
 
     boolean existsByStudentCode(String studentCode);
 
+    Optional<Student> findFirstByOrderByStudentCodeDesc();
+
     boolean existsByUser_Email(String email);
 
     boolean existsByUserId(UUID userId);
@@ -41,10 +43,16 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
                    LOWER(COALESCE(s.email, '')) LIKE LOWER(CONCAT('%', :search, '%')) OR
                    LOWER(COALESCE(u.email, '')) LIKE LOWER(CONCAT('%', :search, '%')))
               AND (:isActive IS NULL OR s.isActive = :isActive)
+              AND (:departmentId IS NULL OR s.department.id = :departmentId)
+              AND (:majorId IS NULL OR s.major.id = :majorId)
+              AND (:studentClassId IS NULL OR s.studentClass.id = :studentClassId)
             """)
     Page<Student> searchStudents(
             @Param("search") String search,
             @Param("isActive") Boolean isActive,
+            @Param("departmentId") UUID departmentId,
+            @Param("majorId") UUID majorId,
+            @Param("studentClassId") UUID studentClassId,
             Pageable pageable
     );
 }

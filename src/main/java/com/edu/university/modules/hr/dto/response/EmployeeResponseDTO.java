@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -19,8 +20,7 @@ public class EmployeeResponseDTO {
     private UUID userId;
     private UUID departmentId;
     private String departmentName;
-    private UUID positionId;
-    private String positionName;
+    private Set<PositionResponseDTO> positions;
     private LocalDate dateOfBirth;
     private LocalDate hireDate;
     private Boolean isActive;

@@ -74,23 +74,35 @@ public class FinanceDataSeeder implements ModuleSeeder {
     }
 
     private List<StudentTuition> seedStudentTuitions(List<Student> students, List<Semester> semesters, List<TuitionFee> fees) {
-        if (studentTuitionRepository.count() > 0) return studentTuitionRepository.findAll();
+        if (studentTuitionRepository.count() >= 150) return studentTuitionRepository.findAll();
         List<StudentTuition> tuitions = new ArrayList<>();
         for (int i = 0; i < students.size(); i++) {
             Student s = students.get(i);
-            TuitionFee fee = fees.get(i % fees.size());
-            BigDecimal raw = fee.getBaseTuition().add(fee.getPricePerCredit().multiply(BigDecimal.valueOf(15)));
-            BigDecimal paid = i % 3 == 0 ? raw : (i % 3 == 1 ? raw.multiply(new BigDecimal("0.5")) : BigDecimal.ZERO);
+            TuitionFee fee = fees.stream()
+                    .filter(f -> f.getTrainingProgram().getId().equals(s.getTrainingProgram().getId()))
+                    .findFirst()
+                    .orElse(fees.get(0));
+            
+            // Randomize credit counts (15-20)
+            int credits = 15 + (i % 6);
+            BigDecimal raw = fee.getBaseTuition().add(fee.getPricePerCredit().multiply(BigDecimal.valueOf(credits)));
+            
+            // Randomize payment status
+            BigDecimal paid;
+            if (i % 4 == 0) paid = raw; // Fully paid
+            else if (i % 4 == 1) paid = raw.divide(BigDecimal.valueOf(2), 0, java.math.RoundingMode.HALF_UP); // Partial
+            else if (i % 4 == 2) paid = BigDecimal.valueOf(2000000); // Small payment
+            else paid = BigDecimal.ZERO; // Unpaid
 
             tuitions.add(StudentTuition.builder()
                     .student(s)
-                    .semester(semesters.get(i % semesters.size()))
+                    .semester(semesters.get(0)) // Current semester
                     .tuitionFee(fee)
-                    .totalCredits(15)
+                    .totalCredits(credits)
                     .rawAmount(raw)
-                    .scholarshipDeduction(BigDecimal.ZERO)
+                    .scholarshipDeduction(i % 10 == 0 ? BigDecimal.valueOf(5000000) : BigDecimal.ZERO)
                     .exemptionAmount(BigDecimal.ZERO)
-                    .netAmount(raw)
+                    .netAmount(i % 10 == 0 ? raw.subtract(BigDecimal.valueOf(5000000)) : raw)
                     .paidAmount(paid)
                     .debtAmount(raw.subtract(paid))
                     .status(paid.compareTo(raw) >= 0 ? 1 : (paid.compareTo(BigDecimal.ZERO) > 0 ? 2 : 3))

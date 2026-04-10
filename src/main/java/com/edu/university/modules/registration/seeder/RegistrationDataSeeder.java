@@ -37,14 +37,15 @@ public class RegistrationDataSeeder implements ModuleSeeder {
         }
 
         List<CourseRegistration> registrations = new ArrayList<>();
-        // Each student automatically registers for 4 courses
+        // Each student automatically registers for 4-6 courses
         for (int i = 0; i < students.size(); i++) {
-            for (int j = 0; j < 4; j++) {
+            int courseCount = 4 + (i % 3);
+            for (int j = 0; j < courseCount; j++) {
                 registrations.add(CourseRegistration.builder()
                         .student(students.get(i))
                         .courseSection(sections.get((i + j) % sections.size()))
                         .status(1) // 1: Success
-                        .isPaid(i % 2 == 0)
+                        .isPaid(i % 5 != 0) // Some unpaid for testing
                         .build());
             }
         }

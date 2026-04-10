@@ -20,6 +20,9 @@ public interface StudentClassRepository extends JpaRepository<StudentClass, UUID
     // Lọc danh sách lớp chỉ theo ngành
     Page<StudentClass> findByMajorId(UUID majorId, Pageable pageable);
 
+    // Tìm lớp theo mã lớp
+    java.util.Optional<StudentClass> findByClassCode(String classCode);
+
     // Kiểm tra mã lớp đã tồn tại chưa
     boolean existsByClassCode(String classCode);
 }

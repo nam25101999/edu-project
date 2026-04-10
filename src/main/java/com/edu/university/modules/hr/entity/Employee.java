@@ -13,6 +13,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -60,9 +62,14 @@ public class Employee {
     @JoinColumn(name = "department_id")
     private Department department;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "position_id")
-    private Position position;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "employee_positions",
+        joinColumns = @JoinColumn(name = "employee_id"),
+        inverseJoinColumns = @JoinColumn(name = "position_id")
+    )
+    @Builder.Default
+    private Set<Position> positions = new HashSet<>();
 
     @Column(name = "hire_date")
     private LocalDate hireDate;

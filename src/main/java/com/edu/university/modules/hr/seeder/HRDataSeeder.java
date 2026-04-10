@@ -46,9 +46,11 @@ public class HRDataSeeder implements ModuleSeeder {
         List<Employee> employees = seedEmployees(depts, positions);
         seedFaculties();
         
+        Role adminRole = roleRepository.findByName("ADMIN").orElse(null);
         Role lecturerRole = roleRepository.findByName("LECTURER").orElse(null);
-        if (lecturerRole != null) {
-            linkLecturersToEmployees(employees, lecturerRole);
+        
+        if (adminRole != null && lecturerRole != null) {
+            linkEmployeesToUsers(employees, adminRole, lecturerRole);
         }
     }
 
@@ -74,26 +76,42 @@ public class HRDataSeeder implements ModuleSeeder {
     }
 
     private List<Position> seedPositions(List<Department> depts) {
-        if (positionRepository.count() > 0) return positionRepository.findAll();
+        if (positionRepository.count() >= 10) return positionRepository.findAll();
         List<Position> pos = List.of(
-                Position.builder().code("TK").name("Trưởng khoa").level("Management").department(depts.get(0)).isActive(true).build(),
-                Position.builder().code("GV").name("Giảng viên").level("Academic").department(depts.get(0)).isActive(true).build(),
-                Position.builder().code("NV").name("Nhân viên").level("Staff").department(depts.get(1)).isActive(true).build());
+                Position.builder().code("DEAN").name("Trưởng khoa").level("Management").department(depts.get(0)).isActive(true).build(),
+                Position.builder().code("VDEAN").name("Phó trưởng khoa").level("Management").department(depts.get(0)).isActive(true).build(),
+                Position.builder().code("HOD").name("Trưởng bộ môn").level("Management").department(depts.get(0)).isActive(true).build(),
+                Position.builder().code("PROF").name("Giáo sư").level("Academic").department(depts.get(0)).isActive(true).build(),
+                Position.builder().code("ASSOC_PROF").name("Phó Giáo sư").level("Academic").department(depts.get(0)).isActive(true).build(),
+                Position.builder().code("LEC").name("Giảng viên").level("Academic").department(depts.get(0)).isActive(true).build(),
+                Position.builder().code("ASST").name("Trợ giảng").level("Academic").department(depts.get(0)).isActive(true).build(),
+                Position.builder().code("ADMIN_H").name("Trưởng phòng hành chính").level("Staff").department(depts.get(1)).isActive(true).build(),
+                Position.builder().code("STAFF").name("Nhân viên").level("Staff").department(depts.get(1)).isActive(true).build(),
+                Position.builder().code("TECH").name("Kỹ thuật viên").level("Staff").department(depts.get(0)).isActive(true).build());
         return positionRepository.saveAll(pos);
     }
 
     private List<Employee> seedEmployees(List<Department> depts, List<Position> pos) {
-        if (employeeRepository.count() > 0) return employeeRepository.findAll();
+        if (employeeRepository.count() >= 40) return employeeRepository.findAll();
         List<Employee> emps = new ArrayList<>();
-        String[] empNames = { "Nguyễn Văn A", "Trần Thị B", "Lê Văn C", "Phạm Văn D", "Hoàng Thị E", "Vũ Văn F", "Đặng Thị G", "Bùi Văn H", "Đỗ Thị I", "Hồ Văn K", "Ngô Thị L", "Dương Văn M", "Lý Thị N", "Đào Văn O", "Đoàn Thị P" };
+        String[] empNames = { 
+            "Nguyễn Văn A", "Trần Thị B", "Lê Văn C", "Phạm Văn D", "Hoàng Thị E", 
+            "Vũ Văn F", "Đặng Thị G", "Bùi Văn H", "Đỗ Thị I", "Hồ Văn K", 
+            "Ngô Thị L", "Dương Văn M", "Lý Thị N", "Đào Văn O", "Đoàn Thị P",
+            "Trịnh Văn Q", "Lâm Thị R", "Mai Văn S", "Phùng Thị T", "Châu Văn U",
+            "Đinh Văn V", "Quách Thị W", "Âu Văn X", "Thân Thị Y", "Vi Văn Z",
+            "Tạ Văn An", "Uông Thị Bình", "Khổng Văn Cường", "Tôn Thị Đào", "Bạch Văn Em",
+            "Chu Văn Giang", "Hà Thị Hoa", "Lương Văn Hùng", "Ninh Thị Lan", "Thái Văn Minh",
+            "Bế Thị Nga", "Nông Văn Phúc", "Sầm Thị Quế", "Vương Văn Sơn", "Lục Thị Tuyết"
+        };
         for (int i = 0; i < empNames.length; i++) {
             emps.add(Employee.builder()
                     .employeeCode(String.format("NV%03d", i + 1))
                     .fullName(empNames[i])
                     .email(String.format("nv%03d@edu.vn", i + 1))
-                    .phone("09" + (80000000 + i))
+                    .phone("09" + String.format("%08d", 80000000 + i))
                     .department(depts.get(i % depts.size()))
-                    .position(i % 5 == 0 ? pos.get(0) : (i % 2 == 0 ? pos.get(1) : pos.get(2)))
+                    .positions(java.util.Set.of(pos.get(i % pos.size())))
                     .isActive(true)
                     .build());
         }
@@ -115,16 +133,29 @@ public class HRDataSeeder implements ModuleSeeder {
         facultyRepository.saveAll(faculties);
     }
 
-    private void linkLecturersToEmployees(List<Employee> employees, Role lecturerRole) {
+    private void linkEmployeesToUsers(List<Employee> employees, Role adminRole, Role lecturerRole) {
         for (Employee emp : employees) {
-            if (emp.getPosition() != null && "Academic".equals(emp.getPosition().getLevel()) && emp.getUser() == null) {
-                String username = "gv_" + emp.getEmployeeCode().toLowerCase();
+            if (emp.getUser() == null) {
+                // Use employee code as username (normalize to lowercase)
+                String username = emp.getEmployeeCode().toLowerCase();
+                
                 if (userRepository.findByUsername(username).isEmpty()) {
+                    // Map roles: Managers receive ADMIN, others receive LECTURER
+                    Role targetRole = lecturerRole;
+                    if (emp.getPositions() != null && !emp.getPositions().isEmpty()) {
+                        boolean isManager = emp.getPositions().stream()
+                                .anyMatch(p -> List.of("DEAN", "VDEAN", "HOD", "ADMIN_H").contains(p.getCode()));
+                        if (isManager) {
+                            targetRole = adminRole;
+                        }
+                    }
+
                     Users user = Users.builder()
                             .username(username)
                             .password(passwordEncoder.encode("123456"))
+                            .fullName(emp.getFullName())
                             .email(emp.getEmail())
-                            .roles(Set.of(lecturerRole))
+                            .roles(Set.of(targetRole))
                             .isActive(true)
                             .emailVerified(true)
                             .build();

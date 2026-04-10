@@ -93,15 +93,15 @@ public class DepartmentStaffController {
         List<Employee> allStaff = employeeRepository.findByDepartmentId(id);
         
         Employee dean = allStaff.stream()
-                .filter(e -> e.getUser() != null && e.getPosition() != null && "TRUONG_KHOA".equals(e.getPosition().getCode()))
+                .filter(e -> e.getUser() != null && e.getPositions() != null && e.getPositions().stream().anyMatch(p -> "TRUONG_KHOA".equals(p.getCode())))
                 .findFirst().orElse(null);
                 
         List<Employee> viceDeans = allStaff.stream()
-                .filter(e -> e.getUser() != null && e.getPosition() != null && "PHO_KHOA".equals(e.getPosition().getCode()))
+                .filter(e -> e.getUser() != null && e.getPositions() != null && e.getPositions().stream().anyMatch(p -> "PHO_KHOA".equals(p.getCode())))
                 .collect(Collectors.toList());
                 
         List<Employee> lecturers = allStaff.stream()
-                .filter(e -> e.getUser() != null && e.getPosition() != null && "GIANG_VIEN".equals(e.getPosition().getCode()))
+                .filter(e -> e.getUser() != null && e.getPositions() != null && e.getPositions().stream().anyMatch(p -> "GIANG_VIEN".equals(p.getCode())))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(BaseResponse.ok(DepartmentStaffResponse.builder()
@@ -134,7 +134,7 @@ public class DepartmentStaffController {
     public ResponseEntity<BaseResponse<Void>> removeStaff(@PathVariable UUID id, @PathVariable UUID employeeId) {
         Employee employee = employeeRepository.findById(employeeId).orElseThrow();
         employee.setDepartment(null);
-        employee.setPosition(null);
+        employee.getPositions().clear();
         employeeRepository.save(employee);
         return ResponseEntity.ok(BaseResponse.ok("Đã xóa nhân sự khỏi khoa", null));
     }
@@ -162,9 +162,11 @@ public class DepartmentStaffController {
 
         if (isUnique) {
             // Remove existing unique role holder (e.g. Dean)
-            employeeRepository.findByDepartmentIdAndPositionCode(deptId, posCode).ifPresent(e -> {
-                e.setPosition(null);
-                e.setDepartment(null);
+            employeeRepository.findByDepartmentIdAndPositions_Code(deptId, posCode).ifPresent(e -> {
+                e.getPositions().removeIf(p -> posCode.equals(p.getCode()));
+                if (e.getPositions().isEmpty()) {
+                    e.setDepartment(null);
+                }
                 employeeRepository.save(e);
             });
         }
@@ -178,7 +180,7 @@ public class DepartmentStaffController {
                         .build());
 
         employee.setDepartment(dept);
-        employee.setPosition(pos);
+        employee.getPositions().add(pos);
         
         return ResponseEntity.ok(BaseResponse.ok("Phân công nhiệm vụ thành công", employeeMapper.toResponseDTO(employeeRepository.save(employee))));
     }

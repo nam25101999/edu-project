@@ -28,13 +28,13 @@ public class AcademicYear extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "code", unique = true, nullable = false, length = 50)
+    @Column(name = "academic_code", unique = true, length = 50)
     private String academicCode;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "academic_name", length = 100)
     private String academicName;
 
-    @Column(name = "year", length = 20)
+    @Column(name = "academic_year", length = 20)
     private String academicYear;
 
     @Column(length = 255)

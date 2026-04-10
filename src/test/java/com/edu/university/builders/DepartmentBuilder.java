@@ -8,7 +8,7 @@ public class DepartmentBuilder {
     private String code = "DEPT_" + UUID.randomUUID().toString().substring(0, 5);
     private String name = "Default Department";
     private String description = "Default Description";
-    private LocalDate establishedYear = LocalDate.now();
+    private LocalDate establishedDate = LocalDate.now();
     private boolean isActive = true;
 
     public static DepartmentBuilder aDepartment() {
@@ -30,7 +30,7 @@ public class DepartmentBuilder {
                 .code(code)
                 .name(name)
                 .description(description)
-                .establishedYear(establishedYear)
+                .establishedDate(establishedDate)
                 .isActive(isActive)
                 .build();
     }

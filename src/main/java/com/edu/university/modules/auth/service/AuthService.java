@@ -280,6 +280,12 @@ public class AuthService {
                 .map(authMapper::toUserResponseDTO);
     }
 
+    // 1b. GET ALL USERS EXCEPT STUDENTS (STAFF)
+    public Page<UserResponseDTO> getStaffUsers(Pageable pageable) {
+        return userRepository.findByRoles_NameNot("STUDENT", pageable)
+                .map(authMapper::toUserResponseDTO);
+    }
+
     // 2. GET USER BY ID
     public UserResponseDTO getUserById(UUID id) {
         Users user = userRepository.findById(id)

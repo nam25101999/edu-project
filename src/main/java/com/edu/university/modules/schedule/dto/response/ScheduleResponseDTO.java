@@ -11,6 +11,7 @@ import java.util.UUID;
 public class ScheduleResponseDTO {
     private UUID id;
     private UUID courseSectionId;
+    private String courseName;
     private String classCode;
     private UUID lecturerId;
     private String lecturerUsername;

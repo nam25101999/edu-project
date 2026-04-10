@@ -41,7 +41,7 @@ public class Course {
     @JoinColumn(name = "department_id")
     private Department department;
 
-    @Column(name = "code", length = 20)
+    @Column(name = "course_code", length = 20)
     private String courseCode;
 
     @Column(name = "name", length = 255)

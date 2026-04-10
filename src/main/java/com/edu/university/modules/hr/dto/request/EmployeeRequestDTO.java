@@ -6,6 +6,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -28,7 +29,7 @@ public class EmployeeRequestDTO {
     private String address;
 
     private UUID departmentId;
-    private UUID positionId;
+    private Set<UUID> positionIds;
 
     private LocalDate hireDate;
     private String contractType;

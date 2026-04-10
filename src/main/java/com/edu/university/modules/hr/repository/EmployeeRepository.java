@@ -24,9 +24,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     
     java.util.List<Employee> findByDepartmentId(UUID departmentId);
 
-    java.util.Optional<Employee> findByDepartmentIdAndPositionCode(UUID departmentId, String positionCode);
+    java.util.Optional<Employee> findByDepartmentIdAndPositions_Code(UUID departmentId, String positionCode);
 
-    java.util.List<Employee> findByDepartmentIdAndPositionCodeIn(UUID departmentId, java.util.Collection<String> positionCodes);
+    java.util.List<Employee> findByDepartmentIdAndPositions_CodeIn(UUID departmentId, java.util.Collection<String> positionCodes);
     
     @org.springframework.data.jpa.repository.Query("SELECT e FROM Employee e " +
             "JOIN e.user u " +

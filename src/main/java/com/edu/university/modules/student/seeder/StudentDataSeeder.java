@@ -91,32 +91,57 @@ public class StudentDataSeeder implements ModuleSeeder {
     }
 
     private void seedStudents(List<AcademicYear> years, List<Department> depts, List<Major> majors, List<TrainingProgram> programs) {
+        if (studentRepository.count() >= 150) return;
         Role studentRole = roleRepository.findByName("STUDENT").orElse(null);
-        List<Student> students = new ArrayList<>();
-        String[] stNames = { "Nguyễn Hoàng Nam", "Phạm Minh Hằng", "Lê Anh Tuấn", "Trần Thu Hà", "Vũ Quốc Việt", "Hoàng Mai Lan", "Đặng Đình Thái", "Bùi Thanh Trúc", "Đỗ Quang Hải", "Hồ Bích Ngọc", "Ngô Tấn Phát", "Dương Yến Nhi", "Lý Hải Minh", "Đào Thúy Quỳnh", "Đoàn Văn Hậu", "Trịnh Xuân Thanh", "Lâm Mỹ Dung", "Mai Văn Phúc", "Phùng Thanh Tùng", "Châu Bảo Nhi" };
+        List<StudentClass> allClasses = studentClassRepository.findAll();
+        if (allClasses.isEmpty()) return;
 
-        for (int i = 0; i < stNames.length; i++) {
-            String stuCode = String.format("SV%03d", i + 1);
-            if (userRepository.findByUsername(stuCode.toLowerCase()).isEmpty()) {
+        List<Student> students = new ArrayList<>();
+        
+        String[] firstNames = {"Nguyễn", "Trân", "Lê", "Phạm", "Hoàng", "Vũ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý", "Đào", "Đoàn", "Trịnh", "Lâm", "Mai", "Võ", "Phan"};
+        String[] middleNames = {"Anh", "Thanh", "Văn", "Thị", "Quốc", "Minh", "Thu", "Hải", "Bích", "Tấn", "Xuân", "Mỹ", "Bảo", "Khánh", "Duy"};
+        String[] lastNames = {"Tuấn", "Hà", "Việt", "Lan", "Thái", "Trúc", "Ngọc", "Phát", "Nhi", "Minh", "Quỳnh", "Hậu", "Thanh", "Dung", "Phúc", "Tùng", "Nhi", "Hùng", "Cường", "Trang"};
+
+        for (int i = 0; i < 200; i++) {
+            String firstName = firstNames[i % firstNames.length];
+            String middleName = middleNames[(i / 2) % middleNames.length];
+            String lastName = lastNames[(i / 3) % lastNames.length];
+            String fullName = firstName + " " + middleName + " " + lastName;
+            
+            String stuCode = String.format("%06d", i + 1);
+            String username = stuCode.toLowerCase();
+            
+            if (userRepository.findByUsername(username).isEmpty()) {
                 Users user = Users.builder()
-                        .username(stuCode.toLowerCase())
+                        .username(username)
                         .password(passwordEncoder.encode("123456"))
-                        .email(stuCode.toLowerCase() + "@student.edu.vn")
-                        .roles(Set.of(studentRole))
+                        .email(username + "@student.edu.vn")
+                        .roles(new java.util.HashSet<>(java.util.Collections.singletonList(studentRole)))
                         .isActive(true)
                         .build();
                 userRepository.save(user);
                 
-                int index = i % majors.size();
+                int mIndex = i % majors.size();
+                Major major = majors.get(mIndex);
+                
+                // Find classes for this major
+                List<StudentClass> majorClasses = allClasses.stream()
+                        .filter(c -> c.getMajor().getId().equals(major.getId()))
+                        .toList();
+                StudentClass studentClass = majorClasses.isEmpty() ? allClasses.get(0) : majorClasses.get(i % majorClasses.size());
+
                 students.add(Student.builder()
                         .studentCode(stuCode)
-                        .fullName(stNames[i])
+                        .fullName(fullName)
+                        .firstName(firstName)
+                        .lastName(middleName + " " + lastName)
                         .gender(i % 2 == 0 ? "1" : "2")
                         .user(user)
                         .academicYear(years.get(0))
-                        .department(depts.get(index % depts.size()))
-                        .major(majors.get(index))
-                        .trainingProgram(programs.get(index % programs.size()))
+                        .department(major.getDepartment())
+                        .major(major)
+                        .studentClass(studentClass)
+                        .trainingProgram(programs.get(mIndex % programs.size()))
                         .status("STUDYING")
                         .isActive(true)
                         .build());

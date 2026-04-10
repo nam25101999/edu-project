@@ -43,8 +43,13 @@ public class StudentController {
     public ResponseEntity<BaseResponse<PageResponse<StudentResponseDTO>>> getAllStudents(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) UUID departmentId,
+            @RequestParam(required = false) UUID majorId,
+            @RequestParam(required = false) UUID studentClassId,
+            @RequestParam(required = false) UUID courseSectionId,
             @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(BaseResponse.okPage(studentService.getAllStudents(search, isActive, pageable)));
+        return ResponseEntity.ok(BaseResponse.okPage(studentService.getAllStudents(
+                search, isActive, departmentId, majorId, studentClassId, courseSectionId, pageable)));
     }
 
     @GetMapping("/stats")
@@ -92,10 +97,29 @@ public class StudentController {
     public ResponseEntity<byte[]> exportStudents(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) UUID departmentId,
+            @RequestParam(required = false) UUID majorId,
+            @RequestParam(required = false) UUID studentClassId,
+            @RequestParam(required = false) UUID courseSectionId,
+            @RequestParam(required = false) List<UUID> studentIds,
+            @RequestParam(required = false) List<String> columns,
             @PageableDefault(size = 2000) Pageable pageable) {
-        byte[] csv = studentService.exportStudents(search, isActive, pageable);
+        byte[] csv = studentService.exportStudents(search, isActive, departmentId, majorId, studentClassId, courseSectionId, studentIds, columns, pageable);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=students.csv")
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .body(csv);
+    }
+
+    @GetMapping("/template")
+    public ResponseEntity<byte[]> getImportTemplate(
+            @RequestParam(required = false) UUID departmentId,
+            @RequestParam(required = false) UUID majorId,
+            @RequestParam(required = false) UUID programId,
+            @RequestParam(required = false) String classCode) {
+        byte[] csv = studentService.getImportTemplate(departmentId, majorId, programId, classCode);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=student_import_template.csv")
                 .contentType(MediaType.parseMediaType("text/csv"))
                 .body(csv);
     }

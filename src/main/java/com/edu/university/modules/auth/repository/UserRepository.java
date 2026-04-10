@@ -11,8 +11,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Repository quáº£n lÃ½ thá»±c thá»ƒ User.
- * Bá»• sung phÆ°Æ¡ng thá»©c countByRolesContaining Ä‘á»ƒ phá»¥c vá»¥ thá»‘ng kÃª trong ReportService.
+ * Repository quản lý thực thể User.
+ * Bổ sung phương thức countByRolesContaining để phục vụ thống kê trong ReportService.
  */
 @Repository
 public interface UserRepository extends JpaRepository<Users, UUID> {
@@ -26,7 +26,7 @@ public interface UserRepository extends JpaRepository<Users, UUID> {
     Boolean existsByEmail(String email);
 
     /**
-     * ÄÄƒng nháº­p linh hoáº¡t: TÃ¬m User báº±ng username, email hoáº·c mÃ£ sá»‘ sinh viÃªn.
+     * Đăng nhập linh hoạt: Tìm User bằng username, email hoặc mã số sinh viên.
      */
     @Query("SELECT u FROM Users u " +
             "LEFT JOIN Student s ON s.user.id = u.id " +
@@ -34,11 +34,14 @@ public interface UserRepository extends JpaRepository<Users, UUID> {
     Optional<Users> findByIdentifier(@Param("identifier") String identifier);
 
     /**
-     * Ä áº¿m sá»‘ lÆ°á»£ng ngÆ°á» i dÃ¹ng theo vai trÃ² (Role).
-     * @param role Vai trÃ² cáº§n Ä‘áº¿m (ADMIN, STUDENT, LECTURER...)
-     * @return Sá»‘ lÆ°á»£ng ngÆ°á» i dÃ¹ng thuá»™c vai trÃ² Ä‘Ã³.
+     * Đếm số lượng người dùng theo vai trò (Role).
+     * @param role Vai trò cần đếm (ADMIN, STUDENT, LECTURER...)
+     * @return Số lượng người dùng thuộc vai trò đó.
      */
-    long countByRolesContaining(Role role); // Ä Ãƒ Sá»¬A: Ä á»•i countByRole thÃ nh countByRolesContaining
+    long countByRolesContaining(Role role);
 
     org.springframework.data.domain.Page<Users> findByRoles_Name(String roleName, org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT u FROM Users u WHERE NOT EXISTS (SELECT r FROM u.roles r WHERE r.name = :roleName)")
+    org.springframework.data.domain.Page<Users> findByRoles_NameNot(@Param("roleName") String roleName, org.springframework.data.domain.Pageable pageable);
 }

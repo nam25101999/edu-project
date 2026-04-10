@@ -18,7 +18,10 @@ import java.util.UUID;
 public interface StudentService {
     StudentResponseDTO createStudent(StudentRequestDTO requestDTO);
 
-    Page<StudentResponseDTO> getAllStudents(String search, Boolean isActive, Pageable pageable);
+    Page<StudentResponseDTO> getAllStudents(String search, Boolean isActive, 
+                                            UUID departmentId, UUID majorId, 
+                                            UUID studentClassId, UUID courseSectionId,
+                                            Pageable pageable);
 
     StudentResponseDTO getStudentById(UUID id);
 
@@ -38,7 +41,14 @@ public interface StudentService {
 
     StudentImportResultDTO importStudents(MultipartFile file);
 
-    byte[] exportStudents(String search, Boolean isActive, Pageable pageable);
+    byte[] exportStudents(String search, Boolean isActive, 
+                          UUID departmentId, UUID majorId, 
+                          UUID studentClassId, UUID courseSectionId,
+                          List<UUID> studentIds,
+                          List<String> columns,
+                          Pageable pageable);
+
+    byte[] getImportTemplate(UUID departmentId, UUID majorId, UUID programId, String classCode);
 
     Page<StudentResponseDTO> getStudentsByStudentClass(UUID studentClassId, String search, Boolean isActive, Pageable pageable);
 
