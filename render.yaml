@@ -25,11 +25,11 @@ services:
           type: redis
           name: education-redis
           property: port
-      - key: REDIS_PASSWORD
+      - key: REDIS_URL
         fromService:
           type: redis
           name: education-redis
-          property: password
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
 
